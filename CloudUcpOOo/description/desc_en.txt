@@ -1,0 +1,1 @@
+CloudUcpOOo is a Universal Content Provider offering Cloud services at LibreOffice / OpenOffice.
