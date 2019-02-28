@@ -16,15 +16,13 @@ from clouducp import getUcb
 from clouducp import getUcp
 from clouducp import registerDataBase
 from clouducp import setLoggerSetting
-from clouducp import g_scheme
 from clouducp import getDbConnection
-from clouducp import getSession
 
 import traceback
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = 'com.gmail.prrvchr.extensions.gDriveOOo.OptionsDialog'
+g_ImplementationName = 'com.gmail.prrvchr.extensions.CloudUcpOOo.OptionsDialog'
 
 g_scheme = 'vnd.google-apps'
 
@@ -36,11 +34,6 @@ class OptionsDialog(unohelper.Base,
             self.ctx = ctx
             self.stringResource = getStringResource(self.ctx, None, 'OptionsDialog')
             print("PyOptionsDialog.__init__() 1")
-            #identifier = getUcb(self.ctx).createContentIdentifier('%s:///' % g_scheme)
-            #print("PyOptionsDialog.__init__() 2 %s" % identifier.getContentIdentifier())
-            identifier = 'com.gmail.prrvchr.extensions.gDriveOOo'
-            self.Connection = getDbConnection(self.ctx, g_scheme, identifier, True)
-            print("PyOptionsDialog.__init__() 3")
         except Exception as e:
             print("PyOptionsDialog.__init__().Error: %s - %s" % (e, traceback.print_exc()))
 
@@ -135,7 +128,7 @@ class OptionsDialog(unohelper.Base,
             provider = getUcp(self.ctx, g_scheme)
             if provider.supportsService('com.sun.star.ucb.ContentProviderProxy'):
                 #ucp = provider.getContentProvider()
-                ucp = createService('com.gmail.prrvchr.extensions.gDriveOOo.ContentProvider', self.ctx)
+                ucp = createService('com.gmail.prrvchr.extensions.CloudUcpOOo.ContentProvider', self.ctx)
                 provider = ucp.registerInstance(g_scheme, '', True)
                 self._toogleSync(dialog, True)
             print("PyOptionsDialog._doLoadUcp() 2")
@@ -144,7 +137,7 @@ class OptionsDialog(unohelper.Base,
             print("PyOptionsDialog._doLoadUcp().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _getLogDialog(self):
-        url = 'vnd.sun.star.script:gDriveOOo.LogDialog?location=application'
+        url = 'vnd.sun.star.script:CloudUcpOOo.LogDialog?location=application'
         return createService('com.sun.star.awt.DialogProvider', self.ctx).createDialog(url)
 
     def _loadLoggerSetting(self, dialog):

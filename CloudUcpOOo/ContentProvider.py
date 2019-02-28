@@ -29,7 +29,7 @@ import traceback
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = 'com.gmail.prrvchr.extensions.gDriveOOo.ContentProvider'
+g_ImplementationName = 'com.gmail.prrvchr.extensions.CloudUcpOOo.ContentProvider'
 
 
 class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, PropertySet,
@@ -178,10 +178,9 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         return user
 
     def _getContent(self, identifier):
-        uri = identifier.getContentIdentifier()
-        content = identifier.getInstance(uri)
+        content = identifier.getInstance('')
         if identifier.IsValid:
-            self.cachedContent.update({uri: content})
+            self.cachedContent.update({identifier.getContentIdentifier(): content})
             content.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), self)
         return content
 

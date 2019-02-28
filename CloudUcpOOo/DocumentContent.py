@@ -43,7 +43,7 @@ import traceback
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = 'com.gmail.prrvchr.extensions.gDriveOOo.DriveOfficeContent'
+g_ImplementationName = 'com.gmail.prrvchr.extensions.CloudUcpOOo.DocumentContent'
 
 
 class DocumentContent(unohelper.Base,
@@ -224,8 +224,7 @@ class DocumentContent(unohelper.Base,
                 identifier = self.getIdentifier()
                 stream = command.Argument.Data
                 sf = getSimpleFile(self.ctx)
-                path = '%s/%s' % (identifier.getContentProviderScheme(), identifier.Id)
-                target = getResourceLocation(self.ctx, path)
+                target = '%s/%s' % (identifier.SourceURL, identifier.Id)
                 if sf.exists(target) and not command.Argument.ReplaceExisting:
                     pass
                 elif stream.queryInterface(uno.getTypeByName('com.sun.star.io.XInputStream')):
@@ -255,8 +254,7 @@ class DocumentContent(unohelper.Base,
 
     def _getUrl(self, sf):
         identifier = self.getIdentifier()
-        location = '%s/%s' % (identifier.getContentProviderScheme(), identifier.Id)
-        url = getResourceLocation(self.ctx, location)
+        url = '%s/%s' % (identifier.SourceURL, identifier.Id)
         if self.Loaded == OFFLINE and sf.exists(url):
             return url
         try:

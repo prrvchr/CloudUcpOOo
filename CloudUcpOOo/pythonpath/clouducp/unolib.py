@@ -1,7 +1,6 @@
 #!
 # -*- coding: utf-8 -*-
 
-import uno
 import unohelper
 
 from com.sun.star.beans import UnknownPropertyException
@@ -9,30 +8,8 @@ from com.sun.star.beans import XPropertySet
 from com.sun.star.beans import XPropertySetInfo
 from com.sun.star.beans import XPropertiesChangeNotifier
 from com.sun.star.beans import XPropertySetInfoChangeNotifier
-from com.sun.star.lang import XComponent
 from com.sun.star.lang import XInitialization
 from com.sun.star.task import XInteractionHandler
-
-
-class Component(XComponent):
-    def __init__(self):
-        self.listeners = []
-
-    # XComponent
-    def dispose(self):
-        print("unolib.Component.dispose() 1")
-        event = uno.createUnoStruct('com.sun.star.lang.EventObject', self)
-        for listener in self.listeners:
-            listener.disposing(event)
-        print("unolib.Component.dispose() 2 ********************************************************")
-    def addEventListener(self, listener):
-        print("unolib.Component.addEventListener() *************************************************")
-        if listener not in self.listeners:
-            self.listeners.append(listener)
-    def removeEventListener(self, listener):
-        print("unolib.Component.removeEventListener() **********************************************")
-        if listener in self.listeners:
-            self.listeners.remove(listener)
 
 
 class Initialization(XInitialization):
@@ -52,7 +29,6 @@ class InteractionHandler(unohelper.Base, XInteractionHandler):
 class PropertySet(XPropertySet):
     def _getPropertySetInfo(self):
         return {}
-
     # XPropertySet
     def getPropertySetInfo(self):
         properties = self._getPropertySetInfo()
@@ -84,7 +60,6 @@ class PropertiesChangeNotifier(XPropertiesChangeNotifier):
     def __init__(self):
         print("PyPropertiesChangeNotifier.__init__()")
         self.propertiesListener = {}
-
     #XPropertiesChangeNotifier
     def addPropertiesChangeListener(self, names, listener):
         print("PyPropertiesChangeNotifier.addPropertiesChangeListener() %s" % self.__class__.__name__)
@@ -103,7 +78,6 @@ class PropertiesChangeNotifier(XPropertiesChangeNotifier):
 class PropertySetInfo(unohelper.Base, XPropertySetInfo):
     def __init__(self, properties):
         self.properties = properties
-
     # XPropertySetInfo
     def getProperties(self):
         return tuple(self.properties.values())
@@ -119,7 +93,6 @@ class PropertySetInfo(unohelper.Base, XPropertySetInfo):
 class PropertySetInfoChangeNotifier(XPropertySetInfoChangeNotifier):
     def __init__(self):
         self.propertyInfoListeners = []
-
     # XPropertySetInfoChangeNotifier
     def addPropertySetInfoChangeListener(self, listener):
         self.propertyInfoListeners.append(listener)

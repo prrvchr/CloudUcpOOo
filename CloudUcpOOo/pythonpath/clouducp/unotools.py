@@ -5,18 +5,6 @@ import uno
 
 from .unolib import InteractionHandler
 
-import binascii
-
-
-def isCmisReady():
-    ctx = uno.getComponentContext()
-    product = getOfficeProductName(ctx)
-    cmisready = product != 'OpenOffice'
-    print("isCmisReady: %s" % cmisready)
-    return cmisready
-
-def getOfficeProductName(ctx):
-    return getConfiguration(ctx, '/org.openoffice.Setup/Product').getByName('ooName')
 
 def getSimpleFile(ctx):
     return ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
@@ -81,8 +69,8 @@ def getNamedValue(name, value):
     namedvalue.Value = value
     return namedvalue
 
-def getResourceLocation(ctx, path='gDriveOOo'):
-    identifier = 'com.gmail.prrvchr.extensions.gDriveOOo'
+def getResourceLocation(ctx, path='CloudUcpOOo'):
+    identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
     service = '/singletons/com.sun.star.deployment.PackageInformationProvider'
     provider = ctx.getValueByName(service)
     return '%s/%s' % (provider.getPackageLocation(identifier), path)
@@ -113,9 +101,6 @@ def getStringResource(ctx, locale=None, filename='DialogStrings'):
         locale = getCurrentLocale(ctx)
     arguments = (location, True, locale, filename, '', InteractionHandler())
     return ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, arguments, ctx)
-
-def generateUuid():
-    return binascii.hexlify(uno.generateUuid().value).decode('utf-8')
 
 def createMessageBox(peer, message, title, box='message', buttons=2):
     boxtypes = {'message': 'MESSAGEBOX', 'info': 'INFOBOX', 'warning': 'WARNINGBOX',

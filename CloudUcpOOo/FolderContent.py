@@ -27,7 +27,6 @@ from clouducp import PropertyContainer
 from clouducp import PropertySetInfo
 from clouducp import PropertySetInfoChangeNotifier
 from clouducp import Row
-from clouducp import createContent
 from clouducp import executeContentCommand
 from clouducp import getChildSelect
 from clouducp import getCommandInfo
@@ -49,9 +48,11 @@ from clouducp import setPropertiesValues
 from clouducp import CREATED
 from clouducp import FOLDER
 
+import traceback
+
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = 'com.gmail.prrvchr.extensions.gDriveOOo.DriveFolderContent'
+g_ImplementationName = 'com.gmail.prrvchr.extensions.CloudUcpOOo.FolderContent'
 
 
 class FolderContent(unohelper.Base,
@@ -158,7 +159,7 @@ class FolderContent(unohelper.Base,
     def createNewContent(self, contentinfo):
         identifier = self.getIdentifier().createContentIdentifier(self._newTitle)
         self._newTitle = ''
-        return createContent(self.ctx, contentinfo.Type, identifier)
+        return identifier.getInstance(contentinfo.Type)
 
     # XChild
     def getParent(self):
@@ -253,7 +254,7 @@ class FolderContent(unohelper.Base,
             if not sf.exists(source):
                 raise CommandAbortedException("Error while saving file: %s" % source, self)
             inputstream = sf.openFileRead(source)
-            target = getResourceLocation(self.ctx, '%s/%s' % (identifier.getContentProviderScheme(), id))
+            target = '%s/%s' % (identifier.SourceURL, id)
             sf.writeFile(target, inputstream)
             inputstream.closeInput()
             ucb = getUcb(self.ctx)

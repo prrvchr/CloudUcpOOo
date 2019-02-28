@@ -6,7 +6,6 @@
 from .children import getChildSelect
 from .children import isChildId
 from .children import selectChildId
-from .children import updateChildren
 
 from .contentcore import executeContentCommand
 from .contentcore import getPropertiesValues
@@ -18,9 +17,6 @@ from .contentlib import CommandInfoChangeNotifier
 from .contentlib import InteractionRequestParameters
 from .contentlib import Row
 from .contentlib import DynamicResultSet
-from .contentlib import InteractionRequestName
-from .contentlib import InteractionRequest
-from .contentlib import InteractionAbort
 
 from .contenttools import getUcb
 from .contenttools import getUcp
@@ -30,48 +26,20 @@ from .contenttools import getContentEvent
 from .contenttools import getCommandInfo
 from .contenttools import getContentInfo
 from .contenttools import propertyChange
-from .contenttools import doSync
 from .contenttools import createContentIdentifier
 from .contenttools import createContentUser
-from .contenttools import uploadItem
-from .contenttools import getSession
-from .contenttools import createContent
-from .contenttools import getIllegalIdentifierException
-from .contenttools import getInteractiveNetworkOffLineException
-from .contenttools import getInteractiveNetworkReadException
-from .contenttools import getUnsupportedNameClashException
-from .contenttools import getInsertCommandArgument
 
 from .dbtools import getDbConnection
 from .dbtools import registerDataBase
 from .dbtools import getItemFromResult
-
-from .google import InputStream
-from .google import getUser
-from .google import getItem
-from .google import getConnectionMode
-from .google import updateItem
-from .google import parseDateTime
-from .google import g_scheme
-from .google import g_folder
-from .google import g_doc_map
-from .google import RETRIEVED
-from .google import CREATED
-from .google import FOLDER
-from .google import FILE
-from .google import RENAMED
-from .google import REWRITED
-from .google import TRASHED
-
-from .identifiers import checkIdentifiers
-from .identifiers import isIdentifier
-from .identifiers import getNewIdentifier
-
-from .items import selectUser
-from .items import mergeJsonUser
-from .items import selectItem
-from .items import insertJsonItem
-from .items import needSync
+from .dbtools import parseDateTime
+from .dbtools import RETRIEVED
+from .dbtools import CREATED
+from .dbtools import FOLDER
+from .dbtools import FILE
+from .dbtools import RENAMED
+from .dbtools import REWRITED
+from .dbtools import TRASHED
 
 from .logger import getLogger
 from .logger import getLoggerSetting
@@ -80,7 +48,6 @@ from .logger import getLoggerUrl
 
 from .unocore import PropertyContainer
 
-from .unolib import Component
 from .unolib import Initialization
 from .unolib import InteractionHandler
 from .unolib import PropertiesChangeNotifier

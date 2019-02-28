@@ -14,8 +14,6 @@ from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.uno import Exception as UnoException
 
 from .children import countChildTitle
-from .contentlib import CommandEnvironment
-from .contentlib import InteractionRequestName
 from .contenttools import getCommand
 from .contenttools import getContentEvent
 from .contenttools import getUcp
@@ -100,10 +98,6 @@ def _setTitle(source, context, title, position):
         error = getInteractiveAugmentedIOException(msg, context, 'ERROR', 'INVALID_CHARACTER', data)
         result = uno.Any('com.sun.star.ucb.InteractiveAugmentedIOException', error)
     elif countChildTitle(identifier.getParent(), title):
-        #msg = "Can't set property: %s value: %s - Name Clash Error" % ('Title', title)
-        #level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
-        #error = IllegalArgumentException(msg, source, position)
-        #result = uno.Any('com.sun.star.lang.IllegalArgumentException', error)
         msg = "Can't set property: %s value: %s - Name Clash Error" % ('Title', title)
         level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
         data = getPropertyValueSet({'Uri': identifier.getContentIdentifier(),'ResourceName': title})
@@ -115,54 +109,6 @@ def _setTitle(source, context, title, position):
         level = uno.getConstantByName('com.sun.star.logging.LogLevel.INFO')
         result = None
     return result, level, msg
-
-def _getTitle(source, title, position):
-    newtitle = _getNewTitle(source, title)
-    if title != newtitle:
-        #result = {}
-        #message = "Name clash!!!"
-        #url = '%s/../' % source.getIdentifier().BaseURL
-        ##interaction = getInteractionHandler(source.ctx, message)
-        #request = InteractionRequestName(source, message, url, title, newtitle, result)
-        #if handler.handleInteractionRequest(request):
-        #    if result.get('Retrieved', False):
-        #        title = result.get('Title')
-        #        return _getTitle(source, handler, title, position)
-        message = "Title: %s cannot be set. File names must be unique" % title
-        e = IllegalArgumentException(message, source, position)
-        error = uno.Any('com.sun.star.lang.IllegalArgumentException', e)
-        print("contentcore._getTitle() %s" % error)
-        return error, title
-    return None, title
-
-def _getNewTitle(source, title):
-    name, extension = _getTitleExtension(title, '.')
-    name, i = _getTitleIndex(name, '~')
-    identifier = source.getIdentifier().getParent()
-    while True:
-        if not countChildTitle(identifier, title):
-            break
-        i += 1
-        title = '%s~%s.%s' % (name, i, extension) if extension else '%s~%s' % (name, i)
-    return title
-
-def _getTitleExtension(name, separator):
-    basename, extension = name, ''
-    names = name.split(separator)
-    if len(names) > 1:
-        extension = names.pop()
-        basename = separator.join(names)
-    return basename, extension
-
-def _getTitleIndex(name, separator):
-    basename, i = name, 0
-    names = name.split(separator)
-    if len(names) > 1:
-        last = names.pop()
-        if last.isdigit():
-            i = int(last)
-            basename = separator.join(names)
-    return basename, i
 
 def updateContent(ctx, event):
     print("contentcore.updateContent() %s - %s" % (event.PropertyName, event.NewValue))
@@ -199,7 +145,6 @@ def notifyContentListener(ctx, source, action, identifier=None):
     elif action == EXCHANGED:
         source.notify(getContentEvent(action, source, identifier))
 
-def executeContentCommand(content, name, argument, environment=None):
-    environment = CommandEnvironment() if environment is None else environment
+def executeContentCommand(content, name, argument, environment):
     command = getCommand(name, argument)
     return content.execute(command, 0, environment)
