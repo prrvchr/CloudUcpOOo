@@ -62,7 +62,6 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
         self.Plugin = plugin
         self._Statement = getDbConnection(self.ctx, template, plugin, True).createStatement()
-        self.User = createContentUser(self.ctx, plugin, template, self.Connection)
         print("ContentProvider.registerInstance() 2")
         provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
         return provider
@@ -109,7 +108,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         if key in self.cachedIdentifier:
             contentidentifier = self.cachedIdentifier[key]
         else:
-            contentidentifier = self._cacheIdentifier(identifier, key)
+            contentidentifier = self._getCachedIdentifier(identifier, key)
         msg = "Identifier: %s ... Done" % contentidentifier.getContentIdentifier()
         self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         print("ContentProvider.createContentIdentifier() 2 %s" % identifier)
@@ -128,7 +127,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         if key in self.cachedContent:
             content = self.cachedContent[key]
         else:
-            content = self._setCachedContent(identifier, key)
+            content = self._getCachedContent(identifier, key)
         if not identifier.IsValid:
             self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
             print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
@@ -154,7 +153,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
 
-    def _cacheIdentifier(self, identifier, key):
+    def _getCachedIdentifier(self, identifier, key):
         uri = getUri(self.ctx, identifier)
         user = self._getUser(uri)
         contentidentifier = createContentIdentifier(self.ctx, self.Plugin, user, uri)
@@ -171,7 +170,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         if username in self.cachedUser:
             user = self.cachedUser[username]
         else:
-            user = self._cacheUser(uri, username)
+            user = self._getCachedUser(uri, username)
         return user
 
     def _getUserNameFromHandler(self):
@@ -184,14 +183,14 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
                 return result.get('UserName')
         return None
 
-    def _cacheUser(self, uri, username):
+    def _getCachedUser(self, uri, username):
         user = createContentUser(self.ctx, self.Plugin, uri.getScheme(), self.Connection, username)
         if user.IsValid:
             print("ContentProvider._setUser(): *****************************")
             self.cachedUser[username] = user
         return user
 
-    def _cacheContent(self, identifier, key):
+    def _getCachedContent(self, identifier, key):
         content = identifier.getInstance('')
         if identifier.IsValid:
             print("ContentProvider._getContent(): **************************")
