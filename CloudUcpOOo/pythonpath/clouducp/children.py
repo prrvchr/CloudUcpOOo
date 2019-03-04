@@ -39,9 +39,11 @@ def selectChildId(connection, parent, uri):
     return id
 
 def getChildSelect(identifier):
+    print("children.getChildSelect() 1")
     # LibreOffice Columns: ['Title', 'Size', 'DateModified', 'DateCreated', 'IsFolder', 'TargetURL', 'IsHidden', 'IsVolume', 'IsRemote', 'IsRemoveable', 'IsFloppy', 'IsCompactDisc']
     # OpenOffice Columns: ['Title', 'Size', 'DateModified', 'DateCreated', 'IsFolder', 'TargetURL', 'IsHidden', 'IsVolume', 'IsRemote', 'IsRemoveable', 'IsFloppy', 'IsCompactDisc']
     index, select = 1, identifier.User.Connection.prepareCall('CALL "selectChild"(?, ?, ?, ?, ?)')
+    print("children.getChildSelect() 2")
     # select return RowCount as OUT parameter in select.getLong(index)!!!
     # Never managed to run the next line:
     # select.ResultSetType = uno.getConstantByName('com.sun.star.sdbc.ResultSetType.SCROLL_INSENSITIVE')
@@ -55,4 +57,5 @@ def getChildSelect(identifier):
     index += 1
     select.setLong(index, identifier.User.Mode)
     index += 1
+    print("children.getChildSelect() 3")
     return index, select

@@ -28,7 +28,6 @@ from clouducp import PropertySetInfo
 from clouducp import PropertySetInfoChangeNotifier
 from clouducp import Row
 from clouducp import executeContentCommand
-from clouducp import getChildSelect
 from clouducp import getCommandInfo
 from clouducp import getContentEvent
 from clouducp import getContentInfo
@@ -196,15 +195,15 @@ class FolderContent(unohelper.Base,
         elif command.Name == 'setPropertyValues':
             return setPropertiesValues(self, environment, command.Argument, self._propertySetInfo, self.Logger)
         elif command.Name == 'open':
-            print("DriveFolderContent.execute() open")
+            print("DriveFolderContent.execute() open 1")
             identifier = self.getIdentifier()
             if self.Loaded == ONLINE:
                 identifier.updateLinks()
                 if identifier.Updated:
                     self.Loaded = OFFLINE
             # Not Used: command.Argument.Properties - Implement me ;-)
-            index, select = getChildSelect(identifier)
-            return DynamicResultSet(self.ctx, identifier, select, index)
+            print("DriveFolderContent.execute() open 2")
+            return DynamicResultSet(self.ctx, identifier)
         elif command.Name == 'insert':
             print("DriveFolderContent.execute() insert")
             identifier = self.getIdentifier()

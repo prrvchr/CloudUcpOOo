@@ -17,6 +17,7 @@ from com.sun.star.ucb import XCommandInfo
 from com.sun.star.ucb import XCommandInfoChangeNotifier
 from com.sun.star.ucb import UnsupportedCommandException
 
+from .children import getChildSelect
 from .contenttools import getUcb
 from .contenttools import getParametersRequest
 from .unolib import PropertySet
@@ -208,14 +209,12 @@ class Row(unohelper.Base,
 
 class DynamicResultSet(unohelper.Base,
                        XDynamicResultSet):
-    def __init__(self, ctx, identifier, select, index):
+    def __init__(self, ctx, identifier):
         self.ctx = ctx
-        self.identifier = identifier
-        self.select = select
-        self.index = index
+        self.index , self.select = getChildSelect(identifier)
     # XDynamicResultSet
     def getStaticResultSet(self):
-        return ContentResultSet(self.ctx, self.identifier, self.select, self.index)
+        return ContentResultSet(self.ctx, self.select, self.index)
     def setListener(self, listener):
         print("DynamicResultSet.setListener():")
         pass
@@ -233,9 +232,8 @@ class ContentResultSet(unohelper.Base,
                        XRow,
                        XResultSetMetaDataSupplier,
                        XContentAccess):
-    def __init__(self, ctx, identifier, select, index):
+    def __init__(self, ctx, select, index):
         self.ctx = ctx
-        self.identifier = identifier
         self.resultset = select.executeQuery()
         self.RowCount = select.getLong(index)
         self.IsRowCountFinal = not select.MoreResults

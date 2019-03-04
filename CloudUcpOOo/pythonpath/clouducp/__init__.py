@@ -3,7 +3,6 @@
 
 #from .unotools import isCmisReady
 
-from .children import getChildSelect
 from .children import isChildId
 from .children import selectChildId
 
