@@ -75,6 +75,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
     def notifyTermination(self, event):
         if self._Statement and not self.Connection.isClosed():
             self._Statement.execute('SHUTDOWN;')
+            #self._Statement.execute('SHUTDOWN COMPACT;')
             level, msg = INFO, "Shutdown database ... closing connection ... Done"
         else:
             level, msg = SEVERE, "Shutdown database ... connection alredy closed !!!"
@@ -104,7 +105,11 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         print("ContentProvider.createContentIdentifier() 1 %s" % identifier)
         msg = "Identifier: %s ..." % identifier
         self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
-        contentidentifier = self.cachedIdentifier.get(identifier, self._getIdentifier(identifier))
+        key = self._getIdentifierKey(identifier)
+        if key in self.cachedIdentifier:
+            contentidentifier = self.cachedIdentifier[key]
+        else:
+            contentidentifier = self._cacheIdentifier(identifier, key)
         msg = "Identifier: %s ... Done" % contentidentifier.getContentIdentifier()
         self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         print("ContentProvider.createContentIdentifier() 2 %s" % identifier)
@@ -119,7 +124,11 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
             self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
             print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
             raise identifier.Error
-        content = self.cachedContent.get(identifier.getContentIdentifier(), self._getContent(identifier))
+        key = self._getIdentifierKey(identifier.getContentIdentifier())
+        if key in self.cachedContent:
+            content = self.cachedContent[key]
+        else:
+            content = self._setCachedContent(identifier, key)
         if not identifier.IsValid:
             self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
             print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
@@ -145,12 +154,13 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
 
-    def _getIdentifier(self, identifier):
+    def _cacheIdentifier(self, identifier, key):
         uri = getUri(self.ctx, identifier)
         user = self._getUser(uri)
         contentidentifier = createContentIdentifier(self.ctx, self.Plugin, user, uri)
         if contentidentifier.IsValid:
-            self.cachedIdentifier.update({identifier: contentidentifier})
+            print("ContentProvider._getIdentifier(): *****************************")
+            self.cachedIdentifier[key] = contentidentifier
         return contentidentifier
 
     def _getUser(self, uri):
@@ -158,7 +168,10 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
             username = uri.getAuthority()
         else:
             username = self._getUserNameFromHandler()
-        user = self.cachedUser.get(username, self._setUser(uri, username))
+        if username in self.cachedUser:
+            user = self.cachedUser[username]
+        else:
+            user = self._cacheUser(uri, username)
         return user
 
     def _getUserNameFromHandler(self):
@@ -171,18 +184,25 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
                 return result.get('UserName')
         return None
 
-    def _setUser(self, uri, username):
+    def _cacheUser(self, uri, username):
         user = createContentUser(self.ctx, self.Plugin, uri.getScheme(), self.Connection, username)
         if user.IsValid:
-            self.cachedUser.update({username: user})
+            print("ContentProvider._setUser(): *****************************")
+            self.cachedUser[username] = user
         return user
 
-    def _getContent(self, identifier):
+    def _cacheContent(self, identifier, key):
         content = identifier.getInstance('')
         if identifier.IsValid:
-            self.cachedContent.update({identifier.getContentIdentifier(): content})
+            print("ContentProvider._getContent(): **************************")
+            self.cachedContent[key] = content
             content.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), self)
         return content
+
+    def _getIdentifierKey(self, uri):
+        while uri.endswith(('/','..','.')):
+            uri = uri[:-1]
+        return uri
 
     # PropertySet
     def _getPropertySetInfo(self):
