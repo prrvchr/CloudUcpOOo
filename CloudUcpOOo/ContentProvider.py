@@ -140,7 +140,9 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         compare = 1
         print("ContentProvider.compareContentIds() %s - %s" % (identifier1.getContentIdentifier(), identifier2.getContentIdentifier()))
         msg = "Identifiers: %s - %s ..." % (identifier1.getContentIdentifier(), identifier2.getContentIdentifier())
-        if identifier1.getContentIdentifier() == identifier2.getContentIdentifier():
+        id1 = self._getIdentifierKey(identifier1.getContentIdentifier())
+        id2 = self._getIdentifierKey(identifier2.getContentIdentifier())
+        if id1 == id2 and identifier1.User.Name == identifier2.User.Name:
             msg += " seem to be the same..."
             compare = 0
         elif identifier1.Id is None and identifier2.Id is not None:
@@ -211,7 +213,6 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         readonly = uno.getConstantByName('com.sun.star.beans.PropertyAttribute.READONLY')
         properties['Connection'] = getProperty('Connection', 'com.sun.star.sdbc.XConnection', maybevoid | bound| readonly)
         properties['Plugin'] = getProperty('Plugin', 'string', maybevoid | bound | readonly)
-        properties['User'] = getProperty('User', 'com.sun.star.uno.XInterface', maybevoid | bound)
         return properties
 
     # XServiceInfo
