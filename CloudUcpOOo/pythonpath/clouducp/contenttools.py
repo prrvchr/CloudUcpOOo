@@ -4,11 +4,25 @@
 import uno
 
 from com.sun.star.sdb import ParametersRequest
+from com.sun.star.connection import NoConnectException
+from com.sun.star.ucb.ConnectionMode import ONLINE
+from com.sun.star.ucb.ConnectionMode import OFFLINE
 
 from .unotools import getProperty
 from .unotools import getPropertyValue
 from .unotools import getNamedValueSet
 
+
+def getConnectionMode(ctx, host):
+    connector = ctx.ServiceManager.createInstance('com.sun.star.connection.Connector')
+    try:
+        connection = connector.connect('socket,host=%s,port=80' % host)
+    except NoConnectException:
+        mode = OFFLINE
+    else:
+        connection.close()
+        mode = ONLINE
+    return mode
 
 def createContentUser(ctx, plugin, scheme, connection, username=None):
     service = '%s.ContentUser' % plugin

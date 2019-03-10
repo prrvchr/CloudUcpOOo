@@ -6,6 +6,7 @@
 from .children import isChildId
 from .children import selectChildId
 
+from .contentcore import getSession
 from .contentcore import executeContentCommand
 from .contentcore import getPropertiesValues
 from .contentcore import setPropertiesValues
@@ -23,6 +24,7 @@ from .contenttools import getUri
 from .contenttools import getMimeType
 from .contenttools import getContentEvent
 from .contenttools import getCommandInfo
+from .contenttools import getConnectionMode
 from .contenttools import getContentInfo
 from .contenttools import propertyChange
 from .contenttools import createContentIdentifier

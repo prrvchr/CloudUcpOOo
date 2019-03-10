@@ -14,6 +14,7 @@ from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.uno import Exception as UnoException
 
 from .children import countChildTitle
+from .contentlib import OAuth2Ooo
 from .contenttools import getCommand
 from .contenttools import getContentEvent
 from .contenttools import getUcp
@@ -26,6 +27,17 @@ from .items import updateTrashed
 from .unotools import getInteractionHandler
 from .unotools import getNamedValue
 from .unotools import getPropertyValueSet
+
+import sys
+
+def getSession(ctx, scheme, username):
+    oauth = OAuth2Ooo(ctx, scheme, username)
+    import requests
+    if sys.version_info[0] < 3:
+        requests.packages.urllib3.disable_warnings()
+    session = requests.Session()
+    session.auth = oauth
+    return session
 
 
 def getPropertiesValues(source, properties, logger):

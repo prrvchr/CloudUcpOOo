@@ -185,87 +185,91 @@ class FolderContent(unohelper.Base,
     def createCommandIdentifier(self):
         return 0
     def execute(self, command, id, environment):
-        if command.Name == 'getCommandInfo':
-            return CommandInfo(self._commandInfo)
-        elif command.Name == 'getPropertySetInfo':
-            return PropertySetInfo(self._propertySetInfo)
-        elif command.Name == 'getPropertyValues':
-            namedvalues = getPropertiesValues(self, command.Argument, self.Logger)
-            return Row(namedvalues)
-        elif command.Name == 'setPropertyValues':
-            return setPropertiesValues(self, environment, command.Argument, self._propertySetInfo, self.Logger)
-        elif command.Name == 'open':
-            print("DriveFolderContent.execute() open 1")
-            identifier = self.getIdentifier()
-            if self.Loaded == ONLINE:
-                identifier.updateLinks()
-                if identifier.Updated:
-                    self.Loaded = OFFLINE
-            # Not Used: command.Argument.Properties - Implement me ;-)
-            print("DriveFolderContent.execute() open 2")
-            return DynamicResultSet(self.ctx, identifier)
-        elif command.Name == 'insert':
-            print("DriveFolderContent.execute() insert")
-            identifier = self.getIdentifier()
-            ucp = getUcp(self.ctx, identifier.getContentProviderScheme())
-            self.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), ucp)
-            propertyChange(self, 'Id', identifier.Id, CREATED | FOLDER)
-            parent = identifier.getParent()
-            event = getContentEvent(self, INSERTED, self, parent)
-            ucp.queryContent(parent).notify(event)
-        elif command.Name == 'delete':
-            print("DriveFolderContent.execute(): delete")
-            self.Trashed = True
-        elif command.Name == 'createNewContent':
-            print("DriveFolderContent.execute(): createNewContent %s" % command.Argument)
-            return self.createNewContent(command.Argument)
-        elif command.Name == 'transfer':
-            # Transfer command is used for document 'File Save' or 'File Save As'
-            # NewTitle come from:
-            # - Last segment path of 'XContent.getIdentifier().getContentIdentifier()' for OpenOffice
-            # - Property 'Title' of 'XContent' for LibreOffice
-            # If the content has been renamed, the last segment is the new Title of the content
-            title = command.Argument.NewTitle
-            source = command.Argument.SourceURL
-            move = command.Argument.MoveData
-            clash = command.Argument.NameClash
-            print("DriveFolderContent.execute(): transfer 1:\nSource:    %s\nId:    %s\nMove:    %s\nClash:    %s" % (source, title, move, clash))
-            identifier = self.getIdentifier()
-            # We check if 'command.Argument.NewTitle' is an Id
-            if isChildId(identifier, title):
-                id = title
-            else:
-                # It appears that 'command.Argument.NewTitle' is not an Id but a Title...
-                # If 'NewTitle' exist and is unique in the folder, we can retrieve its Id
-                id = selectChildId(identifier.User.Connection, identifier.Id, title)
-                if id is None:
-                    # Id could not be found: NewTitle does not exist in the folder...
-                    # For new document (File Save As) we use commands:
-                    # - createNewContent: for creating an empty new Content
-                    # - Insert at new Content for committing change
-                    # To execute these commands, we must throw an exception
-                    # But we need to keep 'NewTitle' for building the Uri
-                    self._newTitle = title
-                    print("DriveFolderContent.execute(): transfer 2:\n    transfer: %s - %s" % (source, id))
-                    raise InteractiveBadTransferURLException("Couln't handle Url: %s" % source, self)
-            print("DriveFolderContent.execute(): transfer 3:\n    transfer: %s - %s" % (source, id))
-            sf = getSimpleFile(self.ctx)
-            if not sf.exists(source):
-                raise CommandAbortedException("Error while saving file: %s" % source, self)
-            inputstream = sf.openFileRead(source)
-            target = '%s/%s' % (identifier.SourceURL, id)
-            sf.writeFile(target, inputstream)
-            inputstream.closeInput()
-            ucb = getUcb(self.ctx)
-            identifier = ucb.createContentIdentifier('%s/%s' % (identifier.BaseURL, title))
-            data = getPropertyValueSet({'Size': sf.getSize(target)})
-            content = ucb.queryContent(identifier)
-            executeContentCommand(content, 'setPropertyValues', data, environment)
-            print("DriveFolderContent.execute(): transfer 4: Fin")
-            if command.Argument.MoveData:
-                pass #must delete object
-        elif command.Name == 'flush':
-            print("DriveFolderContent.execute(): flush")
+        try:
+            if command.Name == 'getCommandInfo':
+                return CommandInfo(self._commandInfo)
+            elif command.Name == 'getPropertySetInfo':
+                return PropertySetInfo(self._propertySetInfo)
+            elif command.Name == 'getPropertyValues':
+                namedvalues = getPropertiesValues(self, command.Argument, self.Logger)
+                return Row(namedvalues)
+            elif command.Name == 'setPropertyValues':
+                return setPropertiesValues(self, environment, command.Argument, self._propertySetInfo, self.Logger)
+            elif command.Name == 'open':
+                print("DriveFolderContent.execute() open 1")
+                identifier = self.getIdentifier()
+                if self.Loaded == ONLINE:
+                    identifier.updateLinks()
+                    if identifier.Updated:
+                        self.Loaded = OFFLINE
+                # Not Used: command.Argument.Properties - Implement me ;-)
+                print("DriveFolderContent.execute() open 2")
+                return DynamicResultSet(self.ctx, identifier)
+            elif command.Name == 'insert':
+                print("DriveFolderContent.execute() insert")
+                identifier = self.getIdentifier()
+                ucp = getUcp(self.ctx, identifier.getContentProviderScheme())
+                self.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), ucp)
+                propertyChange(self, 'Id', identifier.Id, CREATED | FOLDER)
+                parent = identifier.getParent()
+                event = getContentEvent(self, INSERTED, self, parent)
+                ucp.queryContent(parent).notify(event)
+            elif command.Name == 'delete':
+                print("DriveFolderContent.execute(): delete")
+                self.Trashed = True
+            elif command.Name == 'createNewContent':
+                print("DriveFolderContent.execute(): createNewContent %s" % command.Argument)
+                return self.createNewContent(command.Argument)
+            elif command.Name == 'transfer':
+                # Transfer command is used for document 'File Save' or 'File Save As'
+                # NewTitle come from:
+                # - Last segment path of 'XContent.getIdentifier().getContentIdentifier()' for OpenOffice
+                # - Property 'Title' of 'XContent' for LibreOffice
+                # If the content has been renamed, the last segment is the new Title of the content
+                title = command.Argument.NewTitle
+                source = command.Argument.SourceURL
+                move = command.Argument.MoveData
+                clash = command.Argument.NameClash
+                print("DriveFolderContent.execute(): transfer 1:\nSource:    %s\nId:    %s\nMove:    %s\nClash:    %s" % (source, title, move, clash))
+                identifier = self.getIdentifier()
+                # We check if 'command.Argument.NewTitle' is an Id
+                if isChildId(identifier, title):
+                    id = title
+                else:
+                    # It appears that 'command.Argument.NewTitle' is not an Id but a Title...
+                    # If 'NewTitle' exist and is unique in the folder, we can retrieve its Id
+                    id = selectChildId(identifier.User.Connection, identifier.Id, title)
+                    if id is None:
+                        # Id could not be found: NewTitle does not exist in the folder...
+                        # For new document (File Save As) we use commands:
+                        # - createNewContent: for creating an empty new Content
+                        # - Insert at new Content for committing change
+                        # To execute these commands, we must throw an exception
+                        # But we need to keep 'NewTitle' for building the Uri
+                        self._newTitle = title
+                        print("DriveFolderContent.execute(): transfer 2:\n    transfer: %s - %s" % (source, id))
+                        raise InteractiveBadTransferURLException("Couln't handle Url: %s" % source, self)
+                print("DriveFolderContent.execute(): transfer 3:\n    transfer: %s - %s" % (source, id))
+                sf = getSimpleFile(self.ctx)
+                if not sf.exists(source):
+                    raise CommandAbortedException("Error while saving file: %s" % source, self)
+                inputstream = sf.openFileRead(source)
+                target = '%s/%s' % (identifier.SourceURL, id)
+                sf.writeFile(target, inputstream)
+                inputstream.closeInput()
+                ucb = getUcb(self.ctx)
+                identifier = ucb.createContentIdentifier('%s/%s' % (identifier.BaseURL, title))
+                data = getPropertyValueSet({'Size': sf.getSize(target)})
+                content = ucb.queryContent(identifier)
+                executeContentCommand(content, 'setPropertyValues', data, environment)
+                print("DriveFolderContent.execute(): transfer 4: Fin")
+                if command.Argument.MoveData:
+                    pass #must delete object
+            elif command.Name == 'flush':
+                print("DriveFolderContent.execute(): flush")
+        except Exception as e:
+            print("FolderContent.execute().Error: %s - %s - %s" % (command.Name, e, traceback.print_exc()))
+
     def abort(self, id):
         pass
     def releaseCommandIdentifier(self, id):

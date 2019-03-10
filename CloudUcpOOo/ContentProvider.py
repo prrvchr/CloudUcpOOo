@@ -101,18 +101,21 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
 
     # XContentIdentifierFactory
     def createContentIdentifier(self, identifier):
-        print("ContentProvider.createContentIdentifier() 1 %s" % identifier)
-        msg = "Identifier: %s ..." % identifier
-        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
-        key = self._getIdentifierKey(identifier)
-        if key in self.cachedIdentifier:
-            contentidentifier = self.cachedIdentifier[key]
-        else:
-            contentidentifier = self._getCachedIdentifier(identifier, key)
-        msg = "Identifier: %s ... Done" % contentidentifier.getContentIdentifier()
-        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
-        print("ContentProvider.createContentIdentifier() 2 %s" % identifier)
-        return contentidentifier
+        try:
+            print("ContentProvider.createContentIdentifier() 1 %s" % identifier)
+            msg = "Identifier: %s ..." % identifier
+            self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+            key = self._getIdentifierKey(identifier)
+            if key in self.cachedIdentifier:
+                contentidentifier = self.cachedIdentifier[key]
+            else:
+                contentidentifier = self._getCachedIdentifier(identifier, key)
+            msg = "Identifier: %s ... Done" % contentidentifier.getContentIdentifier()
+            self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+            print("ContentProvider.createContentIdentifier() 2 %s" % identifier)
+            return contentidentifier
+        except Exception as e:
+            print("ContentProvider.createContentIdentifier().Error: %s - %s" % (e, traceback.print_exc()))
 
     # XContentProvider
     def queryContent(self, identifier):

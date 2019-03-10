@@ -24,6 +24,29 @@ from .unolib import PropertySet
 from .unotools import getProperty
 
 
+class OAuth2Ooo(object):
+    def __init__(self, ctx, scheme, username=None):
+        name = 'com.gmail.prrvchr.extensions.OAuth2OOo.OAuth2Service'
+        self.service = ctx.ServiceManager.createInstanceWithContext(name, ctx)
+        self.service.ResourceUrl = scheme
+        if username is not None:
+            self.service.UserName = username
+
+    @property
+    def UserName(self):
+        return self.service.UserName
+    @UserName.setter
+    def UserName(self, username):
+        self.service.UserName = username
+    @property
+    def Scheme(self):
+        return self.service.ResourceUrl
+
+    def __call__(self, request):
+        request.headers['Authorization'] = 'Bearer %s' % self.service.Token
+        return request
+
+
 class InteractionAbort(unohelper.Base,
                        XInteractionAbort):
     def __init__(self, result={}):
