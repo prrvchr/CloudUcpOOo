@@ -20,13 +20,27 @@ from com.sun.star.ucb import UnsupportedCommandException
 from .children import getChildSelect
 from .contenttools import getUcb
 from .contenttools import getParametersRequest
+from .contenttools import g_auth
 from .unolib import PropertySet
 from .unotools import getProperty
 
+import traceback
 
-class OAuth2Ooo(object):
+
+class NoOAuth2(object):
+    def __eq__(self, other):
+        return False
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __call__(self, request):
+        return request
+
+
+class OAuth2OOo(NoOAuth2):
     def __init__(self, ctx, scheme, username=None):
-        name = 'com.gmail.prrvchr.extensions.OAuth2OOo.OAuth2Service'
+        name = '%s.OAuth2Service' % g_auth
         self.service = ctx.ServiceManager.createInstanceWithContext(name, ctx)
         self.service.ResourceUrl = scheme
         if username is not None:
@@ -42,9 +56,20 @@ class OAuth2Ooo(object):
     def Scheme(self):
         return self.service.ResourceUrl
 
+    def __eq__(self, other):
+        return all((self.UserName == getattr(other, 'UserName', None),
+                    self.Scheme == getattr(other, 'Scheme', None)))
+
     def __call__(self, request):
-        request.headers['Authorization'] = 'Bearer %s' % self.service.Token
-        return request
+        try:
+            if not request.headers.pop('NoAuth2', False):
+                request.headers['Authorization'] = 'Bearer %s' % self.service.Token
+                print("contentlib.OAuth2OOo.__call__() OAuth2")
+            else:
+                print("contentlib.OAuth2OOo.__call__() no OAuth2")
+            return request
+        except Exception as e:
+            print("contentlib.OAuth2OOo.__call__().Error: %s - %s" % (e, traceback.print_exc()))
 
 
 class InteractionAbort(unohelper.Base,

@@ -5,6 +5,8 @@ import uno
 
 from .unolib import InteractionHandler
 
+g_extension = ''
+
 
 def getSimpleFile(ctx):
     return ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
@@ -69,11 +71,13 @@ def getNamedValue(name, value):
     namedvalue.Value = value
     return namedvalue
 
-def getResourceLocation(ctx, path='CloudUcpOOo'):
-    identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
+def getResourceLocation(ctx, identifier, path=None):
     service = '/singletons/com.sun.star.deployment.PackageInformationProvider'
     provider = ctx.getValueByName(service)
-    return '%s/%s' % (provider.getPackageLocation(identifier), path)
+    location = provider.getPackageLocation(identifier)
+    if path is not None:
+        location += '/%s' % path
+    return location
 
 def getConfiguration(ctx, nodepath, update=False):
     service = 'com.sun.star.configuration.ConfigurationProvider'

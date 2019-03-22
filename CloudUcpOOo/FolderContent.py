@@ -35,7 +35,6 @@ from clouducp import getLogger
 from clouducp import getPropertiesValues
 from clouducp import getProperty
 from clouducp import getPropertyValueSet
-from clouducp import getResourceLocation
 from clouducp import getSimpleFile
 from clouducp import getUcb
 from clouducp import getUcp
@@ -156,6 +155,7 @@ class FolderContent(unohelper.Base,
     def queryCreatableContentsInfo(self):
         return self._creatableContentsInfo
     def createNewContent(self, contentinfo):
+        print("FolderContent.createNewContent() %s" % self.getIdentifier().getContentIdentifier())
         identifier = self.getIdentifier().createContentIdentifier(self._newTitle)
         self._newTitle = ''
         return identifier.getInstance(contentinfo.Type)
@@ -238,7 +238,7 @@ class FolderContent(unohelper.Base,
                 else:
                     # It appears that 'command.Argument.NewTitle' is not an Id but a Title...
                     # If 'NewTitle' exist and is unique in the folder, we can retrieve its Id
-                    id = selectChildId(identifier.User.Connection, identifier.Id, title)
+                    id = selectChildId(identifier.User.Connection, identifier.User.Id, identifier.Id, title)
                     if id is None:
                         # Id could not be found: NewTitle does not exist in the folder...
                         # For new document (File Save As) we use commands:
@@ -267,6 +267,8 @@ class FolderContent(unohelper.Base,
                     pass #must delete object
             elif command.Name == 'flush':
                 print("DriveFolderContent.execute(): flush")
+        except InteractiveBadTransferURLException as e:
+            raise e
         except Exception as e:
             print("FolderContent.execute().Error: %s - %s - %s" % (command.Name, e, traceback.print_exc()))
 

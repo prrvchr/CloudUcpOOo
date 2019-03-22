@@ -12,6 +12,9 @@ from .unotools import getProperty
 from .unotools import getPropertyValue
 from .unotools import getNamedValueSet
 
+g_identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
+g_auth = 'com.gmail.prrvchr.extensions.OAuth2OOo'
+
 
 def getConnectionMode(ctx, host):
     connector = ctx.ServiceManager.createInstance('com.sun.star.connection.Connector')
@@ -35,6 +38,23 @@ def createContentIdentifier(ctx, plugin, user, uri):
     namedvalue = getNamedValueSet({'User': user, 'Uri': uri})
     contentidentifier = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
     return contentidentifier
+
+def createContent(ctx, identifier, data, plugin, folder, link, documents):
+    content, service = None, None
+    mimetype = data.get('MimeType', 'application/octet-stream')
+    if mimetype == folder:
+        service = '%s.FolderContent' % g_identifier
+    elif mimetype == link:
+        pass
+    elif mimetype in (documents):
+        service = '%s.DocumentContent' % plugin
+    else:
+        service = '%s.DocumentContent' % g_identifier
+    if service is not None:
+        namedvalue = getNamedValueSet({'Identifier': identifier})
+        namedvalue += getNamedValueSet(data)
+        content = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
+    return content
 
 def propertyChange(source, name, oldvalue, newvalue):
     if name in source.propertiesListener:
@@ -118,9 +138,7 @@ def getUri(ctx, identifier):
     uri = factory.parse(identifier)
     return uri
 
-def getUcb(ctx=None, arguments=None):
-    ctx = uno.getComponentContext() if ctx is None else ctx
-    arguments = ('Local', 'Office') if arguments is None else arguments
+def getUcb(ctx, arguments=('Local', 'Office')):
     name = 'com.sun.star.ucb.UniversalContentBroker'
     return ctx.ServiceManager.createInstanceWithArguments(name, (arguments, ))
 

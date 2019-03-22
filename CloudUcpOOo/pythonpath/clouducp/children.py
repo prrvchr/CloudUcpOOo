@@ -27,11 +27,12 @@ def isChildId(identifier, id):
     call.close()
     return ischild
 
-def selectChildId(connection, parent, uri):
+def selectChildId(connection, userid, parent, title):
     id = None
-    call = connection.prepareCall('CALL "selectChildId"(?, ?)')
-    call.setString(1, parent)
-    call.setString(2, uri)
+    call = connection.prepareCall('CALL "selectChildId"(?, ?, ?)')
+    call.setString(1, userid)
+    call.setString(2, parent)
+    call.setString(3, title)
     result = call.executeQuery()
     if result.next():
         id = result.getString(1)

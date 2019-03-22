@@ -14,11 +14,12 @@ from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.uno import Exception as UnoException
 
 from .children import countChildTitle
-from .contentlib import OAuth2Ooo
+from .contentlib import OAuth2OOo
 from .contenttools import getCommand
 from .contenttools import getContentEvent
 from .contenttools import getUcp
 from .contenttools import getInteractiveAugmentedIOException
+from .contenttools import g_auth
 from .items import insertContentItem
 from .items import updateLoaded
 from .items import updateName
@@ -27,18 +28,21 @@ from .items import updateTrashed
 from .unotools import getInteractionHandler
 from .unotools import getNamedValue
 from .unotools import getPropertyValueSet
+from .unotools import getResourceLocation
+
 
 import sys
 
 def getSession(ctx, scheme, username):
-    oauth = OAuth2Ooo(ctx, scheme, username)
-    import requests
+    # we need to call OAuth2OOo service first after we can import requests library (lazy loading)
+    oauth = OAuth2OOo(ctx, scheme, username)
+    from oauth2 import requests
     if sys.version_info[0] < 3:
         requests.packages.urllib3.disable_warnings()
     session = requests.Session()
     session.auth = oauth
+    session.codes = requests.codes
     return session
-
 
 def getPropertiesValues(source, properties, logger):
     namedvalues = []
@@ -130,10 +134,7 @@ def updateContent(ctx, event):
         result = insertContentItem(event.Source, identifier, event.NewValue)
     elif name == 'Trashed':
         result = updateTrashed(identifier, event.NewValue)
-        #if result:
-        #    event.Source.notify(getContentEvent(event.Source, DELETED, event.Source, identifier))
-        #action = DELETED
-    if name  == 'Name':
+    elif name  == 'Name':
         result = updateName(identifier, event.NewValue)
     elif name == 'Size':
         result = updateSize(identifier, event.NewValue)

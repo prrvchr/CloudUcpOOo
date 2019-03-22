@@ -12,6 +12,7 @@ from com.sun.star.logging.LogLevel import SEVERE
 from com.sun.star.ucb import XContentIdentifierFactory
 from com.sun.star.ucb import XContentProvider
 from com.sun.star.ucb import XParameterizedContentProvider
+from com.sun.star.ucb import IllegalIdentifierException
 
 from clouducp import InteractionRequestParameters
 from clouducp import PropertySet
@@ -39,6 +40,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         msg = "ContentProvider loading ..."
         self.ctx = ctx
         self._Statement = None
+        self.Scheme = None
         self.Plugin = None
         self.cachedUser = {}
         self.cachedIdentifier = {}
@@ -60,6 +62,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
     def registerInstance(self, template, plugin, replace):
         print("ContentProvider.registerInstance() 1 %s - %s" % (template, plugin))
         # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+        self.Scheme = template
         self.Plugin = plugin
         self._Statement = getDbConnection(self.ctx, template, plugin, True).createStatement()
         print("ContentProvider.registerInstance() 2")
@@ -109,7 +112,11 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
             if key in self.cachedIdentifier:
                 contentidentifier = self.cachedIdentifier[key]
             else:
-                contentidentifier = self._getCachedIdentifier(identifier, key)
+                uri = getUri(self.ctx, identifier)
+                user = self._getUser(uri)
+                contentidentifier = createContentIdentifier(self.ctx, self.Plugin, user, uri)
+                if contentidentifier.IsValid:
+                    self.cachedIdentifier[key] = contentidentifier
             msg = "Identifier: %s ... Done" % contentidentifier.getContentIdentifier()
             self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
             print("ContentProvider.createContentIdentifier() 2 %s" % identifier)
@@ -119,26 +126,36 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
 
     # XContentProvider
     def queryContent(self, identifier):
-        content = None
-        print("ContentProvider.queryContent() 1 %s" % identifier.getContentIdentifier())
-        msg = "Identifier: %s..." % identifier.getContentIdentifier()
-        if not identifier.IsValid:
-            self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
-            print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
-            raise identifier.Error
-        key = self._getIdentifierKey(identifier.getContentIdentifier())
-        if key in self.cachedContent:
-            content = self.cachedContent[key]
-        else:
-            content = self._getCachedContent(identifier, key)
-        if not identifier.IsValid:
-            self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
-            print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
-            raise identifier.Error
-        msg += " Done"
-        self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
-        print("ContentProvider.queryContent() 2 %s" % identifier.getContentIdentifier())
-        return content
+        try:
+            content = None
+            print("ContentProvider.queryContent() 1 %s" % identifier.getContentIdentifier())
+            msg = "Identifier: %s..." % identifier.getContentIdentifier()
+            if not identifier.IsValid:
+                self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
+                print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
+                raise identifier.Error
+            key = self._getIdentifierKey(identifier.getContentIdentifier())
+            if key in self.cachedContent:
+                content = self.cachedContent[key]
+            else:
+                content = identifier.getInstance('')
+                if identifier.Error is None:
+                    print("ContentProvider.queryContent() 2: **************************")
+                    self.cachedContent[key] = content
+                    content.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), self)
+                else:
+                    self.Logger.logp(SEVERE, "ContentProvider", "queryContent()", "%s - %s" % (msg, identifier.Error.Message))
+                    print("ContentProvider.queryContent() %s - %s" % (msg, identifier.Error.Message))
+                    raise identifier.Error
+            msg += " Done"
+            self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+            print("ContentProvider.queryContent() 3 %s" % identifier.getContentIdentifier())
+            return content
+        except IllegalIdentifierException as e:
+            print("ContentProvider.queryContent().Error: %s - %s" % (e, traceback.print_exc()))
+            raise e
+        except Exception as e:
+            print("ContentProvider.queryContent().Error: %s - %s" % (e, traceback.print_exc()))
     def compareContentIds(self, identifier1, identifier2):
         compare = 1
         print("ContentProvider.compareContentIds() %s - %s" % (identifier1.getContentIdentifier(), identifier2.getContentIdentifier()))
@@ -158,24 +175,16 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
 
-    def _getCachedIdentifier(self, identifier, key):
-        uri = getUri(self.ctx, identifier)
-        user = self._getUser(uri)
-        contentidentifier = createContentIdentifier(self.ctx, self.Plugin, user, uri)
-        if contentidentifier.IsValid:
-            print("ContentProvider._getIdentifier(): *****************************")
-            self.cachedIdentifier[key] = contentidentifier
-        return contentidentifier
-
     def _getUser(self, uri):
         if uri.hasAuthority() and uri.getAuthority() != '':
             username = uri.getAuthority()
         else:
             username = self._getUserNameFromHandler()
-        if username in self.cachedUser:
-            user = self.cachedUser[username]
+        key = self._getUserKey(username)
+        if key in self.cachedUser:
+            user = self.cachedUser[key]
         else:
-            user = self._getCachedUser(uri, username)
+            user = self._getCachedUser(uri, username, key)
         return user
 
     def _getUserNameFromHandler(self):
@@ -188,20 +197,18 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
                 return result.get('UserName')
         return None
 
-    def _getCachedUser(self, uri, username):
+    def _getCachedUser(self, uri, username, key):
         user = createContentUser(self.ctx, self.Plugin, uri.getScheme(), self.Connection, username)
         if user.IsValid:
-            print("ContentProvider._setUser(): *****************************")
-            self.cachedUser[username] = user
+            print("ContentProvider._setUser(): ************** %s *************" % key)
+            self.cachedUser[key] = user
         return user
 
-    def _getCachedContent(self, identifier, key):
-        content = identifier.getInstance('')
-        if identifier.IsValid:
-            print("ContentProvider._getContent(): **************************")
-            self.cachedContent[key] = content
-            content.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), self)
-        return content
+    def _getUserKey(self, username):
+        key = '%s://' % self.Scheme
+        if username is not None:
+            key += username
+        return key
 
     def _getIdentifierKey(self, uri):
         while uri.endswith(('/','..','.')):

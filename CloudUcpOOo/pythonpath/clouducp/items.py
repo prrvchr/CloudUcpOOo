@@ -11,14 +11,17 @@ from .dbtools import TRASHED
 
 
 def insertContentItem(content, identifier, value):
-    properties = ('Name', 'DateCreated', 'DateModified', 'MimeType', 'Size', 'Trashed',
-                  'CanAddChild', 'CanRename', 'IsReadOnly', 'IsVersionable', 'Loaded')
-    insert = identifier.User.Connection.prepareCall('CALL "insertContentItem"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    properties = identifier.Properties
+    call = 'CALL "insertContentItem"(%s)' % ','.join(['?'] * (len(properties) +5))
+    print("items.insertContentItem() %s - %s - %s" % (identifier.getContentIdentifier(), properties, call))
+    insert = identifier.User.Connection.prepareCall(call)
     insert.setString(1, identifier.User.Id)
     insert.setString(2, identifier.Id)
     insert.setString(3, identifier.getParent().Id)
     insert.setString(4, value)
-    result = _insertContentItem(content, insert, properties, 5)
+    index = setContentData(content, insert, properties, 5)
+    insert.execute()
+    result = insert.getLong(index)
     insert.close()
     return result
 
@@ -64,10 +67,3 @@ def updateLoaded(identifier, value):
     result = update.getLong(4)
     update.close()
     return result
-
-def _insertContentItem(content, insert, properties, index=1):
-    index = setContentData(content, insert, properties, index)
-    # Never managed to run the next line: Implement me ;-)
-    #merge.setArray(index, SqlArray(item['Parents'], 'VARCHAR'))
-    insert.execute()
-    return insert.getLong(index)

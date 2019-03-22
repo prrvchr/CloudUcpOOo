@@ -28,8 +28,7 @@ g_shutdow = ';shutdown=true'
 
 
 def getDbConnection(ctx, scheme, identifier, shutdown=False):
-    service = '/singletons/com.sun.star.deployment.PackageInformationProvider'
-    location = ctx.getValueByName(service).getPackageLocation(identifier)
+    location = getResourceLocation(ctx, identifier, g_folder)
     pool = ctx.ServiceManager.createInstance('com.sun.star.sdbc.ConnectionPool')
     url = _getUrl(location, scheme, shutdown)
     info = _getInfo(location)
@@ -117,9 +116,9 @@ def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year
 
 
 def _getUrl(location, scheme, shutdown):
-    return '%s%s/%s/%s%s%s' % (g_protocol, location, g_folder, scheme, g_options, g_shutdow if shutdown else '')
+    return '%s%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
 
 def _getInfo(location):
-    path = '%s/%s/%s' % (location, g_folder, g_jar)
+    path = '%s/%s' % (location, g_jar)
     return (getPropertyValue('JavaDriverClass', g_class), 
             getPropertyValue('JavaDriverClassPath', path))

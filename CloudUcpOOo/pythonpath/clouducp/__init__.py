@@ -18,17 +18,18 @@ from .contentlib import InteractionRequestParameters
 from .contentlib import Row
 from .contentlib import DynamicResultSet
 
+from .contenttools import createContent
+from .contenttools import createContentIdentifier
+from .contenttools import createContentUser
 from .contenttools import getUcb
 from .contenttools import getUcp
 from .contenttools import getUri
 from .contenttools import getMimeType
-from .contenttools import getContentEvent
 from .contenttools import getCommandInfo
 from .contenttools import getConnectionMode
+from .contenttools import getContentEvent
 from .contenttools import getContentInfo
 from .contenttools import propertyChange
-from .contenttools import createContentIdentifier
-from .contenttools import createContentUser
 
 from .dbtools import getDbConnection
 from .dbtools import registerDataBase

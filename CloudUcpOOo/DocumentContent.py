@@ -30,7 +30,6 @@ from clouducp import getMimeType
 from clouducp import getPropertiesValues
 from clouducp import getProperty
 from clouducp import getSimpleFile
-from clouducp import getResourceLocation
 from clouducp import getUcb
 from clouducp import getUcp
 from clouducp import parseDateTime
@@ -255,12 +254,16 @@ class DocumentContent(unohelper.Base,
     def _getUrl(self, sf):
         identifier = self.getIdentifier()
         url = '%s/%s' % (identifier.SourceURL, identifier.Id)
+        print("DriveOfficeContent._getUrl() 1")
         if self.Loaded == OFFLINE and sf.exists(url):
             return url
         try:
             stream = identifier.createInputStream()
+            print("DriveOfficeContent._getUrl() 2")
             sf.writeFile(url, stream)
-        except:
+            print("DriveOfficeContent._getUrl() 3")
+        except Exception as e:
+            print("DriveOfficeContent._getUrl().Error: %s - %s" % (e, traceback.print_exc()))
             return None
         else:
             self.Loaded = OFFLINE
