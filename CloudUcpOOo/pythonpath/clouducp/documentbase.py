@@ -25,19 +25,24 @@ from .contenttools import getCommandInfo
 from .contenttools import getContentEvent
 from .logger import getLogger
 from .contenttools import getMimeType
-from .unotools import getPropertiesValues
 from .unotools import getProperty
 from .unotools import getSimpleFile
 from .contenttools import getUcb
 from .contenttools import getUcp
 from .contenttools import propertyChange
+from .contentcore import getPropertiesValues
 from .contentcore import setPropertiesValues
 from .dbtools import CREATED
 from .dbtools import FILE
 from .dbtools import parseDateTime
 
 
-class DocumentContentBase(unohelper.Base,
+class DocumentBase(object):
+    pass
+
+
+class DocumentContentBase(DocumentBase,
+                          unohelper.Base,
                           XContent,
                           XChild,
                           XCommandProcessor2,
@@ -46,7 +51,7 @@ class DocumentContentBase(unohelper.Base,
                           Initialization,
                           PropertiesChangeNotifier,
                           PropertySetInfoChangeNotifier):
-    def __init__(self, ctx, *namedvalues):
+    def __init__(self, ctx, namedvalues):
         self.ctx = ctx
         self.Logger = getLogger(self.ctx)
         level = uno.getConstantByName("com.sun.star.logging.LogLevel.INFO")

@@ -44,6 +44,7 @@ from .dbtools import TRASHED
 
 from .identifierbase import ContentIdentifierBase
 from .userbase import ContentUserBase
+from .documentbase import DocumentContentBase
 
 from .logger import getLogger
 from .logger import getLoggerSetting
