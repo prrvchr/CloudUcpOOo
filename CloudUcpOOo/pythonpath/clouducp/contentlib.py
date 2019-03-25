@@ -63,7 +63,7 @@ class OAuth2OOo(NoOAuth2):
     def __call__(self, request):
         try:
             if not request.headers.pop('NoAuth2', False):
-                request.headers['Authorization'] = 'Bearer %s' % self.service.Token
+                request.headers['Authorization'] = 'Bearer %s' % self.service.getDefaultMethodName()
                 print("contentlib.OAuth2OOo.__call__() OAuth2")
             else:
                 print("contentlib.OAuth2OOo.__call__() no OAuth2")
@@ -74,11 +74,9 @@ class OAuth2OOo(NoOAuth2):
 
 class InteractionAbort(unohelper.Base,
                        XInteractionAbort):
-    def __init__(self, result={}):
-        self.result = result
     # XInteractionAbort
     def select(self):
-        self.result.update({'Retrieved': False})
+        pass
 
 
 class InteractionSupplyParameters(unohelper.Base,
@@ -92,7 +90,8 @@ class InteractionSupplyParameters(unohelper.Base,
             if property.Name == 'UserName':
                 self.username = property.Value
     def select(self):
-        self.result.update({'Retrieved': True, 'UserName': self.username})
+        self.result.Value = self.username
+        self.result.IsPresent = True
 
 
 class InteractionRequestParameters(unohelper.Base,
@@ -100,7 +99,7 @@ class InteractionRequestParameters(unohelper.Base,
     def __init__(self, source, connection, message, result):
         self.request = getParametersRequest(source, connection, message)
         self.request.Parameters = RequestParameters(message)
-        self.continuations = (InteractionSupplyParameters(result), InteractionAbort(result))
+        self.continuations = (InteractionSupplyParameters(result), InteractionAbort())
     # XInteractionRequest
     def getRequest(self):
         return self.request

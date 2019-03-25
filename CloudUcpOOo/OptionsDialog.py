@@ -17,6 +17,7 @@ from clouducp import getUcp
 from clouducp import registerDataBase
 from clouducp import setLoggerSetting
 from clouducp import getDbConnection
+from clouducp import g_identifier
 
 import traceback
 
@@ -32,7 +33,7 @@ class OptionsDialog(unohelper.Base,
     def __init__(self, ctx):
         try:
             self.ctx = ctx
-            self.stringResource = getStringResource(self.ctx, None, 'OptionsDialog')
+            self.stringResource = getStringResource(self.ctx, g_identifier, None, 'OptionsDialog')
             print("PyOptionsDialog.__init__() 1")
         except Exception as e:
             print("PyOptionsDialog.__init__().Error: %s - %s" % (e, traceback.print_exc()))

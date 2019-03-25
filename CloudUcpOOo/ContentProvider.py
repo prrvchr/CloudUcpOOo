@@ -42,6 +42,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
         self._Statement = None
         self.Scheme = None
         self.Plugin = None
+        self.User = None
         self.cachedUser = {}
         self.cachedIdentifier = {}
         self.cachedContent = {}
@@ -113,6 +114,7 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
                 contentidentifier = self.cachedIdentifier[key]
             else:
                 uri = getUri(self.ctx, identifier)
+                print("ContentProvider.createContentIdentifier() %s" % uri.getUriReference())
                 user = self._getUser(uri)
                 contentidentifier = createContentIdentifier(self.ctx, self.Plugin, user, uri)
                 if contentidentifier.IsValid:
@@ -177,38 +179,32 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
 
     def _getUser(self, uri):
         if uri.hasAuthority() and uri.getAuthority() != '':
-            username = uri.getAuthority()
+            self.User = uri.getAuthority()
+        elif self.User is None:
+            self.User = self._getUserNameFromHandler()
+        if self.User and self.User in self.cachedUser:
+            user = self.cachedUser[self.User]
         else:
-            username = self._getUserNameFromHandler()
-        key = self._getUserKey(username)
-        if key in self.cachedUser:
-            user = self.cachedUser[key]
-        else:
-            user = self._getCachedUser(uri, username, key)
+            user = self._getCachedUser(uri.getScheme())
         return user
 
     def _getUserNameFromHandler(self):
-        result = {}
+        result = uno.createUnoStruct('com.sun.star.beans.Optional<string>')
         message = "Authentication is needed!!!"
         handler = getInteractionHandler(self.ctx, message)
         request = InteractionRequestParameters(self, self.Connection, message, result)
         if handler.handleInteractionRequest(request):
-            if result.get('Retrieved', False):
-                return result.get('UserName')
+            if result.IsPresent:
+                return result.Value
         return None
 
-    def _getCachedUser(self, uri, username, key):
-        user = createContentUser(self.ctx, self.Plugin, uri.getScheme(), self.Connection, username)
+    def _getCachedUser(self, scheme):
+        user = createContentUser(self.ctx, self.Plugin, scheme, self.Connection, self.User)
+        print("ContentProvider._setUser(): 1 ************** %s *************" % self.User)
         if user.IsValid:
-            print("ContentProvider._setUser(): ************** %s *************" % key)
-            self.cachedUser[key] = user
+            print("ContentProvider._setUser(): 2 ************** %s *************" % self.User)
+            self.cachedUser[self.User] = user
         return user
-
-    def _getUserKey(self, username):
-        key = '%s://' % self.Scheme
-        if username is not None:
-            key += username
-        return key
 
     def _getIdentifierKey(self, uri):
         while uri.endswith(('/','..','.')):

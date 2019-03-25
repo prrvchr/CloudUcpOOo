@@ -1,8 +1,6 @@
 #!
 # -*- coding: utf-8 -*-
 
-#from .unotools import isCmisReady
-
 from .children import isChildId
 from .children import selectChildId
 
@@ -30,6 +28,7 @@ from .contenttools import getConnectionMode
 from .contenttools import getContentEvent
 from .contenttools import getContentInfo
 from .contenttools import propertyChange
+from .contenttools import g_identifier
 
 from .dbtools import getDbConnection
 from .dbtools import registerDataBase
@@ -42,6 +41,9 @@ from .dbtools import FILE
 from .dbtools import RENAMED
 from .dbtools import REWRITED
 from .dbtools import TRASHED
+
+from .identifierbase import ContentIdentifierBase
+from .userbase import ContentUserBase
 
 from .logger import getLogger
 from .logger import getLoggerSetting
