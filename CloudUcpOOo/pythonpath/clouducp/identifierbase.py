@@ -25,6 +25,16 @@ from .unotools import getNamedValueSet
 from .unotools import getProperty
 from .unotools import getResourceLocation
 from .contentcore import getSession
+from .dbtools import getItemFromResult
+from .dbtools import parseDateTime
+from .dbtools import unparseDateTime
+from .dbtools import RETRIEVED
+from .dbtools import CREATED
+from .dbtools import FOLDER
+from .dbtools import FILE
+from .dbtools import RENAMED
+from .dbtools import REWRITED
+from .dbtools import TRASHED
 
 
 class IdentifierBase(object):
@@ -54,6 +64,13 @@ class ContentIdentifierBase(IdentifierBase,
         self.Updated = False
         self.Id, self.Title, self.Url = self._parseUri() if self.User.IsValid else (None, None, None)
         self.Session = getSession(self.ctx, self.Uri.getScheme(), self.User.Name) if self.IsValid else None
+        self.RETRIEVED = RETRIEVED
+        self.CREATED = CREATED
+        self.FOLDER = FOLDER
+        self.FILE = FILE
+        self.RENAMED = RENAMED
+        self.REWRITED = REWRITED
+        self.TRASHED = TRASHED
 
     @property
     def IsRoot(self):
@@ -82,10 +99,6 @@ class ContentIdentifierBase(IdentifierBase,
         raise NotImplementedError
     def getDocument(self):
         raise NotImplementedError
-    def getInputStream(self):
-        raise NotImplementedError
-    def doSync(self, session):
-        raise NotImplementedError
     def updateChildren(self, session):
         raise NotImplementedError
     def getNewIdentifier(self):
@@ -102,10 +115,54 @@ class ContentIdentifierBase(IdentifierBase,
         raise NotImplementedError
     def unquote(self, text):
         raise NotImplementedError
+    def mergeJsonItemCall(self):
+        raise NotImplementedError
+    def mergeJsonItem(self, merge, item, index):
+        raise NotImplementedError
+    def getItemToSync(self, mode):
+        raise NotImplementedError
+    def syncItem(self, session, item):
+        raise NotImplementedError
+    def updateSync(self, id, mode):
+        result = 0
+        if id is not None:
+            update = self.User.Connection.prepareCall('CALL "updateSync"(?, ?, ?, ?)')
+            update.setString(1, self.User.Id)
+            update.setString(2, id)
+            update.setLong(3, mode)
+            update.execute()
+            result = update.getLong(4)
+            update.close()
+        return result != 0
+    def getDateTimeParser(self):
+        return parseDateTime
+    def unparseDateTime(self, datetime=None):
+        return unparseDateTime(datetime)
+    def getInputStream(self, path, id):
+        url = '%s/%s' % (path, id)
+        sf = self.ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
+        if sf.exists(url):
+            return sf.getSize(url), sf.openFileRead(url)
+        return 0, None
+
+    def getItemFromResult(self, result, data=None, transform=None):
+        return getItemFromResult(result, data, transform)
+
+    def doSync(self, session):
+        results = []
+        path = self.SourceURL
+        for item in self.getItemToSync(RETRIEVED):
+            id = self.syncItem(session, path, item)
+            results.append(self.updateSync(id, RETRIEVED))
+            if id:
+                print("items.doSync(): all -> Ok")
+            else:
+                print("items.doSync(): all -> Error")
+        return all(results)
 
     # XInputStreamProvider
     def createInputStream(self):
-        return self.getInputStream()
+        raise NotImplementedError
 
     # XUpdatable
     def update(self):
@@ -227,6 +284,12 @@ class ContentIdentifierBase(IdentifierBase,
             self._Error = IllegalIdentifierException(message, self)
         return item
 
+    def updateChildren(self, session):
+        merge, index = self.mergeJsonItemCall()
+        update = all(self.mergeJsonItem(merge, item, index) for item in ChildGenerator(session, self.Id))
+        merge.close()
+        return update
+
     def _getPropertySetInfo(self):
         properties = {}
         maybevoid = uno.getConstantByName('com.sun.star.beans.PropertyAttribute.MAYBEVOID')
@@ -247,3 +310,7 @@ class ContentIdentifierBase(IdentifierBase,
         properties['Properties'] = getProperty('Properties', '[]string', bound | readonly)
         properties['Error'] = getProperty('Error', 'com.sun.star.ucb.IllegalIdentifierException', maybevoid | bound | readonly)
         return properties
+
+
+class ChildGenerator():
+    pass

@@ -7,19 +7,23 @@ import unohelper
 from com.sun.star.lang import XServiceInfo
 from com.sun.star.awt import XContainerWindowEventHandler
 
-from clouducp import createService
-from clouducp import getFileSequence
-from clouducp import getLoggerUrl
-from clouducp import getLoggerSetting
-from clouducp import getStringResource
-from clouducp import getUcb
-from clouducp import getUcp
-from clouducp import registerDataBase
-from clouducp import setLoggerSetting
-from clouducp import getDbConnection
-from clouducp import g_identifier
-
 import traceback
+
+try:
+    from clouducp import createService
+    from clouducp import getFileSequence
+    from clouducp import getLoggerUrl
+    from clouducp import getLoggerSetting
+    from clouducp import getStringResource
+    from clouducp import getUcb
+    from clouducp import getUcp
+    from clouducp import registerDataBase
+    from clouducp import setLoggerSetting
+    from clouducp import getDbConnection
+    from clouducp import g_identifier
+except ImportError as e:
+    print("OptionsDialog.import().Error: %s - %s" % (e, traceback.print_exc()))
+
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()

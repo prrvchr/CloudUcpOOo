@@ -13,6 +13,9 @@ from .unolib import PropertySet
 from .contenttools import getConnectionMode
 from .unotools import getProperty
 from .contentcore import getSession
+from .dbtools import getItemFromResult
+from .dbtools import parseDateTime
+from .dbtools import unparseDateTime
 
 
 class UserBase(object):
@@ -66,6 +69,14 @@ class ContentUserBase(UserBase,
         raise NotImplementedError
     def mergeJsonUser(self, data, root):
         raise NotImplementedError
+
+    def getDateTimeParser(self):
+        return parseDateTime
+    def unparseDateTime(self, datetime=None):
+        return unparseDateTime(datetime)
+
+    def getItemFromResult(self, result, data=None, transform=None):
+        return getItemFromResult(result, data, transform)
 
     def _getUser(self):
         if self.Name is None:

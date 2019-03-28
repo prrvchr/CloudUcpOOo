@@ -114,7 +114,6 @@ def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year
         t.IsUTC = utc
     return t
 
-
 def _getUrl(location, scheme, shutdown):
     return '%s%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
 
