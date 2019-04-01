@@ -61,14 +61,17 @@ class ContentProvider(unohelper.Base, XServiceInfo, XContentIdentifierFactory, P
 
     # XParameterizedContentProvider
     def registerInstance(self, template, plugin, replace):
-        print("ContentProvider.registerInstance() 1 %s - %s" % (template, plugin))
-        # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
-        self.Scheme = template
-        self.Plugin = plugin
-        self._Statement = getDbConnection(self.ctx, template, plugin, True).createStatement()
-        print("ContentProvider.registerInstance() 2")
-        provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
-        return provider
+        try:
+            print("ContentProvider.registerInstance() 1 %s - %s" % (template, plugin))
+            # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+            self.Scheme = template
+            self.Plugin = plugin
+            self._Statement = getDbConnection(self.ctx, template, plugin, True).createStatement()
+            print("ContentProvider.registerInstance() 2")
+            provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
+            return provider
+        except Exception as e:
+            print("ContentProvider.registerInstance().Error: %s - %s" % (e, traceback.print_exc()))
     def deregisterInstance(self, template, argument):
         getUcb(self.ctx).deregisterContentProvider(self, template)
 

@@ -29,12 +29,14 @@ g_shutdow = ';shutdown=true'
 
 def getDbConnection(ctx, scheme, identifier, shutdown=False):
     location = getResourceLocation(ctx, identifier, g_folder)
+    print("dbtools.getDbConnection() %s" % (location, ))
     pool = ctx.ServiceManager.createInstance('com.sun.star.sdbc.ConnectionPool')
     url = _getUrl(location, scheme, shutdown)
+    print("dbtools.getDbConnection() %s" % (url, ))
     info = _getInfo(location)
     connection = pool.getConnectionWithInfo(url, info)
     return connection
-    
+
 def registerDataBase(ctx, scheme, shutdown=False, url=None):
     location = getResourceLocation(ctx, '') if url is None else url
     url = '%s%s.odb' % (location, scheme)
@@ -119,5 +121,5 @@ def _getUrl(location, scheme, shutdown):
 
 def _getInfo(location):
     path = '%s/%s' % (location, g_jar)
-    return (getPropertyValue('JavaDriverClass', g_class), 
+    return (getPropertyValue('JavaDriverClass', g_class),
             getPropertyValue('JavaDriverClassPath', path))

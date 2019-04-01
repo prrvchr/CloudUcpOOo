@@ -95,10 +95,10 @@ class ContentUserBase(UserBase,
     def _getUserFromProvider(self):
         user = None
         with self.Session as s:
-            data, root = self.getUser(s)
+            user, root = self.getUser(s)
         print("ContentUser._getUserFromProvider(): %s" % self.Name)
-        if root is not None:
-            user = self.mergeJsonUser(data, root)
+        if user is not None:
+            user = self.mergeJsonUser(user, root)
         else:
             message = "ERROR: Can't retrieve User: %s from provider" % self.Name
             self.Error = IllegalIdentifierException(message, self)
