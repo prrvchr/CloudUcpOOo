@@ -17,9 +17,7 @@ try:
     from clouducp import getStringResource
     from clouducp import getUcb
     from clouducp import getUcp
-    from clouducp import registerDataBase
     from clouducp import setLoggerSetting
-    from clouducp import getDbConnection
     from clouducp import g_identifier
 except ImportError as e:
     print("OptionsDialog.import().Error: %s - %s" % (e, traceback.print_exc()))
@@ -78,9 +76,9 @@ class OptionsDialog(unohelper.Base,
     def _doViewDataBase(self, dialog):
         try:
             print("PyOptionsDialog._doConnect() 1")
-            url = registerDataBase(self.ctx, g_scheme)
-            desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
-            desktop.loadComponentFromURL(url, '_default', 0, ())
+            #url = registerDataBase(self.ctx, g_scheme)
+            #desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
+            #desktop.loadComponentFromURL(url, '_default', 0, ())
             #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
             #mri.inspect(connection)
             print("PyOptionsDialog._doConnect() 2")
@@ -94,7 +92,7 @@ class OptionsDialog(unohelper.Base,
         print("PyOptionsDialog._initialize()")
         provider = getUcp(self.ctx, g_scheme)
         loaded = provider.supportsService('com.sun.star.ucb.ContentProvider')
-        print("OptionsDialog._initialize() %s" % loaded) 
+        print("OptionsDialog._initialize() %s" % loaded)
         self._toogleSync(dialog, loaded)
         self._loadLoggerSetting(dialog)
 
@@ -126,7 +124,7 @@ class OptionsDialog(unohelper.Base,
             dialog.dispose()
         except Exception as e:
             print("PyOptionsDialog._doViewLog().Error: %s - %s" % (e, traceback.print_exc()))
-    
+
     def _doLoadUcp(self, dialog):
         try:
             print("PyOptionsDialog._doLoadUcp() 1")

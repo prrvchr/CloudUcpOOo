@@ -3,11 +3,14 @@
 
 import uno
 
+from com.sun.star.sdbc import SQLException
+
 import datetime
 
 from .unotools import getPropertyValue
 from .unotools import getResourceLocation
 from .unotools import getSimpleFile
+from .contenttools import g_identifier
 
 RETRIEVED = 0
 CREATED = 1
@@ -27,14 +30,19 @@ g_options = ';default_schema=true;hsqldb.default_table_type=cached;get_column_na
 g_shutdow = ';shutdown=true'
 
 
-def getDbConnection(ctx, scheme, identifier, shutdown=False):
-    location = getResourceLocation(ctx, identifier, g_folder)
-    print("dbtools.getDbConnection() %s" % (location, ))
+def getDataSourceUrl(ctx, scheme, plugin, shutdown=False):
+    # ToDo check if 'hsqldb.jar' is in Libre/OpenOffice 'ClassPath' and add it if not...
+    location = getResourceLocation(ctx, plugin, g_folder)
+    return '%s%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
+
+def getDataSourceConnection(ctx, url):
+    connection = None
     pool = ctx.ServiceManager.createInstance('com.sun.star.sdbc.ConnectionPool')
-    url = _getUrl(location, scheme, shutdown)
-    print("dbtools.getDbConnection() %s" % (url, ))
-    info = _getInfo(location)
-    connection = pool.getConnectionWithInfo(url, info)
+    info = _getInfo(ctx)
+    try:
+        connection = pool.getConnectionWithInfo(url, info)
+    except SQLException:
+        pass
     return connection
 
 def registerDataBase(ctx, scheme, shutdown=False, url=None):
@@ -51,37 +59,10 @@ def registerDataBase(ctx, scheme, shutdown=False, url=None):
 
 def _createDataBase(dbcontext, scheme, location, url, shutdown):
     datasource = dbcontext.createInstance()
-    datasource.URL = _getUrl(location, scheme, shutdown)
+    datasource.URL = getDataSourceUrl(location, scheme, shutdown)
     datasource.Info = _getInfo(location)
     descriptor = (getPropertyValue('Overwrite', True), )
     datasource.DatabaseDocument.storeAsURL(url, descriptor)
-
-def getItemFromResult(result, data=None, transform=None):
-    item = {} if data is None else {'Data':{k: None for k in data}}
-    for index in range(1, result.MetaData.ColumnCount +1):
-        dbtype = result.MetaData.getColumnTypeName(index)
-        name = result.MetaData.getColumnName(index)
-        if dbtype == 'VARCHAR':
-            value = result.getString(index)
-        elif dbtype == 'TIMESTAMP':
-            value = result.getTimestamp(index)
-        elif dbtype == 'BOOLEAN':
-            value = result.getBoolean(index)
-        elif dbtype == 'BIGINT' or dbtype == 'SMALLINT':
-            value = result.getLong(index)
-        else:
-            continue
-        if transform is not None and name in transform:
-            print("dbtools.getItemFromResult() 1: %s: %s" % (name, value))
-            value = transform[name](value)
-            print("dbtools.getItemFromResult() 2: %s: %s" % (name, value))
-        if value is None or result.wasNull():
-            continue
-        if data is not None and name in data:
-            item['Data'][name] = value
-        else:
-            item[name] = value
-    return item
 
 def parseDateTime(timestr=None):
     if timestr is None:
@@ -116,10 +97,8 @@ def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year
         t.IsUTC = utc
     return t
 
-def _getUrl(location, scheme, shutdown):
-    return '%s%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
-
-def _getInfo(location):
+def _getInfo(ctx):
+    location = getResourceLocation(ctx, g_identifier, g_folder)
     path = '%s/%s' % (location, g_jar)
     return (getPropertyValue('JavaDriverClass', g_class),
             getPropertyValue('JavaDriverClassPath', path))

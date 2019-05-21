@@ -1,0 +1,64 @@
+#ifndef __com_sun_star_ucb_XRestUser_idl__
+#define __com_sun_star_ucb_XRestUser_idl__
+
+#include <com/sun/star/uno/XInterface.idl>
+#include <com/sun/star/ucb/XRestDataSource.idl>
+#include <com/sun/star/ucb/XRestKeyMap.idl>
+#include <com/sun/star/uri/XUriReference.idl>
+#include <com/sun/star/sdbc/XStatement.idl>
+#include <com/sun/star/io/XInputStream.idl>
+
+module com { module sun { module star { module ucb {
+
+interface XRestUser: com::sun::star::uno::XInterface
+{
+
+    com::sun::star::ucb::XRestKeyMap initializeIdentifier([in] com::sun::star::uri::XUriReference Uri,
+                                                          [in] boolean IsNew,
+                                                          [out] string Error);
+    com::sun::star::ucb::XRestKeyMap getItem([in] com::sun::star::ucb::XRestKeyMap Identifier);
+    com::sun::star::sdbc::XStatement getFolderContent([in] com::sun::star::ucb::XRestKeyMap Identifier,
+                                                      [in] com::sun::star::ucb::XRestKeyMap Content,
+                                                      [out] long Index,
+                                                      [out] boolean Updated);
+    boolean insertNewDocument([in] string ItemId,
+                              [in] string ParentId,
+                              [in] com::sun::star::ucb::XRestKeyMap Content);
+    boolean insertNewFolder([in] string ItemId,
+                            [in] string ParentId,
+                            [in] com::sun::star::ucb::XRestKeyMap Content);
+    short updateLoaded([in] string ItemId,
+                       [in] short Value,
+                       [in] short Default);
+    string updateTitle([in] string ItemId,
+                       [in] string Value,
+                       [in] string Default);
+    long updateSize([in] string ItemId,
+                    [in] long Size);
+    boolean updateTrashed([in] string ItemId,
+                          [in] boolean Value,
+                          [in] boolean Default);
+    any synchronize([in] any Value);
+    boolean isIdentifier([in] string ItemId);
+    boolean isChildId([in] string ParentId,
+                      [in] string ItemId);
+    string selectChildId([in] string ParentId,
+                         [in] string Title);
+    long countChildTitle([in] string ParentId,
+                         [in] string Title);
+    void checkNewIdentifier();
+    string getNewIdentifier();
+
+    [attribute, readonly] ::com::sun::star::ucb::XRestDataSource DataSource;
+    [attribute, readonly] string Id;
+    [attribute, readonly] string Name;
+    [attribute, readonly] string RootId;
+    [attribute, readonly] boolean IsValid;
+    [attribute, readonly] string Error;
+
+};
+
+
+}; }; }; };
+
+#endif

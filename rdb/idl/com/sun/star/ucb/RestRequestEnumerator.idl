@@ -1,0 +1,19 @@
+#ifndef __com_sun_star_ucb_RestRequestEnumerator_idl__
+#define __com_sun_star_ucb_RestRequestEnumerator_idl__
+
+#include <com/sun/star/ucb/RestRequestToken.idl>
+
+module com { module sun { module star { module ucb {
+
+struct RestRequestEnumerator
+{
+
+    com::sun::star::ucb::RestRequestToken Token;
+    string Field;
+
+
+};
+
+}; }; }; };
+
+#endif

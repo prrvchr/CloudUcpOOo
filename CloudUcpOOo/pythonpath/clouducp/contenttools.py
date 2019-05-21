@@ -14,9 +14,13 @@ from .unotools import getNamedValueSet
 
 g_identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
 g_auth = 'com.gmail.prrvchr.extensions.OAuth2OOo'
+g_timeout = (15, 60)
 
 
 def getConnectionMode(ctx, host):
+    return getSessionMode(ctx, host)
+
+def getSessionMode(ctx, host):
     connector = ctx.ServiceManager.createInstance('com.sun.star.connection.Connector')
     try:
         connection = connector.connect('socket,host=%s,port=80' % host)
@@ -27,9 +31,9 @@ def getConnectionMode(ctx, host):
         mode = ONLINE
     return mode
 
-def createContentUser(ctx, plugin, scheme, connection, username=None):
+def createContentUser(ctx, datasource, plugin, username=None):
     service = '%s.ContentUser' % plugin
-    namedvalue = getNamedValueSet({'Scheme': scheme, 'Connection': connection, 'Name': username})
+    namedvalue = getNamedValueSet({'DataSource': datasource, 'Name': username})
     contentuser = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
     return contentuser
 

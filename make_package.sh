@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./make_rdb.sh
+
 cd ./CloudUcpOOo/
 
 zip -0 CloudUcpOOo.zip mimetype
