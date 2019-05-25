@@ -17,10 +17,6 @@ from com.sun.star.ucb import IllegalIdentifierException
 from com.sun.star.ucb import XRestContentProvider
 
 from clouducp import DataSource
-from clouducp import User
-from clouducp import Identifier
-from clouducp import Content
-
 from clouducp import InteractionRequestParameters
 from clouducp import getInteractionHandler
 from clouducp import getLogger
@@ -42,10 +38,10 @@ class ContentProvider(unohelper.Base,
                       XTerminateListener,
                       XRestContentProvider):
     def __init__(self, ctx):
+        print("ContentProvider.__init__()***********************")
         msg = "ContentProvider loading ..."
         self.ctx = ctx
         self.DataSource = None
-        self.cachedUser = {}
         self.Logger = getLogger(self.ctx)
         msg += " Done"
         self.Logger.logp(INFO, "ContentProvider", "__init__()", msg)
@@ -55,16 +51,19 @@ class ContentProvider(unohelper.Base,
 
     # XParameterizedContentProvider
     def registerInstance(self, template, plugin, replace):
-        # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+        print("ContentProvider.registerInstance() 1")
         datasource = DataSource(self.ctx, template, plugin, False)
+        print("ContentProvider.registerInstance() 3")
         if not datasource.IsValid:
             self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
             print("ContentProvider.registerInstance() DataBase Connection ERROR")
             return None
+        print("ContentProvider.registerInstance() 4")
         self.DataSource = datasource
         desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
         desktop.addTerminateListener(self)
         provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
+        print("ContentProvider.registerInstance() 5")
         return provider
     def deregisterInstance(self, template, argument):
         getUcb(self.ctx).deregisterContentProvider(self, template)
@@ -87,9 +86,10 @@ class ContentProvider(unohelper.Base,
             self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
             url = self._getUrl(url)
             uri = getUri(self.ctx, url)
-            user = self._getUser(uri)
+            name = self._getUserName(uri)
+            user = self.DataSource.getUser(name)
             print("ContentProvider.createContentIdentifier() 2 %s" % url)
-            identifier = Identifier(self.ctx, user, uri)
+            identifier = user.getIdentifier(uri)
             msg = "Identifier: %s ... Done" % identifier.getContentIdentifier()
             self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
             return identifier
@@ -107,7 +107,7 @@ class ContentProvider(unohelper.Base,
                                                                 (msg, identifier.Error))
             print("ContentProvider.queryContent() 3 %s - %s" % (msg, identifier.Error))
             raise IllegalIdentifierException(identifier.Error, self)
-        content = Content(self.ctx, identifier)
+        content = identifier.getContent()
         msg += " Done"
         self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
         print("ContentProvider.queryContent() 4 %s" % identifier.getContentIdentifier())
@@ -141,18 +141,12 @@ class ContentProvider(unohelper.Base,
             identifier = transformer.getPresentation(url, True)
         return identifier
 
-    def _getUser(self, uri):
+    def _getUserName(self, uri):
         if uri.hasAuthority() and uri.getAuthority() != '':
-            username = uri.getAuthority()
+            name = uri.getAuthority()
         else:
-            username = self._getUserNameFromHandler()
-        if username and username in self.cachedUser:
-            user = self.cachedUser[username]
-        else:
-            user = User(self.ctx, self.DataSource, username)
-            if user.IsValid:
-                self.cachedUser[username] = user
-        return user
+            name = self._getUserNameFromHandler()
+        return name
 
     def _getUserNameFromHandler(self):
         result = uno.createUnoStruct('com.sun.star.beans.Optional<string>')

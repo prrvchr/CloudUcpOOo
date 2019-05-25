@@ -9,8 +9,8 @@ module com { module sun { module star { module ucb {
 service RestProvider
 {
 
-    interface com::sun::star::lang::XServiceInfo;
-    interface com::sun::star::ucb::XRestProvider;
+    interface ::com::sun::star::lang::XServiceInfo;
+    interface ::com::sun::star::ucb::XRestProvider;
 
 };
 

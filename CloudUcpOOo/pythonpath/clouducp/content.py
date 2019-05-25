@@ -23,7 +23,12 @@ from com.sun.star.ucb.ContentAction import INSERTED
 from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.logging.LogLevel import INFO
 
-from .keymap import KeyMap
+# oauth2 is only available after OAuth2OOo as been loaded...
+try:
+    from oauth2 import KeyMap
+except ImportError:
+    pass
+
 from .contentlib import CommandInfo
 from .contentlib import Row
 from .contentlib import DynamicResultSet
@@ -50,20 +55,17 @@ class Content(unohelper.Base,
               XCommandProcessor2,
               XContentCreator,
               XChild):
-    def __init__(self, ctx, identifier):
+    def __init__(self, ctx, identifier, data):
         try:
             self.ctx = ctx
             self.Logger = getLogger(self.ctx)
             msg = "DriveFolderContent loading ... "
             self.Identifier = identifier
-            if self.Identifier.IsValid:
-                self.MetaData = self.Identifier.initializeContent()
-                creatablecontent = self._getCreatableContentsInfo()
-                self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
-                self._commandInfo = self._getCommandInfo()
-                self._propertySetInfo = self._getPropertySetInfo()
-            else:
-                self.MetaData = KeyMap()
+            self.MetaData = data
+            creatablecontent = self._getCreatableContentsInfo()
+            self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
+            self._commandInfo = self._getCommandInfo()
+            self._propertySetInfo = self._getPropertySetInfo()
             self._newTitle = ''
             self.contentListeners = []
             msg += "Done."
@@ -89,7 +91,7 @@ class Content(unohelper.Base,
             return XInterface()
         identifier = self.Identifier.getParent()
         print("Content.getParent() 2 %s" % identifier.getContentIdentifier())
-        return Content(self.ctx, identifier)
+        return identifier.getContent()
     def setParent(self, parent):
         print("Content.setParent()")
         raise NoSupportException('Parent can not be set', self)
@@ -103,7 +105,7 @@ class Content(unohelper.Base,
             identifier = self.Identifier.createNewIdentifier(self._newTitle, info.Type)
             self._newTitle = ''
             print("Content.createNewContent() 2 %s" % info.Type)
-            return Content(self.ctx, identifier)
+            return identifier.getContent()
         except Exception as e:
             print("Content.createNewContent().Error: %s - %s" % (e, traceback.print_exc()))
 

@@ -1,15 +1,10 @@
 #!
 # -*- coding: utf-8 -*-
 
-from .providerbase import ProviderBase
+from .configuration import g_oauth2
 
 from .datasource import DataSource
-from .user import User
-from .request import Request
-from .identifier import Identifier
-from .keymap import KeyMap
-from .content import Content
-
+from .providerbase import ProviderBase
 
 from .contentcore import executeContentCommand
 from .contentcore import getPropertiesValues

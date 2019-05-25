@@ -3,14 +3,15 @@
 
 #include <com/sun/star/uno/XInterface.idl>
 #include <com/sun/star/ucb/XRestIdentifier.idl>
+#include <com/sun/star/auth/XRestKeyMap.idl>
 
 module com { module sun { module star { module ucb {
 
 interface XRestContent: com::sun::star::uno::XInterface
 {
 
-    [attribute, readonly] com::sun::star::ucb::XRestIdentifier Identifier;
-    [attribute, readonly] com::sun::star::ucb::XRestKeyMap MetaData;
+    [attribute, readonly] ::com::sun::star::ucb::XRestIdentifier Identifier;
+    [attribute, readonly] ::com::sun::star::auth::XRestKeyMap MetaData;
 
 };
 

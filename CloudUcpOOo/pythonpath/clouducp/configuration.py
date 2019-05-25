@@ -5,7 +5,7 @@
 g_identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
 
 # Request / OAuth2 configuration
-g_auth = 'com.gmail.prrvchr.extensions.OAuth2OOo'
+g_oauth2 = 'com.gmail.prrvchr.extensions.OAuth2OOo.OAuth2Service'
 g_timeout = (15, 60)
 
 # DataSource configuration

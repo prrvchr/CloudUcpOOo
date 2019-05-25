@@ -15,7 +15,13 @@ from com.sun.star.beans.PropertyAttribute import TRANSIENT
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
-from .keymap import KeyMap
+try:
+    from oauth2 import KeyMap
+except ImportError:
+    print("Identifier IMPORT ERROR ******************************************************")
+
+from .content import Content
+
 from .contenttools import getUri
 from .unotools import getProperty
 from .unotools import getResourceLocation
@@ -40,25 +46,25 @@ class Identifier(unohelper.Base,
         else:
             self.MetaData = KeyMap()
 
-    def initializeContent(self):
-        print("Identifier.initializeContent()")
+    def getContent(self):
+        print("Identifier.getContent()")
         if self.IsNew:
             isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
             isdocument = self.User.DataSource.Provider.isDocument(self._ContentType)
-            item = KeyMap(**{'Id': id})
-            item.insertValue('ContentType', self._ContentType)
-            item.insertValue('DateCreated', parseDateTime())
-            item.insertValue('IsFolder', isfolder)
-            item.insertValue('IsDocument', isdocument)
-            item.insertValue('CanAddChild', True)
-            item.insertValue('CanRename', True)
-            item.insertValue('IsVersionable', False)
-            item.insertValue('Loaded', True)
-            item.insertValue('Trashed', False)
+            data = KeyMap(**{'Id': id})
+            data.insertValue('ContentType', self._ContentType)
+            data.insertValue('DateCreated', parseDateTime())
+            data.insertValue('IsFolder', isfolder)
+            data.insertValue('IsDocument', isdocument)
+            data.insertValue('CanAddChild', True)
+            data.insertValue('CanRename', True)
+            data.insertValue('IsVersionable', False)
+            data.insertValue('Loaded', True)
+            data.insertValue('Trashed', False)
         else:
-            item = self.User.getItem(self.MetaData)
-        item.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
-        return item
+            data = self.User.getItem(self.MetaData)
+        data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
+        return Content(self.ctx, self, data)
 
     @property
     def Id(self):
@@ -169,7 +175,7 @@ class Identifier(unohelper.Base,
     # XChild
     def getParent(self):
         uri = getUri(self.ctx, self.BaseURI)
-        return Identifier(self.ctx, self.User, uri)
+        return self.User.getIdentifier(uri)
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)
 

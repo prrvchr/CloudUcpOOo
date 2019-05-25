@@ -3,7 +3,7 @@
 
 #include <com/sun/star/uno/XInterface.idl>
 #include <com/sun/star/ucb/XRestUser.idl>
-#include <com/sun/star/ucb/XRestKeyMap.idl>
+#include <com/sun/star/auth/XRestKeyMap.idl>
 #include <com/sun/star/uri/XUriReference.idl>
 #include <com/sun/star/ucb/XSimpleFileAccess.idl>
 #include <com/sun/star/util/DateTime.idl>
@@ -16,16 +16,16 @@ module com { module sun { module star { module ucb {
 interface XRestIdentifier: com::sun::star::uno::XInterface
 {
 
-    com::sun::star::ucb::XRestKeyMap initializeContent();
-    com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string Title,
-                                                             [in] string ContentType);
-    com::sun::star::sdbc::XStatement getFolderContent([in] com::sun::star::ucb::XRestKeyMap Content,
-                                                      [out] long Index);
-    string getDocumentContent([in] com::sun::star::ucb::XSimpleFileAccess Sf,
-                              [in] com::sun::star::ucb::XRestKeyMap Content,
+    ::com::sun::star::uno::XInterface getContent();
+    ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string Title,
+                                                               [in] string ContentType);
+    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content,
+                                                        [out] long Index);
+    string getDocumentContent([in] XSimpleFileAccess Sf,
+                              [in] ::com::sun::star::auth::XRestKeyMap Content,
                               [out] long Size);
-    boolean insertNewDocument([in] com::sun::star::ucb::XRestKeyMap Content);
-    boolean insertNewFolder([in] com::sun::star::ucb::XRestKeyMap Content);
+    boolean insertNewDocument([in] ::com::sun::star::auth::XRestKeyMap Content);
+    boolean insertNewFolder([in] ::com::sun::star::auth::XRestKeyMap Content);
     boolean isChildId([in] string ItemId);
     string selectChildId([in] string Title);
     long countChildTitle([in] string Title);
@@ -35,7 +35,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
                        [in] string Default);
 
     [attribute, readonly] ::com::sun::star::ucb::XRestUser User;
-    [attribute, readonly] com::sun::star::ucb::XRestKeyMap MetaData;
+    [attribute, readonly] ::com::sun::star::auth::XRestKeyMap MetaData;
     [attribute, readonly] string Id;
     [attribute, readonly] boolean IsRoot;
     [attribute, readonly] boolean IsValid;

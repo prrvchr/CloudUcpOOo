@@ -5,7 +5,6 @@ import uno
 import unohelper
 
 from com.sun.star.ucb import XRestDataSource
-from com.sun.star.ucb import XRestKeyMap
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RETRIEVED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_CREATED
@@ -15,9 +14,18 @@ from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RENAMED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_REWRITED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 
+# oauth2 is only available after OAuth2OOo as been loaded...
+try:
+    from oauth2 import KeyMap
+    from oauth2 import OutputStream
+except ImportError:
+    print("DataSource IMPORT ERROR ******************************************************")
+    pass
+from .user import User
+
 from .datasourcehelper import getDataSourceConnection
 from .datasourcehelper import getDataSourceUrl
-from .datasourcehelper import getKetMapFromResult
+from .datasourcehelper import getKeyMapFromResult
 from .datasourcehelper import setUserData
 from .datasourcehelper import setRootData
 from .datasourcehelper import setItemData
@@ -25,14 +33,16 @@ from .datasourcehelper import setItemParent
 from .datasourcehelper import setContentData
 
 import binascii
+import traceback
 
 
 class DataSource(unohelper.Base,
                  XRestDataSource):
     def __init__(self, ctx, scheme, plugin, shutdown=False):
         self.ctx = ctx
-        self._Statement = None
         self.Provider = None
+        self._Statement = None
+        self._CahedUser = {}
         self._Error = ''
         self.Url = getDataSourceUrl(self.ctx, scheme, plugin, shutdown)
         connection = getDataSourceConnection(self.ctx, self.Url)
@@ -41,9 +51,13 @@ class DataSource(unohelper.Base,
         else:
             # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
             self._Statement = connection.createStatement()
+            print("DataSource.__init__() 1")
             service = '%s.Provider' % plugin
             self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-            self.Provider.initialize(scheme, plugin)
+            print("DataSource.__init__() 2")
+            link, folder = self._getMediaType()
+            self.Provider.initialize(scheme, plugin, link, folder)
+            print("DataSource.__init__() 3")
 
     # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
     @property
@@ -67,31 +81,55 @@ class DataSource(unohelper.Base,
             return True
         return False
 
+    def getUser(self, name):
+        # User never change... we can cache it...
+        if name and name in self._CahedUser:
+            user = self._CahedUser[name]
+        else:
+            user = User(self.ctx, self, name)
+            if user.IsValid:
+                self._CahedUser[name] = user
+        return user
+
     def initializeUser(self, name, error):
+        print("DataSource.initializeUser() 1")
+        user = KeyMap()
         if not name:
             error = "ERROR: Can't retrieve a UserName from Handler"
-            return None, error
+            return user, error
         print("DataSource.initializeUser()")
-        self.Provider.initializeSession(name)
+        if not self.Provider.initializeUser(name):
+            error = "ERROR: No authorization for User: %s" % name
+            return user, error
         user = self._selectUser(name)
-        if not user:
+        if not user.IsPresent:
             if self.Provider.isOnLine():
                 user = self._getUser(name)
-                if not user:
+                if not user.IsPresent:
                     error = "ERROR: Can't retrieve User: %s from provider" % name
             else:
                 error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
-        return user, error
+        return user.Value, error
+
+    def _getMediaType(self):
+        call = self.Connection.prepareCall('CALL "getMediaType"(?, ?)')
+        call.execute()
+        link = call.getString(1)
+        folder = call.getString(2)
+        call.close()
+        return link, folder
 
     def _selectUser(self, name):
         print("DataSource._selectUser() 1")
-        user = None
-        select = self.Connection.prepareCall('CALL "selectUser"(?)')
+        user = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.auth.XRestKeyMap>')
+        user.Value = KeyMap()
+        select = self.Connection.prepareCall('CALL "getUser"(?)')
         select.setString(1, name)
         result = select.executeQuery()
         if result.next():
+            user.IsPresent = True
             print("ProviderBase._selectUser() 2")
-            user = getKetMapFromResult(result)
+            user.Value = getKeyMapFromResult(result)
         select.close()
         return user
 
@@ -100,21 +138,22 @@ class DataSource(unohelper.Base,
         if user.IsPresent:
             root = self.Provider.getRoot(user.Value)
             if root.IsPresent:
-                return self._mergeUser(user.Value, root.Value)
-        return None
+                return self._mergeUser(user, root)
+        return user
 
     def _mergeUser(self, user, root):
-        item = None
         timestamp = self.Provider.getTimeStamp()
-        call = 'CALL "mergeUser"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        call = 'CALL "mergeUserAndRoot"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         merge = self.Connection.prepareCall(call)
-        i = setUserData(self.Provider, merge, user, 1)
-        i = setRootData(self.Provider, merge, root, timestamp, i)
+        i = setUserData(self.Provider, merge, user.Value, 1)
+        i = setRootData(self.Provider, merge, root.Value, timestamp, i)
         result = merge.executeQuery()
         if result.next():
-            item = getKetMapFromResult(result)
+            user.Value = getKeyMapFromResult(result)
+        else:
+            user.IsPresent = False
         merge.close()
-        return item
+        return user
 
     def getItem(self, user, identifier):
         item = self._selectItem(user, identifier)
@@ -126,12 +165,12 @@ class DataSource(unohelper.Base,
 
     def _selectItem(self, user, identifier):
         item = None
-        select = self.Connection.prepareCall('CALL "selectItem"(?, ?)')
+        select = self.Connection.prepareCall('CALL "getItem"(?, ?)')
         select.setString(1, user.getValue('UserId'))
         select.setString(2, identifier.getValue('Id'))
         result = select.executeQuery()
         if result.next():
-            item = getKetMapFromResult(result)
+            item = getKeyMapFromResult(result)
         select.close()
         return item
 
@@ -146,7 +185,7 @@ class DataSource(unohelper.Base,
         i = setItemParent(self.Provider,merge, item, rootid, i)
         result = merge.executeQuery()
         if result.next():
-            item = getKetMapFromResult(result)
+            item = getKeyMapFromResult(result)
         merge.close()
         return item
 
@@ -179,7 +218,7 @@ class DataSource(unohelper.Base,
 
     def _getChildSelect(self, user, identifier, i=1):
         id = identifier.getValue('Id')
-        select = self.Connection.prepareCall('CALL "selectChild"(?, ?, ?, ?, ?)')
+        select = self.Connection.prepareCall('CALL "getChildren"(?, ?, ?, ?, ?)')
         # LibreOffice Columns:
         #    ['Title', 'Size', 'DateModified', 'DateCreated', 'IsFolder', 'TargetURL', 'IsHidden',
         #     'IsVolume', 'IsRemote', 'IsRemoveable', 'IsFloppy', 'IsCompactDisc']
@@ -256,10 +295,11 @@ class DataSource(unohelper.Base,
             return value
         print("DataSource.synchronize(): 2")
         results = []
+        uploader = self.Provider.getUploader(self.Connection)
         call, i = self._getUpdateSync(user)
         for item in self._getItemToSync(user):
             print("DataSource.synchronize(): 3")
-            response = self._syncItem(item, call, i)
+            response = self._syncItem(item, uploader, call, i)
             print("DataSource.synchronize(): 4")
             if response is None:
                 continue
@@ -272,21 +312,20 @@ class DataSource(unohelper.Base,
         call.close()
         return value if all(results) else None
 
-    def _syncItem(self, item, call, i):
+    def _syncItem(self, item, uploader, call, i):
         response = False
         mode = item.getValue('Mode')
-        chunk = self.Provider.Chunk
         if mode & SYNC_CREATED:
             if mode & SYNC_FOLDER:
                 parameter = self.Provider.getUpdateParameter(item, True, None)
                 response = self.Provider.updateContent(item, parameter)
             if mode & SYNC_FILE:
                 parameter = self.Provider.getUploadParameter(item, True)
-                response = self._uploadContent(item, parameter, chunk)
+                response = None if uploader.start(item, parameter) else False
         else:
             if mode & SYNC_REWRITED:
                 parameter = self.Provider.getUploadParameter(item, False)
-                response = self._uploadContent(item, parameter, chunk)
+                response = None if uploader.start(item, parameter) else False
             if mode & SYNC_RENAMED:
                 parameter = self.Provider.getUpdateParameter(item, False, 'Title')
                 response = self.Provider.updateContent(parameter)
@@ -295,21 +334,6 @@ class DataSource(unohelper.Base,
             response = self.Provider.updateContent(item, parameter)
         return response
 
-    def _uploadContent(self, item, parameter, chunk):
-        input, size = self._getInputStream(item)
-        if size is not None:
-            print("DataSource._uploadContent() 1")
-            self.Provider.uploadContent(self.Connection, parameter, item, input, size)
-            return None
-        return False
-
-    def _getInputStream(self, item):
-        url = '%s/%s' % (self.Provider.SourceURL, self.Provider.getItemId(item))
-        sf = self.ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
-        if sf.exists(url):
-            return sf.openFileRead(url), sf.getSize(url)
-        return None, None
-
     def _getItemToSync(self, user):
         items = []
         select = self.Connection.prepareCall('CALL "selectSync"(?, ?)')
@@ -317,7 +341,7 @@ class DataSource(unohelper.Base,
         select.setLong(2, SYNC_RETRIEVED)
         result = select.executeQuery()
         while result.next():
-            items.append(getKetMapFromResult(result, user, self.Provider))
+            items.append(getKeyMapFromResult(result, user, self.Provider))
         select.close()
         return items
 
@@ -348,8 +372,8 @@ class DataSource(unohelper.Base,
         return self._insertContent(userid, itemid, parentid, content, mode)
 
     def _insertContent(self, userid, itemid, parentid, content, mode):
-        call = 'CALL "insertContentItem"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        print("items.insertContentItem() %s" % call)
+        call = 'CALL "insertNewContent"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        print("items.insertContentItem() %s" % content.getValue('Title'))
         insert = self.Connection.prepareCall(call)
         insert.setString(1, userid)
         insert.setString(2, itemid)

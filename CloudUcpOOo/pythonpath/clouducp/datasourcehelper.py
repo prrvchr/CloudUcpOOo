@@ -1,11 +1,19 @@
 #!
 # -*- coding: utf_8 -*-
 
+import uno
 import unohelper
 
 from com.sun.star.sdbc import SQLException
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RETRIEVED
 
-from .keymap import KeyMap
+# oauth2 is only available after OAuth2OOo as been loaded...
+try:
+    from oauth2 import KeyMap
+except ImportError:
+    print("DataSourceHelper IMPORT ERROR ******************************************************")
+    pass
+
 from .unotools import getPropertyValue
 from .unotools import getResourceLocation
 from .configuration import g_identifier
@@ -132,7 +140,7 @@ def setContentData(call, data, i=1):
     i += 1
     return i
 
-def getKetMapFromResult(result, keymap=None, provider=None):
+def getKeyMapFromResult(result, keymap=None, provider=None):
     item = KeyMap() if keymap is None else keymap
     #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
     for i in range(1, result.MetaData.ColumnCount +1):
@@ -156,6 +164,7 @@ def getKetMapFromResult(result, keymap=None, provider=None):
             value = provider.transform(name, value)
         item.insertValue(name, value)
     return item
+
 
 def _getInfo(ctx):
     location = getResourceLocation(ctx, g_identifier, g_folder)

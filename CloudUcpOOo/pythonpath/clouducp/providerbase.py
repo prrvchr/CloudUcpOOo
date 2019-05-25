@@ -5,16 +5,19 @@ import uno
 import unohelper
 
 from com.sun.star.lang import XServiceInfo
-from com.sun.star.io import XStreamListener
-from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RETRIEVED
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
 from com.sun.star.ucb import XRestProvider
 
-from .request import Request
-from .keymap import KeyMap
+# oauth2 is only available after OAuth2OOo as been loaded...
+try:
+    from oauth2 import KeyMap
+except ImportError:
+    pass
+
 from .unotools import getResourceLocation
+from .configuration import g_oauth2
 
 import datetime
 import traceback
@@ -30,9 +33,11 @@ class ProviderBase(ProviderObject,
                    XRestProvider):
     def __init__(self, ctx):
         self.ctx = ctx
-        self.Request = Request(ctx)
+        self.Request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
         self.Scheme = None
         self.Plugin = None
+        self.Link = None
+        self.Folder = None
         self.SourceURL = None
         self.SessionMode = OFFLINE
         self._Error = ''
@@ -46,12 +51,6 @@ class ProviderBase(ProviderObject,
         raise NotImplementedError
     @property
     def UploadUrl(self):
-        raise NotImplementedError
-    @property
-    def Folder(self):
-        raise NotImplementedError
-    @property
-    def Link(self):
         raise NotImplementedError
     @property
     def Office(self):
@@ -130,15 +129,20 @@ class ProviderBase(ProviderObject,
     def isOffLine(self):
         return self.SessionMode != ONLINE
 
-    def initialize(self, scheme, plugin):
+    def initialize(self, scheme, plugin, link, folder):
+        self.Request.initializeSession(scheme)
         self.Scheme = scheme
         self.Plugin = plugin
+        self.Link = link
+        self.Folder = folder
         self.SourceURL = getResourceLocation(self.ctx, plugin, scheme)
+        self.SessionMode = self.Request.getSessionMode(self.Host)
 
-    def initializeSession(self, name):
+    def initializeUser(self, name):
         self.SessionMode = self.Request.getSessionMode(self.Host)
         if self.isOnLine():
-            self.Request.initializeSession(self.Scheme, name)
+            return self.Request.initializeUser(name)
+        return True
 
     # Can be rewrited method
     def isFolder(self, contenttype):
@@ -147,6 +151,7 @@ class ProviderBase(ProviderObject,
         return contenttype == self.Link
     def isDocument(self, contenttype):
         return not (self.isFolder(contenttype) or self.isLink(contenttype))
+
     def getRootId(self, item):
         return self.getItemId(item)
     def getRootName(self, item):
@@ -189,7 +194,8 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter('getNewIdentifier', user)
         return self.Request.getEnumerator(parameter)
     def getUser(self, name):
-        data = KeyMap(**{'Id': name})
+        data = KeyMap()
+        data.insertValue('Id', name)
         parameter = self.getRequestParameter('getUser', data)
         return self.Request.execute(parameter)
     def getRoot(self, user):
@@ -216,55 +222,29 @@ class ProviderBase(ProviderObject,
         print("Provider.updateContent() 1")
         return self.Request.execute(parameter)
 
-    def uploadContent(self, connection, parameter, item, input, size):
-        print("Provider.uploadContent() 1")
-        #response = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.ucb.XRestKeyMap>')
-        print("Provider.uploadContent() 2")
-        output, response = self.Request.getOutputStream(parameter, size, self.Chunk, None)
-        print("Provider.uploadContent() 3")
-        listener = StreamListener(connection, self, item, response)
-        print("Provider.uploadContent() 4")
-        pump = self.ctx.ServiceManager.createInstance('com.sun.star.io.Pump')
-        pump.setInputStream(input)
-        pump.setOutputStream(output)
-        pump.addListener(listener)
-        pump.start()
+    def getUploader(self, connection):
+        return self.Request.getUploader(connection, self)
 
-
-class StreamListener(unohelper.Base,
-                     XStreamListener):
-    def __init__(self, connection, provider, item, response):
-        self.connection = connection
-        self.provider = provider
-        self.item = item
-        self.response = response
-
-    # XStreamListener
-    def started(self):
-        print("StreamListener.started() *****************************************************")
-    def closed(self):
-        print("StreamListener.closed() 1")
-        if self.response.IsPresent:
-            print("StreamListener.closed() 2")
-            call = self.connection.prepareCall('CALL "updateSync"(?, ?, ?, ?, ?, ?, ?)')
-            call.setString(1, self.item.getValue('UserId'))
-            call.setLong(2, SYNC_RETRIEVED)
-            print("StreamListener.closed() 3")
-            call.setString(3, self.provider.getItemId(self.item))
-            call.setString(4, self.provider.getResponseId(self.response.Value, self.item))
-            print("StreamListener.closed() 4")
-            call.setString(5, self.provider.getItemName(self.item))
-            call.setString(6, self.provider.getResponseName(self.response.Value, self.item))
-            print("StreamListener.closed() 5")
-            call.execute()
-            result = call.getLong(7)
-            call.close()
-            print("StreamListener.closed() *****************************************************")
-        else:
-            print("StreamListener.closed() ERROR * ERROR * ERROR * ERROR * ERROR * ERROR * ERROR")
-    def terminated(self):
-        pass
-    def error(self, error):
-        print("StreamListener.error() *****************************************************")
-    def disposing(self, event):
-        pass
+    def _getKeyMapFromResult(self, result, keymap, transform=False):
+        #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
+        for i in range(1, result.MetaData.ColumnCount +1):
+            dbtype = result.MetaData.getColumnTypeName(i)
+            name = result.MetaData.getColumnName(i)
+            if dbtype == 'VARCHAR':
+                value = result.getString(i)
+            elif dbtype == 'TIMESTAMP':
+                value = result.getTimestamp(i)
+            elif dbtype == 'BOOLEAN':
+                value = result.getBoolean(i)
+            elif dbtype == 'BIGINT' or dbtype == 'SMALLINT':
+                value = result.getLong(i)
+            else:
+                #print("DataSource._getKetMapFromResult() %s - %s" % (dbtype, name))
+                continue
+            #print("DataSource._getKetMapFromResult() %s - %s - %s" % (i, name, value))
+            if result.wasNull():
+                value = None
+            if transform:
+                value = self.transform(name, value)
+            keymap.insertValue(name, value)
+        return keymap

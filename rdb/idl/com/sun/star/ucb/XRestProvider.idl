@@ -2,12 +2,14 @@
 #define __com_sun_star_ucb_XRestProvider_idl__
 
 #include <com/sun/star/uno/XInterface.idl>
-#include <com/sun/star/ucb/XRestKeyMap.idl>
-#include <com/sun/star/ucb/XRestRequest.idl>
+#include <com/sun/star/auth/XRestKeyMap.idl>
 #include <com/sun/star/io/XInputStream.idl>
 #include <com/sun/star/container/XEnumeration.idl>
-#include <com/sun/star/ucb/RestRequestParameter.idl>
+#include <com/sun/star/auth/RestRequestParameter.idl>
+#include <com/sun/star/auth/XOAuth2Service.idl>
+#include <com/sun/star/sdbc/XResultSet.idl>
 #include <com/sun/star/sdbc/XConnection.idl>
+#include <com/sun/star/beans/Optional.idl>
 
 module com { module sun { module star { module ucb {
 
@@ -15,8 +17,10 @@ interface XRestProvider: com::sun::star::uno::XInterface
 {
 
     void initialize([in] string Scheme,
-                    [in] string Plugin);
-    void initializeSession([in] string Name);
+                    [in] string Plugin,
+                    [in] string Link,
+                    [in] string Folder);
+    boolean initializeUser([in] string Name);
     boolean isOnLine();
     boolean isOffLine();
     string getTimeStamp();
@@ -25,61 +29,57 @@ interface XRestProvider: com::sun::star::uno::XInterface
     boolean isDocument([in] string ContentType);
     any transform([in] string Name,
                   [in] any Value);
-    com::sun::star::container::XEnumeration getIdentifier([in] com::sun::star::ucb::XRestKeyMap User);
-    com::sun::star::beans::Optional<com::sun::star::ucb::XRestKeyMap> getUser([in] string Name);
-    com::sun::star::beans::Optional<com::sun::star::ucb::XRestKeyMap> getRoot([in] com::sun::star::ucb::XRestKeyMap User);
-    com::sun::star::beans::Optional<com::sun::star::ucb::XRestKeyMap> getItem([in] com::sun::star::ucb::XRestKeyMap Identifier);
-    com::sun::star::ucb::RestRequestParameter getUpdateParameter([in] com::sun::star::ucb::XRestKeyMap Item,
-                                                                 [in] boolean New,
-                                                                 [in] string Method);
-    com::sun::star::ucb::RestRequestParameter getUploadParameter([in] com::sun::star::ucb::XRestKeyMap Item,
-                                                                 [in] boolean New);
-    com::sun::star::container::XEnumeration getFolderContent([in] com::sun::star::ucb::XRestKeyMap content);
-    com::sun::star::io::XInputStream getDocumentContent([in] com::sun::star::ucb::XRestKeyMap content);
-    com::sun::star::ucb::RestRequestParameter getRequestParameter([in] string Method,
-                                                                  [in] com::sun::star::ucb::XRestKeyMap Data);
-    com::sun::star::ucb::XRestKeyMap updateContent([in] com::sun::star::ucb::RestRequestParameter Parameter);
-    void uploadContent([in] com::sun::star::sdbc::XConnection Connection,
-                       [in] com::sun::star::ucb::RestRequestParameter Parameter,
-                       [in] com::sun::star::ucb::XRestKeyMap Item,
-                       [in] com::sun::star::io::XInputStream Input,
-                       [in] long Size);
-    string getUserId([in] com::sun::star::ucb::XRestKeyMap User);
-    string getUserName([in] com::sun::star::ucb::XRestKeyMap User);
-    string getUserDisplayName([in] com::sun::star::ucb::XRestKeyMap User);
-    string getRootId([in] com::sun::star::ucb::XRestKeyMap Root);
-    string getRootName([in] com::sun::star::ucb::XRestKeyMap Root);
-    string getRootCreated([in] com::sun::star::ucb::XRestKeyMap Root,
+    ::com::sun::star::container::XEnumeration getIdentifier([in] ::com::sun::star::auth::XRestKeyMap User);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getUser([in] string Name);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getRoot([in] ::com::sun::star::auth::XRestKeyMap User);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getItem([in] ::com::sun::star::auth::XRestKeyMap Identifier);
+    ::com::sun::star::auth::RestRequestParameter getUpdateParameter([in] ::com::sun::star::auth::XRestKeyMap Item,
+                                                                    [in] boolean New,
+                                                                    [in] string Method);
+    ::com::sun::star::auth::RestRequestParameter getUploadParameter([in] ::com::sun::star::auth::XRestKeyMap Item,
+                                                                   [in] boolean New);
+    ::com::sun::star::container::XEnumeration getFolderContent([in] ::com::sun::star::auth::XRestKeyMap content);
+    ::com::sun::star::io::XInputStream getDocumentContent([in] ::com::sun::star::auth::XRestKeyMap content);
+    ::com::sun::star::auth::RestRequestParameter getRequestParameter([in] string Method,
+                                                                     [in] ::com::sun::star::auth::XRestKeyMap Data);
+    ::com::sun::star::auth::XRestKeyMap updateContent([in] ::com::sun::star::auth::RestRequestParameter Parameter);
+    ::com::sun::star::uno::XInterface getUploader([in] ::com::sun::star::sdbc::XConnection Connection);
+    string getUserId([in] ::com::sun::star::auth::XRestKeyMap User);
+    string getUserName([in] ::com::sun::star::auth::XRestKeyMap User);
+    string getUserDisplayName([in] ::com::sun::star::auth::XRestKeyMap User);
+    string getRootId([in] ::com::sun::star::auth::XRestKeyMap Root);
+    string getRootName([in] ::com::sun::star::auth::XRestKeyMap Root);
+    string getRootCreated([in] ::com::sun::star::auth::XRestKeyMap Root,
                           [in] string TimeStamp);
-    string getRootModified([in] com::sun::star::ucb::XRestKeyMap Root,
+    string getRootModified([in] ::com::sun::star::auth::XRestKeyMap Root,
                            [in] string TimeStamp);
-    string getRootMediaType([in] com::sun::star::ucb::XRestKeyMap Root);
-    long getRootSize([in] com::sun::star::ucb::XRestKeyMap Root);
-    boolean getRootTrashed([in] com::sun::star::ucb::XRestKeyMap Root);
-    boolean getRootCanAddChild([in] com::sun::star::ucb::XRestKeyMap Root);
-    boolean getRootCanRename([in] com::sun::star::ucb::XRestKeyMap Root);
-    boolean getRootIsReadOnly([in] com::sun::star::ucb::XRestKeyMap Root);
-    boolean getRootIsVersionable([in] com::sun::star::ucb::XRestKeyMap Root);
-    string getItemId([in] com::sun::star::ucb::XRestKeyMap Item);
-    string getItemName([in] com::sun::star::ucb::XRestKeyMap Item);
-    string getItemCreated([in] com::sun::star::ucb::XRestKeyMap Item,
+    string getRootMediaType([in] ::com::sun::star::auth::XRestKeyMap Root);
+    long getRootSize([in] ::com::sun::star::auth::XRestKeyMap Root);
+    boolean getRootTrashed([in] ::com::sun::star::auth::XRestKeyMap Root);
+    boolean getRootCanAddChild([in] ::com::sun::star::auth::XRestKeyMap Root);
+    boolean getRootCanRename([in] ::com::sun::star::auth::XRestKeyMap Root);
+    boolean getRootIsReadOnly([in] ::com::sun::star::auth::XRestKeyMap Root);
+    boolean getRootIsVersionable([in] ::com::sun::star::auth::XRestKeyMap Root);
+    string getItemId([in] ::com::sun::star::auth::XRestKeyMap Item);
+    string getItemName([in] ::com::sun::star::auth::XRestKeyMap Item);
+    string getItemCreated([in] ::com::sun::star::auth::XRestKeyMap Item,
                           [in] string TimeStamp);
-    string getItemModified([in] com::sun::star::ucb::XRestKeyMap Item,
+    string getItemModified([in] ::com::sun::star::auth::XRestKeyMap Item,
                            [in] string TimeStamp);
-    string getItemMediaType([in] com::sun::star::ucb::XRestKeyMap Item);
-    long getItemSize([in] com::sun::star::ucb::XRestKeyMap Item);
-    boolean getItemTrashed([in] com::sun::star::ucb::XRestKeyMap Item);
-    boolean getItemCanAddChild([in] com::sun::star::ucb::XRestKeyMap Item);
-    boolean getItemCanRename([in] com::sun::star::ucb::XRestKeyMap Item);
-    boolean getItemIsReadOnly([in] com::sun::star::ucb::XRestKeyMap Item);
-    boolean getItemIsVersionable([in] com::sun::star::ucb::XRestKeyMap Item);
-    string getItemParent([in] com::sun::star::ucb::XRestKeyMap Item,
+    string getItemMediaType([in] ::com::sun::star::auth::XRestKeyMap Item);
+    long getItemSize([in] ::com::sun::star::auth::XRestKeyMap Item);
+    boolean getItemTrashed([in] ::com::sun::star::auth::XRestKeyMap Item);
+    boolean getItemCanAddChild([in] ::com::sun::star::auth::XRestKeyMap Item);
+    boolean getItemCanRename([in] ::com::sun::star::auth::XRestKeyMap Item);
+    boolean getItemIsReadOnly([in] ::com::sun::star::auth::XRestKeyMap Item);
+    boolean getItemIsVersionable([in] ::com::sun::star::auth::XRestKeyMap Item);
+    string getItemParent([in] ::com::sun::star::auth::XRestKeyMap Item,
                          [in] string RootId);
-    string getResponseId([in] com::sun::star::ucb::XRestKeyMap Response,
-                         [in] com::sun::star::ucb::XRestKeyMap Item);
-    string getResponseName([in] com::sun::star::ucb::XRestKeyMap Response,
-                           [in] com::sun::star::ucb::XRestKeyMap Item);
-    [attribute, readonly] com::sun::star::ucb::XRestRequest Request;
+    string getResponseId([in] ::com::sun::star::auth::XRestKeyMap Response,
+                         [in] ::com::sun::star::auth::XRestKeyMap Item);
+    string getResponseName([in] ::com::sun::star::auth::XRestKeyMap Response,
+                           [in] ::com::sun::star::auth::XRestKeyMap Item);
+    [attribute, readonly] ::com::sun::star::uno::XInterface Request;
     [attribute, readonly] string Scheme;
     [attribute, readonly] string Plugin;
     [attribute, readonly] short SessionMode;

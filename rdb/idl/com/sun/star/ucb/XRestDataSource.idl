@@ -3,7 +3,7 @@
 
 #include <com/sun/star/uno/XInterface.idl>
 #include <com/sun/star/ucb/XRestProvider.idl>
-#include <com/sun/star/ucb/XRestKeyMap.idl>
+#include <com/sun/star/auth/XRestKeyMap.idl>
 #include <com/sun/star/sdbc/XConnection.idl>
 #include <com/sun/star/sdbc/XStatement.idl>
 
@@ -13,25 +13,26 @@ interface XRestDataSource: com::sun::star::uno::XInterface
 {
 
     boolean shutdownConnection([in] boolean Compact);
-    com::sun::star::ucb::XRestKeyMap initializeUser([in] string Name,
-                                                    [out] string Error);
+    ::com::sun::star::uno::XInterface getUser([in] string Name);
+    ::com::sun::star::auth::XRestKeyMap initializeUser([in] string Name,
+                                                       [out] string Error);
     boolean isIdentifier([in] string UserId,
                          [in] string ItemId);
-    com::sun::star::ucb::XRestKeyMap getItem([in] com::sun::star::ucb::XRestKeyMap User,
-                                             [in] com::sun::star::ucb::XRestKeyMap Identifier);
-    com::sun::star::sdbc::XStatement getFolderContent([in] com::sun::star::ucb::XRestKeyMap User,
-                                                      [in] com::sun::star::ucb::XRestKeyMap Identifier,
-                                                      [in] com::sun::star::ucb::XRestKeyMap Content,
-                                                      [out] long Index,
-                                                      [out] boolean Updated);
+    ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap User,
+                                             [in] ::com::sun::star::auth::XRestKeyMap Identifier);
+    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap User,
+                                                        [in] ::com::sun::star::auth::XRestKeyMap Identifier,
+                                                        [in] ::com::sun::star::auth::XRestKeyMap Content,
+                                                        [out] long Index,
+                                                        [out] boolean Updated);
     boolean insertNewDocument([in] string UserId,
                               [in] string ItemId,
                               [in] string ParentId,
-                              [in] com::sun::star::ucb::XRestKeyMap Content);
+                              [in] ::com::sun::star::auth::XRestKeyMap Content);
     boolean insertNewFolder([in] string UserId,
                             [in] string ItemId,
                             [in] string ParentId,
-                            [in] com::sun::star::ucb::XRestKeyMap Content);
+                            [in] ::com::sun::star::auth::XRestKeyMap Content);
     string updateSync([in] string UserId,
                       [in] string ItemId,
                       [in] short Mode);
@@ -50,7 +51,7 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                           [in] string ItemId,
                           [in] boolean Value,
                           [in] boolean Default);
-    any synchronize([in] com::sun::star::ucb::XRestKeyMap User,
+    any synchronize([in] ::com::sun::star::auth::XRestKeyMap User,
                     [in] any Value);
     boolean isChildId([in] string UserId,
                       [in] string ParentId,
@@ -61,8 +62,8 @@ interface XRestDataSource: com::sun::star::uno::XInterface
     long countChildTitle([in] string UserId,
                          [in] string ParentId,
                          [in] string Title);
-    void checkNewIdentifier([in] com::sun::star::ucb::XRestKeyMap User);
-    string getNewIdentifier([in] com::sun::star::ucb::XRestKeyMap User);
+    void checkNewIdentifier([in] ::com::sun::star::auth::XRestKeyMap User);
+    string getNewIdentifier([in] ::com::sun::star::auth::XRestKeyMap User);
 
     [attribute, readonly] ::com::sun::star::sdbc::XConnection Connection;
     [attribute, readonly] ::com::sun::star::ucb::XRestProvider Provider;

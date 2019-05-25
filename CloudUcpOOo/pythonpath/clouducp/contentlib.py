@@ -16,7 +16,6 @@ from com.sun.star.ucb import XDynamicResultSet
 from com.sun.star.ucb import XCommandInfo
 from com.sun.star.ucb import XCommandInfoChangeNotifier
 from com.sun.star.ucb import UnsupportedCommandException
-from com.sun.star.io import XStreamListener
 
 from .contenttools import getUcb
 from .contenttools import getParametersRequest
@@ -384,21 +383,3 @@ class ContentResultSet(unohelper.Base,
     def queryContent(self):
         identifier = self.queryContentIdentifier()
         return getUcb(self.ctx).queryContent(identifier)
-
-
-class UploadListener(unohelper.Base,
-                     XStreamListener):
-    def __init__(self):
-        pass
-
-    # XStreamListener
-    def started(self):
-        print("UploadListener.started() *******************************************************")
-    def closed(self):
-        print("UploadListener.closed() ********************************************************")
-    def terminated(self):
-        print("UploadListener.terminated() ****************************************************")
-    def error(self, error):
-        print("UploadListener.error() *********************************************************")
-    def disposing(self, event):
-        print("UploadListener.disposing() %s" % event.Source)

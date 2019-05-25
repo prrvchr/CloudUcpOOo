@@ -8,7 +8,14 @@ from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb import XRestUser
 
-from .keymap import KeyMap
+# oauth2 is only available after OAuth2OOo as been loaded...
+try:
+    from oauth2 import KeyMap
+except ImportError:
+    print("User IMPORT ERROR ******************************************************")
+    pass
+
+from .identifier import Identifier
 
 import traceback
 
@@ -16,13 +23,17 @@ import traceback
 class User(unohelper.Base,
            XRestUser):
     def __init__(self, ctx, datasource, name):
+        print("User.__init__() 1")
         self.ctx = ctx
         self.Name = name
+        print("User.__init__() 2")
         self.DataSource = datasource
+        print("User.__init__() 3")
         self._Error = ''
         self.MetaData, self._Error = self.DataSource.initializeUser(name, '')
         if self.IsValid:
             self.checkNewIdentifier()
+            print("User.__init__() 4")
 
     @property
     def Id(self):
@@ -84,6 +95,9 @@ class User(unohelper.Base,
             return sf.getSize(url), sf.openFileRead(url)
         return 0, None
 
+    def getIdentifier(self, uri):
+        return Identifier(self.ctx, self, uri)
+
     def initializeIdentifier(self, uri, isnew, error=''):
         paths = []
         position = -1
@@ -116,7 +130,8 @@ class User(unohelper.Base,
             error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
             print("User.initializeIdentifier() Error: %s" % error)
         paths.insert(0, self.Name)
-        identifier = KeyMap(**{'Id': id})
+        identifier = KeyMap()
+        identifier.insertValue('Id', id)
         identifier.insertValue('IsRoot', isroot)
         identifier.insertValue('IsNew', isnew)
         identifier.insertValue('BaseName', basename)
