@@ -6,11 +6,11 @@
 
 ## This extension can not be used alone, but is necessary for the use of:
 
-### [gDriveOOo v0.0.2] (https://github.com/prrvchr/gDriveOOo/raw/master/gDriveOOo.oxt)
+### [gDriveOOo v0.0.2](https://github.com/prrvchr/gDriveOOo/raw/master/gDriveOOo.oxt)
 
-### [oneDriveOOo v0.0.1] (https://github.com/prrvchr/oneDriveOOo/raw/master/oneDriveOOo.oxt)
+### [oneDriveOOo v0.0.1](https://github.com/prrvchr/oneDriveOOo/raw/master/oneDriveOOo.oxt)
 
-### [DropboxOOo v0.0.1] (https://github.com/prrvchr/DropboxOOo/raw/master/DropboxOOo.oxt)
+### [DropboxOOo v0.0.1](https://github.com/prrvchr/DropboxOOo/raw/master/DropboxOOo.oxt)
 
 ## For LibreOffice you need to configure Java User ClassPath
 
