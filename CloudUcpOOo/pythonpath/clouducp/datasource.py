@@ -195,7 +195,7 @@ class DataSource(unohelper.Base,
     def getFolderContent(self, user, identifier, content, index, updated):
         if ONLINE == content.getValue('Loaded') == self.Provider.SessionMode:
             updated = self._updateFolderContent(user, content)
-        select, index = self._getChildSelect(user, identifier)
+        select, index = self._getChildSelect(user, identifier, index)
         return select, index, updated
 
     def _updateFolderContent(self, user, content):
@@ -237,10 +237,7 @@ class DataSource(unohelper.Base,
         select.setString(i, id)
         i += 1
         # "TargetURL" is done by CONCAT(BaseURL,'/',Title or Id)...
-        url = identifier.getValue('BaseURI')
-        if not identifier.getValue('IsRoot'):
-            url += '/%s' % id
-        select.setString(i, url)
+        select.setString(i, identifier.getValue('BaseURL'))
         i += 1
         select.setLong(i, self.Provider.SessionMode)
         i += 1
@@ -306,7 +303,7 @@ class DataSource(unohelper.Base,
             print("DataSource.synchronize(): 4")
             if response is None:
                 continue
-            elif response.IsPresent:
+            elif response and response.IsPresent:
                 results.append(self._updateSync(item, response.Value, call, i))
             else:
                 print("DataSource.synchronize(): all -> Error")
@@ -320,8 +317,8 @@ class DataSource(unohelper.Base,
         mode = item.getValue('Mode')
         if mode & SYNC_CREATED:
             if mode & SYNC_FOLDER:
-                parameter = self.Provider.getUpdateParameter(item, True, None)
-                response = self.Provider.updateContent(item, parameter)
+                parameter = self.Provider.getUpdateParameter(item, True, '')
+                response = self.Provider.updateContent(parameter)
             if mode & SYNC_FILE:
                 parameter = self.Provider.getUploadParameter(item, True)
                 response = None if uploader.start(item, parameter) else False
@@ -334,7 +331,7 @@ class DataSource(unohelper.Base,
                 response = self.Provider.updateContent(parameter)
         if mode & SYNC_TRASHED:
             parameter = self.Provider.getUpdateParameter(item, False, 'Trashed')
-            response = self.Provider.updateContent(item, parameter)
+            response = self.Provider.updateContent(parameter)
         return response
 
     def _getItemToSync(self, user):
@@ -355,17 +352,22 @@ class DataSource(unohelper.Base,
         return call, 3
 
     def _updateSync(self, item, response, call, i):
-        call.setString(i, self.Provider.getItemId(item))
+        oldid = self.Provider.getItemId(item)
+        newid = self.Provider.getResponseId(response, item)
+        oldname = self.Provider.getItemName(item)
+        newname = self.Provider.getResponseName(response, item)
+        call.setString(i, oldid)
         i += 1
-        call.setString(i, self.Provider.getResponseId(response, item))
+        call.setString(i, newid)
         i += 1
-        call.setString(i, self.Provider.getItemName(item))
+        call.setString(i, oldname)
         i += 1
-        call.setString(i, self.Provider.getResponseName(response, item))
+        call.setString(i, newname)
         i += 1
         call.execute()
-        result = call.getLong(i)
-        return '' if result != 1 else id
+        error = call.getString(i)
+        print("DataSource._updateSync() %s - %s - %s - %s" % (oldid, newid, oldname, newname))
+        return '' if error != '' else id
 
     def insertNewDocument(self, userid, itemid, parentid, content):
         mode = SYNC_CREATED | SYNC_FILE
@@ -376,7 +378,7 @@ class DataSource(unohelper.Base,
 
     def _insertContent(self, userid, itemid, parentid, content, mode):
         call = 'CALL "insertNewContent"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        print("items.insertContentItem() %s" % content.getValue('Title'))
+        print("items.insertContentItem() %s - %s" % (itemid, content.getValue('Title')))
         insert = self.Connection.prepareCall(call)
         insert.setString(1, userid)
         insert.setString(2, itemid)

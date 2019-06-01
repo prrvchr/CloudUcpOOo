@@ -5,6 +5,7 @@ import uno
 
 from com.sun.star.sdb import ParametersRequest
 from com.sun.star.connection import NoConnectException
+from com.sun.star.ucb import InteractiveAugmentedIOException
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 

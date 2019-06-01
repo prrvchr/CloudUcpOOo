@@ -101,9 +101,8 @@ class Content(unohelper.Base,
         return self.MetaData.getValue('CreatableContentsInfo')
     def createNewContent(self, info):
         try:
-            print("Content.createNewContent() 1")
-            identifier = self.Identifier.createNewIdentifier(self._newTitle, info.Type)
-            self._newTitle = ''
+            print("Content.createNewContent() 1 %s" % info)
+            identifier = self.Identifier.createNewIdentifier(info.Type)
             print("Content.createNewContent() 2 %s" % info.Type)
             return identifier.getContent()
         except Exception as e:

@@ -144,6 +144,9 @@ class ContentProvider(unohelper.Base,
         return identifier
 
     def _getUserName(self, uri):
+        if not uri.getPathSegmentCount():
+            print("ContentProvider._getUserName() Not Complete ********")
+            return ''
         if uri.hasAuthority() and uri.getAuthority() != '':
             name = uri.getAuthority()
             self._defaultUser = None

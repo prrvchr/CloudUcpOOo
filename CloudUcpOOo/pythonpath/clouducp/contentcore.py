@@ -81,21 +81,25 @@ def _setProperty(source, context, name, value):
 
 def _setTitle(source, context, title):
     identifier = source.Identifier
+    parent = identifier.getParent()
     if u'~' in title:
         msg = "Can't set property: Title value: %s contains invalid character: '~'." % title
         level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
         data = getPropertyValueSet({'Uri': identifier.getContentIdentifier(),'ResourceName': title})
         error = getInteractiveAugmentedIOException(msg, context, 'ERROR', 'INVALID_CHARACTER', data)
         result = uno.Any('com.sun.star.ucb.InteractiveAugmentedIOException', error)
-    elif not identifier.IsNew and identifier.getParent().countChildTitle(title):
+    elif parent.countChildTitle(title):
         msg = "Can't set property: %s value: %s - Name Clash Error" % ('Title', title)
         level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
-        data = getPropertyValueSet({'Uri': identifier.getContentIdentifier(),'ResourceName': title})
+        data = getPropertyValueSet({'TargetFolderURL': parent.getContentIdentifier(),
+                                    'ClashingName': title,
+                                    'ProposedNewName': '%s(1)' % title})
+        #data = getPropertyValueSet({'Uri': identifier.getContentIdentifier(),'ResourceName': title})
         error = getInteractiveAugmentedIOException(msg, context, 'ERROR', 'ALREADY_EXISTING', data)
         result = uno.Any('com.sun.star.ucb.InteractiveAugmentedIOException', error)
     else:
         if identifier.IsNew:
-            source.MetaData.insertValue('Title', title)
+            source.MetaData.insertValue('Title', identifier.setTitle(title, source.IsFolder))
         else:
             default = source.MetaData.getValue('Title')
             source.MetaData.insertValue('Title', identifier.updateTitle(title, default))

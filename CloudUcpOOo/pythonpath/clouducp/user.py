@@ -72,8 +72,8 @@ class User(unohelper.Base,
         return self.synchronize(inserted)
 
     # XRestUser
-    def getFolderContent(self, identifier, content, final, updated):
-        return self.DataSource.getFolderContent(self.MetaData, identifier, content, final, updated)
+    def getFolderContent(self, identifier, content, index, updated):
+        return self.DataSource.getFolderContent(self.MetaData, identifier, content, index, updated)
 
     def updateLoaded(self, itemid, value, default):
         return self.DataSource.updateLoaded(self.Id, itemid, value, default)
@@ -115,11 +115,13 @@ class User(unohelper.Base,
                     break
         for i in range(position):
             paths.append(uri.getPathSegment(i).strip())
-        if not basename:
+        if isnew:
+            id = self.getNewIdentifier()
+            if basename:
+                paths.append(basename)
+        elif not basename:
             id = self.RootId
             isroot = True
-        elif isnew:
-            id = self.getNewIdentifier()
         elif self.isIdentifier(basename):
             id = basename
         else:
@@ -135,7 +137,10 @@ class User(unohelper.Base,
         identifier.insertValue('IsRoot', isroot)
         identifier.insertValue('IsNew', isnew)
         identifier.insertValue('BaseName', basename)
-        identifier.insertValue('BaseURI', '%s://%s' % (uri.getScheme(), '/'.join(paths)))
+        baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
+        identifier.insertValue('BaseURI', baseuri)
+        baseurl = baseuri if isroot else '%s/%s' % (baseuri, id)
+        identifier.insertValue('BaseURL', baseurl)
         print("User.initializeIdentifier() FIN")
         return identifier, error
 

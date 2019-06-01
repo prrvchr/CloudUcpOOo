@@ -37,7 +37,7 @@ class Identifier(unohelper.Base,
     def __init__(self, ctx, user, uri, contenttype=None):
         self.ctx = ctx
         self.User = user
-        self._Uri = uri
+        self._Uri = uri.getUriReference()
         self._ContentType = contenttype
         isnew = contenttype is not None
         self._Error = ''
@@ -49,18 +49,25 @@ class Identifier(unohelper.Base,
     def getContent(self):
         print("Identifier.getContent()")
         if self.IsNew:
+            timestamp = parseDateTime()
             isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
             isdocument = self.User.DataSource.Provider.isDocument(self._ContentType)
             data = KeyMap(**{'Id': id})
             data.insertValue('ContentType', self._ContentType)
-            data.insertValue('DateCreated', parseDateTime())
-            data.insertValue('IsFolder', isfolder)
-            data.insertValue('IsDocument', isdocument)
+            data.insertValue('DateCreated', timestamp)
+            data.insertValue('DateModified', timestamp)
+            if isfolder:
+                folder = self.User.DataSource.Provider.Folder
+                data.insertValue('MediaType', folder)
+            data.insertValue('Size', 0)
+            data.insertValue('Trashed', False)
             data.insertValue('CanAddChild', True)
             data.insertValue('CanRename', True)
+            data.insertValue('IsReadOnly', False)
             data.insertValue('IsVersionable', False)
             data.insertValue('Loaded', True)
-            data.insertValue('Trashed', False)
+            data.insertValue('IsFolder', isfolder)
+            data.insertValue('IsDocument', isdocument)
         else:
             data = self.User.getItem(self.MetaData)
         data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
@@ -83,11 +90,16 @@ class Identifier(unohelper.Base,
         return self.MetaData.getValue('BaseURI')
     @property
     def BaseURL(self):
-        return self.BaseURI if self.IsRoot else '%s/%s' % (self.BaseURI, self.Id)
+        return self.MetaData.getValue('BaseURL')
     @property
     def Error(self):
         return self.User.Error if self.User.Error else self._Error
 
+    def setTitle(self, title, isfolder):
+        id = self.Id if isfolder else title
+        self._Uri = '%s/%s' % (self._Uri, id)
+        self.MetaData.insertValue('BaseName', id)
+        return title
 
     def insertNewDocument(self, content):
         parentid = self.getParent().Id
@@ -127,8 +139,8 @@ class Identifier(unohelper.Base,
         return 0, None
 
     # XRestIdentifier
-    def createNewIdentifier(self, title, contenttype):
-        url = '%s/%s' % (self.BaseURL, title)
+    def createNewIdentifier(self, contenttype):
+        url = self.BaseURL
         print("Identifier.createNewIdentifier() 1 %s" % url)
         uri = getUri(self.ctx, url)
         return Identifier(self.ctx, self.User, uri, contenttype)
@@ -166,7 +178,7 @@ class Identifier(unohelper.Base,
 
     # XContentIdentifier
     def getContentIdentifier(self):
-        url = self._Uri.getUriReference()
+        url = self._Uri
         print("Identifier.getContentIdentifier(): %s" % url)
         return url
     def getContentProviderScheme(self):
@@ -174,7 +186,8 @@ class Identifier(unohelper.Base,
 
     # XChild
     def getParent(self):
-        uri = getUri(self.ctx, self.BaseURI)
+        url = '%s/' % self.BaseURI
+        uri = getUri(self.ctx, url)
         return self.User.getIdentifier(uri)
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)

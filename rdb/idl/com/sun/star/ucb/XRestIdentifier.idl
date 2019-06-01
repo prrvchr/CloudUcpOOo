@@ -17,8 +17,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
 {
 
     ::com::sun::star::uno::XInterface getContent();
-    ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string Title,
-                                                               [in] string ContentType);
+    ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string ContentType);
     ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content,
                                                         [out] long Index);
     string getDocumentContent([in] XSimpleFileAccess Sf,
@@ -33,6 +32,8 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
                           [in] boolean Default);
     string updateTitle([in] string Value,
                        [in] string Default);
+    string setTitle([in] string Value,
+                    [in] boolean IsFolder);
 
     [attribute, readonly] ::com::sun::star::ucb::XRestUser User;
     [attribute, readonly] ::com::sun::star::auth::XRestKeyMap MetaData;

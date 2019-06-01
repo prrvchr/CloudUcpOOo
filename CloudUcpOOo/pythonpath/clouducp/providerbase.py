@@ -214,10 +214,6 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter('getFolderContent', content)
         return self.Request.getEnumerator(parameter)
 
-    def insertContent(self, parameter):
-        print("Provider.updateContent() 1")
-        return self.Request.execute(parameter)
-
     def updateContent(self, parameter):
         print("Provider.updateContent() 1")
         return self.Request.execute(parameter)
