@@ -17,7 +17,6 @@ from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 # oauth2 is only available after OAuth2OOo as been loaded...
 try:
     from oauth2 import KeyMap
-    from oauth2 import OutputStream
 except ImportError:
     print("DataSource IMPORT ERROR ******************************************************")
     pass
