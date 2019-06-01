@@ -24,7 +24,7 @@ except ImportError:
 from .user import User
 
 from .datasourcehelper import getDataSourceConnection
-from .datasourcehelper import getDataSourceUrl
+from .datasourcehelper import getDataSourceInfo
 from .datasourcehelper import getKeyMapFromResult
 from .datasourcehelper import setUserData
 from .datasourcehelper import setRootData
@@ -44,10 +44,10 @@ class DataSource(unohelper.Base,
         self._Statement = None
         self._CahedUser = {}
         self._Error = ''
-        self.Url = getDataSourceUrl(self.ctx, scheme, plugin, shutdown)
-        connection = getDataSourceConnection(self.ctx, self.Url)
+        url, info = getDataSourceInfo(self.ctx, scheme, plugin, shutdown)
+        connection = getDataSourceConnection(self.ctx, url, info)
         if not connection:
-            self._Error = "ERROR: Can't connect to DataSource at Url: %s" % self.Url
+            self._Error = "ERROR: Can't connect to DataSource at Url: %s" % url
         else:
             # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
             self._Statement = connection.createStatement()
@@ -56,8 +56,9 @@ class DataSource(unohelper.Base,
             self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
             print("DataSource.__init__() 2")
             link, folder = self._getMediaType()
-            self.Provider.initialize(scheme, plugin, link, folder)
             print("DataSource.__init__() 3")
+            self.Provider.initialize(scheme, plugin, link, folder)
+            print("DataSource.__init__() 4")
 
     # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
     @property
@@ -68,7 +69,7 @@ class DataSource(unohelper.Base,
         return not self.Error
     @property
     def Error(self):
-        return self.Provider.Error if self.Provider.Error else self._Error
+        return self.Provider.Error if self.Provider else self._Error
 
     def shutdownConnection(self, compact=False):
         if not self.Connection:
@@ -112,10 +113,12 @@ class DataSource(unohelper.Base,
         return user.Value, error
 
     def _getMediaType(self):
-        call = self.Connection.prepareCall('CALL "getMediaType"(?, ?)')
+        call = self.Connection.prepareCall('CALL "getMediaType"(?, ?, ?)')
+        # OpenOffice doesn't support only OUT parameters
+        call.setString(1, 'dummy')
         call.execute()
-        link = call.getString(1)
-        folder = call.getString(2)
+        link = call.getString(2)
+        folder = call.getString(3)
         call.close()
         return link, folder
 

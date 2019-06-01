@@ -72,8 +72,8 @@ class User(unohelper.Base,
         return self.synchronize(inserted)
 
     # XRestUser
-    def getFolderContent(self, identifier, content, index, updated):
-        return self.DataSource.getFolderContent(self.MetaData, identifier, content, index, updated)
+    def getFolderContent(self, identifier, content, final, updated):
+        return self.DataSource.getFolderContent(self.MetaData, identifier, content, final, updated)
 
     def updateLoaded(self, itemid, value, default):
         return self.DataSource.updateLoaded(self.Id, itemid, value, default)

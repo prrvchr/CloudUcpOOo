@@ -62,3 +62,4 @@ from .unotools import getSimpleFile
 from .unotools import getInteractionHandler
 from .unotools import getPropertyValueSet
 from .unotools import getNamedValueSet
+from .unotools import getConfiguration

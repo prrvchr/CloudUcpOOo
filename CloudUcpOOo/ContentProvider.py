@@ -43,6 +43,7 @@ class ContentProvider(unohelper.Base,
         self.ctx = ctx
         self.DataSource = None
         self.Logger = getLogger(self.ctx)
+        self._defaultUser = None
         msg += " Done"
         self.Logger.logp(INFO, "ContentProvider", "__init__()", msg)
 
@@ -55,8 +56,9 @@ class ContentProvider(unohelper.Base,
         datasource = DataSource(self.ctx, template, plugin, False)
         print("ContentProvider.registerInstance() 3")
         if not datasource.IsValid:
-            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
-            print("ContentProvider.registerInstance() DataBase Connection ERROR")
+            e = datasource.Error
+            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", e)
+            print("ContentProvider.registerInstance() DataBase Connection ERROR: %s" % e)
             return None
         print("ContentProvider.registerInstance() 4")
         self.DataSource = datasource
@@ -144,6 +146,9 @@ class ContentProvider(unohelper.Base,
     def _getUserName(self, uri):
         if uri.hasAuthority() and uri.getAuthority() != '':
             name = uri.getAuthority()
+            self._defaultUser = None
+        elif self._defaultUser is not None:
+            name = self._defaultUser
         else:
             name = self._getUserNameFromHandler()
         return name
@@ -152,9 +157,11 @@ class ContentProvider(unohelper.Base,
         result = uno.createUnoStruct('com.sun.star.beans.Optional<string>')
         message = "Authentication is needed!!!"
         handler = getInteractionHandler(self.ctx, message)
-        request = InteractionRequestParameters(self, self.Connection, message, result)
+        request = InteractionRequestParameters(self, self.DataSource.Connection, message, result)
         if handler.handleInteractionRequest(request):
             if result.IsPresent:
+                self._defaultUser = result.Value
+                print("ContentProvider._getUserNameFromHandler() %s" % result.Value)
                 return result.Value
         return ''
 

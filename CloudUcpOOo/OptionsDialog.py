@@ -19,6 +19,7 @@ try:
     from clouducp import getUcp
     from clouducp import setLoggerSetting
     from clouducp import g_identifier
+    from clouducp import getConfiguration
 except ImportError as e:
     print("OptionsDialog.import().Error: %s - %s" % (e, traceback.print_exc()))
 
@@ -73,20 +74,18 @@ class OptionsDialog(unohelper.Base,
     def getSupportedMethodNames(self):
         return ('external_event', 'Logger', 'ViewLog', 'LoadUcp', 'ViewFile')
 
-    def _doViewDataBase(self, dialog):
+    def _doViewFile(self, dialog):
         try:
-            print("PyOptionsDialog._doConnect() 1")
+            print("PyOptionsDialog._doViewFile() 1")
             #url = registerDataBase(self.ctx, g_scheme)
             #desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
             #desktop.loadComponentFromURL(url, '_default', 0, ())
-            #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
-            #mri.inspect(connection)
-            print("PyOptionsDialog._doConnect() 2")
+            configuration = getConfiguration(self.ctx, 'org.openoffice.Office.Java')
+            mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+            mri.inspect(configuration)
+            print("PyOptionsDialog._doViewFile() 2")
         except Exception as e:
-            print("PyOptionsDialog._doConnect().Error: %s - %s" % (e, traceback.print_exc()))
-
-    def _doViewFile(self, dialog):
-        print("PyOptionsDialog._doViewFile().Error: %s - %s" % (e, traceback.print_exc()))
+            print("PyOptionsDialog._doViewFile().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _initialize(self, dialog):
         print("PyOptionsDialog._initialize()")
