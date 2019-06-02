@@ -43,7 +43,7 @@ interface XRestProvider: com::sun::star::uno::XInterface
     ::com::sun::star::auth::RestRequestParameter getRequestParameter([in] string Method,
                                                                      [in] ::com::sun::star::auth::XRestKeyMap Data);
     ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> updateContent([in] ::com::sun::star::auth::RestRequestParameter Parameter);
-    ::com::sun::star::uno::XInterface getUploader([in] ::com::sun::star::sdbc::XConnection Connection);
+    ::com::sun::star::uno::XInterface getUploader([in] ::com::sun::star::uno::XInterface DataSource);
     string getUserId([in] ::com::sun::star::auth::XRestKeyMap User);
     string getUserName([in] ::com::sun::star::auth::XRestKeyMap User);
     string getUserDisplayName([in] ::com::sun::star::auth::XRestKeyMap User);

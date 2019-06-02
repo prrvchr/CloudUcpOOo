@@ -6,6 +6,7 @@
 #include <com/sun/star/auth/XRestKeyMap.idl>
 #include <com/sun/star/sdbc/XConnection.idl>
 #include <com/sun/star/sdbc/XStatement.idl>
+#include <com/sun/star/beans/Optional.idl>
 
 module com { module sun { module star { module ucb {
 
@@ -53,6 +54,8 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                           [in] boolean Default);
     any synchronize([in] ::com::sun::star::auth::XRestKeyMap User,
                     [in] any Value);
+    void callBack([in] ::com::sun::star::auth::XRestKeyMap Item,
+                  [in] ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> Response);
     boolean isChildId([in] string UserId,
                       [in] string ParentId,
                       [in] string ItemId);

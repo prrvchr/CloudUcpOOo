@@ -294,7 +294,7 @@ class DataSource(unohelper.Base,
             return value
         print("DataSource.synchronize(): 2")
         results = []
-        uploader = self.Provider.getUploader(self.Connection)
+        uploader = self.Provider.getUploader(self)
         call, i = self._getUpdateSync(user)
         for item in self._getItemToSync(user):
             print("DataSource.synchronize(): 3")
@@ -343,6 +343,12 @@ class DataSource(unohelper.Base,
             items.append(getKeyMapFromResult(result, user, self.Provider))
         select.close()
         return items
+
+    def callBack(self, item, response):
+        if response.IsPresent:
+            call, index = self._getUpdateSync(item)
+            self._updateSync(item, response.Value, call, index)
+            call.close()
 
     def _getUpdateSync(self, user):
         call = self.Connection.prepareCall('CALL "updateSync"(?, ?, ?, ?, ?, ?, ?)')

@@ -218,8 +218,8 @@ class ProviderBase(ProviderObject,
         print("Provider.updateContent() 1")
         return self.Request.execute(parameter)
 
-    def getUploader(self, connection):
-        return self.Request.getUploader(connection, self)
+    def getUploader(self, datasource):
+        return self.Request.getUploader(datasource)
 
     def _getKeyMapFromResult(self, result, keymap, transform=False):
         #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
