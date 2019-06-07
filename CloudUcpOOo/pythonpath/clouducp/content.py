@@ -145,8 +145,8 @@ class Content(unohelper.Base,
             elif command.Name == 'open':
                 if self.IsFolder:
                     # Not Used: command.Argument.Properties - Implement me ;-)
-                    select, index = self.Identifier.getFolderContent(self.MetaData, 1)
-                    return DynamicResultSet(self.ctx, select, index)
+                    select = self.Identifier.getFolderContent(self.MetaData)
+                    return DynamicResultSet(self.ctx, select)
                 elif self.IsDocument:
                     sf = getSimpleFile(self.ctx)
                     url, size = self.Identifier.getDocumentContent(sf, self.MetaData, 0)

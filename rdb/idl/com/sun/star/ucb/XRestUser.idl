@@ -20,7 +20,6 @@ interface XRestUser: com::sun::star::uno::XInterface
     ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap Identifier);
     ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Identifier,
                                                       [in] ::com::sun::star::auth::XRestKeyMap Content,
-                                                      [out] long Index,
                                                       [out] boolean Updated);
     boolean insertNewDocument([in] string ItemId,
                               [in] string ParentId,

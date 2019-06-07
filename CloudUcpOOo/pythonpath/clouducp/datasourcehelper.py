@@ -52,6 +52,32 @@ def _registerJavaClass(ctx, location):
     except Exception as e:
         print("DataSourceHelper._registerJavaClass().Error: %s - %s" % (e, traceback.print_exc()))
 
+def getDataSourceUrl(ctx, scheme, plugin):
+    error = ''
+    url = getResourceLocation(ctx, plugin, '%s.odb' % scheme)
+    print("DataSourceHelper.getDataSourceUrl() 1: %s" % url)
+    if not getSimpleFile(ctx).exists(url):
+        error = "Error: can't open DataSource file: %s doesn't exist" % url
+    print("DataSourceHelper.getDataSourceUrl() 2: %s" % error)
+    return error, url
+
+def getDataSourceConnection(ctx, scheme, url):
+    print("DataSourceHelper.getDataSourceConnection() 1: %s" % url)
+    connection = None
+    dbcontext = ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
+    if not dbcontext.hasRegisteredDatabase(scheme):
+        dbcontext.registerDatabaseLocation(scheme, url)
+    elif dbcontext.getDatabaseLocation(scheme) != url:
+        dbcontext.changeDatabaseLocation(scheme, url)
+    print("DataSourceHelper.getDataSourceConnection() 2: %s" % url)
+    #mri = ctx.ServiceManager.createInstance('mytools.Mri')
+    #mri.inspect(dbcontext)
+    if dbcontext.hasByName(scheme):
+        datasource = dbcontext.getByName(scheme)
+        connection = datasource.getConnection('', '')
+    print("DataSourceHelper.getDataSourceConnection() 3")
+    return connection
+
 def getDataSourceInfo(ctx, scheme, plugin, shutdown=False):
     # ToDo check if 'hsqldb.jar' is in Libre/OpenOffice 'ClassPath' and add it if not...
     location = getResourceLocation(ctx, plugin, g_folder)
@@ -75,7 +101,7 @@ def getDataSourceConnection1(ctx, scheme):
     except Exception as e:
         print("DataSourceHelper.getDataSourceConnection().Error: %s - %s" % (e, traceback.print_exc()))
 
-def getDataSourceConnection(ctx, url, info):
+def getDataSourceConnection2(ctx, url, info):
     connection = None
     pool = ctx.ServiceManager.createInstance('com.sun.star.sdbc.ConnectionPool')
     try:
@@ -125,14 +151,11 @@ def _getDataSourceClassPath(location):
     print("DataSourceHelper._getDataSourceClassPath() 1: %s" % path)
     return '%s/%s' % (path, g_jar)
 
-def setUserData(provider, call, user, i=1):
-    call.setString(i, provider.getUserId(user))
-    i += 1
-    call.setString(i, provider.getUserName(user))
-    i += 1
-    call.setString(i, provider.getUserDisplayName(user))
-    i += 1
-    return i
+def setUserData(provider, call, user, root):
+    call.setString(1, provider.getUserId(user))
+    call.setString(2, provider.getUserName(user))
+    call.setString(3, provider.getUserDisplayName(user))
+    call.setString(4, provider.getRootId(root))
 
 def setRootData(provider, call, root, timestamp, i=1):
     call.setString(i, provider.getRootId(root))

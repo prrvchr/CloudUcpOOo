@@ -64,11 +64,11 @@ def _createDataBase(dbcontext, scheme, location, url, shutdown):
     descriptor = (getPropertyValue('Overwrite', True), )
     datasource.DatabaseDocument.storeAsURL(url, descriptor)
 
-def parseDateTime(timestr=None):
-    if timestr is None:
+def parseDateTime(timestr='', format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    if not timestr:
         t = datetime.datetime.now()
     else:
-        t = datetime.datetime.strptime(timestr, g_datetime)
+        t = datetime.datetime.strptime(timestr, format)
     return _getDateTime(t.microsecond, t.second, t.minute, t.hour, t.day, t.month, t.year)
 
 def unparseDateTime(t=None):

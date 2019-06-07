@@ -10,6 +10,7 @@
 #include <com/sun/star/sdbc/XResultSet.idl>
 #include <com/sun/star/sdbc/XConnection.idl>
 #include <com/sun/star/beans/Optional.idl>
+#include <com/sun/star/util/DateTime.idl>
 
 module com { module sun { module star { module ucb {
 
@@ -49,10 +50,10 @@ interface XRestProvider: com::sun::star::uno::XInterface
     string getUserDisplayName([in] ::com::sun::star::auth::XRestKeyMap User);
     string getRootId([in] ::com::sun::star::auth::XRestKeyMap Root);
     string getRootName([in] ::com::sun::star::auth::XRestKeyMap Root);
-    string getRootCreated([in] ::com::sun::star::auth::XRestKeyMap Root,
-                          [in] string TimeStamp);
-    string getRootModified([in] ::com::sun::star::auth::XRestKeyMap Root,
-                           [in] string TimeStamp);
+    ::com::sun::star::util::DateTime getRootCreated([in] ::com::sun::star::auth::XRestKeyMap Root,
+                                                    [in] ::com::sun::star::util::DateTime TimeStamp);
+    ::com::sun::star::util::DateTime getRootModified([in] ::com::sun::star::auth::XRestKeyMap Root,
+                                                     [in] ::com::sun::star::util::DateTime TimeStamp);
     string getRootMediaType([in] ::com::sun::star::auth::XRestKeyMap Root);
     long getRootSize([in] ::com::sun::star::auth::XRestKeyMap Root);
     boolean getRootTrashed([in] ::com::sun::star::auth::XRestKeyMap Root);
@@ -62,10 +63,10 @@ interface XRestProvider: com::sun::star::uno::XInterface
     boolean getRootIsVersionable([in] ::com::sun::star::auth::XRestKeyMap Root);
     string getItemId([in] ::com::sun::star::auth::XRestKeyMap Item);
     string getItemName([in] ::com::sun::star::auth::XRestKeyMap Item);
-    string getItemCreated([in] ::com::sun::star::auth::XRestKeyMap Item,
-                          [in] string TimeStamp);
-    string getItemModified([in] ::com::sun::star::auth::XRestKeyMap Item,
-                           [in] string TimeStamp);
+    ::com::sun::star::util::DateTime getItemCreated([in] ::com::sun::star::auth::XRestKeyMap Item,
+                                                    [in] ::com::sun::star::util::DateTime TimeStamp);
+    ::com::sun::star::util::DateTime getItemModified([in] ::com::sun::star::auth::XRestKeyMap Item,
+                                                     [in] ::com::sun::star::util::DateTime TimeStamp);
     string getItemMediaType([in] ::com::sun::star::auth::XRestKeyMap Item);
     long getItemSize([in] ::com::sun::star::auth::XRestKeyMap Item);
     boolean getItemTrashed([in] ::com::sun::star::auth::XRestKeyMap Item);
@@ -73,8 +74,8 @@ interface XRestProvider: com::sun::star::uno::XInterface
     boolean getItemCanRename([in] ::com::sun::star::auth::XRestKeyMap Item);
     boolean getItemIsReadOnly([in] ::com::sun::star::auth::XRestKeyMap Item);
     boolean getItemIsVersionable([in] ::com::sun::star::auth::XRestKeyMap Item);
-    string getItemParent([in] ::com::sun::star::auth::XRestKeyMap Item,
-                         [in] string RootId);
+    sequence <string> getItemParent([in] ::com::sun::star::auth::XRestKeyMap Item,
+                                    [in] string RootId);
     string getResponseId([in] ::com::sun::star::auth::XRestKeyMap Response,
                          [in] ::com::sun::star::auth::XRestKeyMap Item);
     string getResponseName([in] ::com::sun::star::auth::XRestKeyMap Response,
@@ -95,7 +96,6 @@ interface XRestProvider: com::sun::star::uno::XInterface
     [attribute, readonly] long Chunk;
     [attribute, readonly] long Buffer;
     [attribute, readonly] string SourceURL;
-    [attribute, readonly] string TimeStampPattern;
     [attribute, readonly] string Error;
 
 };

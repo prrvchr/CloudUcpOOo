@@ -31,9 +31,11 @@ class User(unohelper.Base,
         print("User.__init__() 3")
         self._Error = ''
         self.MetaData, self._Error = self.DataSource.initializeUser(name, '')
+        print("User.__init__() 4 %s" % self._Error)
         if self.IsValid:
+            print("User.__init__() 5")
             self.checkNewIdentifier()
-            print("User.__init__() 4")
+            print("User.__init__() 6")
 
     @property
     def Id(self):
@@ -72,8 +74,8 @@ class User(unohelper.Base,
         return self.synchronize(inserted)
 
     # XRestUser
-    def getFolderContent(self, identifier, content, index, updated):
-        return self.DataSource.getFolderContent(self.MetaData, identifier, content, index, updated)
+    def getFolderContent(self, identifier, content, updated):
+        return self.DataSource.getFolderContent(self.MetaData, identifier, content, updated)
 
     def updateLoaded(self, itemid, value, default):
         return self.DataSource.updateLoaded(self.Id, itemid, value, default)

@@ -53,7 +53,7 @@ class ContentProvider(unohelper.Base,
     # XParameterizedContentProvider
     def registerInstance(self, template, plugin, replace):
         print("ContentProvider.registerInstance() 1")
-        datasource = DataSource(self.ctx, template, plugin, False)
+        datasource = DataSource(self.ctx, template, plugin)
         print("ContentProvider.registerInstance() 3")
         if not datasource.IsValid:
             e = datasource.Error
@@ -62,8 +62,8 @@ class ContentProvider(unohelper.Base,
             return None
         print("ContentProvider.registerInstance() 4")
         self.DataSource = datasource
-        desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
-        desktop.addTerminateListener(self)
+        #desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
+        #desktop.addTerminateListener(self)
         provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
         print("ContentProvider.registerInstance() 5")
         return provider

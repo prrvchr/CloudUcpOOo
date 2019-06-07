@@ -18,8 +18,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
 
     ::com::sun::star::uno::XInterface getContent();
     ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string ContentType);
-    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content,
-                                                        [out] long Index);
+    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content);
     string getDocumentContent([in] XSimpleFileAccess Sf,
                               [in] ::com::sun::star::auth::XRestKeyMap Content,
                               [out] long Size);

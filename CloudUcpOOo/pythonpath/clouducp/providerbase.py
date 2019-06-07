@@ -16,6 +16,7 @@ try:
 except ImportError:
     pass
 
+from .dbtools import parseDateTime
 from .unotools import getResourceLocation
 from .configuration import g_oauth2
 
@@ -77,9 +78,6 @@ class ProviderBase(ProviderObject,
     @property
     def IdentifierRange(self):
         return (0, 0)
-    @property
-    def TimeStampPattern(self):
-        return '%Y-%m-%dT%H:%M:%SZ'
 
     # Must be implemented method
     def getRequestParameter(self, method, data):
@@ -124,17 +122,19 @@ class ProviderBase(ProviderObject,
         raise NotImplementedError
 
     # Base method
+    def parseDateTime(self, timestamp, format='%Y-%m-%dT%H:%M:%S.%fZ'):
+        return parseDateTime(timestamp, format)
     def isOnLine(self):
         return self.SessionMode != OFFLINE
     def isOffLine(self):
         return self.SessionMode != ONLINE
 
-    def initialize(self, scheme, plugin, link, folder):
+    def initialize(self, scheme, plugin, folder, link):
         self.Request.initializeSession(scheme)
         self.Scheme = scheme
         self.Plugin = plugin
-        self.Link = link
         self.Folder = folder
+        self.Link = link
         self.SourceURL = getResourceLocation(self.ctx, plugin, scheme)
         self.SessionMode = self.Request.getSessionMode(self.Host)
 

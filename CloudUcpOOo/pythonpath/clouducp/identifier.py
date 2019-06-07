@@ -119,17 +119,6 @@ class Identifier(unohelper.Base,
         return self.User.updateTrashed(self.Id, value, default)
     def updateTitle(self, value, default):
         return self.User.updateTitle(self.Id, value, default)
-    def updateSync(self, id, mode):
-        result = 0
-        if id is not None:
-            update = self.User.Connection.prepareCall('CALL "updateSync"(?, ?, ?, ?)')
-            update.setString(1, self.User.Id)
-            update.setString(2, id)
-            update.setLong(3, mode)
-            update.execute()
-            result = update.getLong(4)
-            update.close()
-        return result != 0
 
     def getInputStream(self, path, id):
         url = '%s/%s' % (path, id)
@@ -169,12 +158,12 @@ class Identifier(unohelper.Base,
                 stream.closeInput()
         return url, size
 
-    def getFolderContent(self, content, index):
-        select, index, updated = self.User.getFolderContent(self.MetaData, content, index, False)
+    def getFolderContent(self, content):
+        select, updated = self.User.getFolderContent(self.MetaData, content, False)
         if updated:
             loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
             content.insertValue('Loaded', loaded)
-        return select, index
+        return select
 
     # XContentIdentifier
     def getContentIdentifier(self):
