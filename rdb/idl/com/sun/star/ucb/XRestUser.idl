@@ -31,11 +31,14 @@ interface XRestUser: com::sun::star::uno::XInterface
                        [in] short Value,
                        [in] short Default);
     string updateTitle([in] string ItemId,
+                       [in] string ParentId,
                        [in] string Value,
                        [in] string Default);
     long updateSize([in] string ItemId,
+                    [in] string ParentId,
                     [in] long Size);
     boolean updateTrashed([in] string ItemId,
+                          [in] string ParentId,
                           [in] boolean Value,
                           [in] boolean Default);
     any synchronize([in] any Value);

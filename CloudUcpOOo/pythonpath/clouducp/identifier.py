@@ -116,9 +116,11 @@ class Identifier(unohelper.Base,
         return self.User.countChildTitle(self.Id, title)
 
     def updateTrashed(self, value, default):
-        return self.User.updateTrashed(self.Id, value, default)
+        parentid = self.getParent().Id
+        return self.User.updateTrashed(self.Id, parentid, value, default)
     def updateTitle(self, value, default):
-        return self.User.updateTitle(self.Id, value, default)
+        parentid = self.getParent().Id
+        return self.User.updateTitle(self.Id, parentid, value, default)
 
     def getInputStream(self, path, id):
         url = '%s/%s' % (path, id)
@@ -180,17 +182,3 @@ class Identifier(unohelper.Base,
         return self.User.getIdentifier(uri)
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)
-
-    def _getContentData(self):
-        data = KeyMap()
-        for name in ('Title', 'DateCreated', 'DateModified', 'MediaType', 'Size',
-                     'Trashed','CanAddChild', 'CanRename', 'IsReadOnly', 'IsVersionable'):
-            data.insertValue(name, getattr(self, name))
-        data.insertValue('Parent', self.getParent().Id)
-        print("Identifier._getContentData() %s" % self.getParent().Id)
-        return data
-
-    def _getUrl(self, url):
-        if self.IsFolder and not url.endswith('/'):
-            url += '/'
-        return url

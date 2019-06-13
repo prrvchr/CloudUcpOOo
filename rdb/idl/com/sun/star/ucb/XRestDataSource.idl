@@ -13,7 +13,6 @@ module com { module sun { module star { module ucb {
 interface XRestDataSource: com::sun::star::uno::XInterface
 {
 
-    boolean shutdownConnection([in] boolean Compact);
     ::com::sun::star::uno::XInterface getUser([in] string Name);
     ::com::sun::star::auth::XRestKeyMap initializeUser([in] string Name,
                                                        [out] string Error);
@@ -42,13 +41,16 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                        [in] short Default);
     string updateTitle([in] string UserId,
                        [in] string ItemId,
+                       [in] string ParentId,
                        [in] string Value,
                        [in] string Default);
     long updateSize([in] string UserId,
                     [in] string ItemId,
+                    [in] string ParentId,
                     [in] long Size);
     boolean updateTrashed([in] string UserId,
                           [in] string ItemId,
+                          [in] string ParentId,
                           [in] boolean Value,
                           [in] boolean Default);
     any synchronize([in] ::com::sun::star::auth::XRestKeyMap User,
@@ -69,7 +71,6 @@ interface XRestDataSource: com::sun::star::uno::XInterface
 
     [attribute, readonly] ::com::sun::star::sdbc::XConnection Connection;
     [attribute, readonly] ::com::sun::star::ucb::XRestProvider Provider;
-    [attribute, readonly] string Url;
     [attribute, readonly] boolean IsValid;
     [attribute, readonly] string Error;
 

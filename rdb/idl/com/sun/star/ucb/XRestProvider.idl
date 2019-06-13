@@ -49,7 +49,7 @@ interface XRestProvider: com::sun::star::uno::XInterface
     string getUserName([in] ::com::sun::star::auth::XRestKeyMap User);
     string getUserDisplayName([in] ::com::sun::star::auth::XRestKeyMap User);
     string getRootId([in] ::com::sun::star::auth::XRestKeyMap Root);
-    string getRootName([in] ::com::sun::star::auth::XRestKeyMap Root);
+    string getRootTitle([in] ::com::sun::star::auth::XRestKeyMap Root);
     ::com::sun::star::util::DateTime getRootCreated([in] ::com::sun::star::auth::XRestKeyMap Root,
                                                     [in] ::com::sun::star::util::DateTime TimeStamp);
     ::com::sun::star::util::DateTime getRootModified([in] ::com::sun::star::auth::XRestKeyMap Root,
@@ -62,7 +62,7 @@ interface XRestProvider: com::sun::star::uno::XInterface
     boolean getRootIsReadOnly([in] ::com::sun::star::auth::XRestKeyMap Root);
     boolean getRootIsVersionable([in] ::com::sun::star::auth::XRestKeyMap Root);
     string getItemId([in] ::com::sun::star::auth::XRestKeyMap Item);
-    string getItemName([in] ::com::sun::star::auth::XRestKeyMap Item);
+    string getItemTitle([in] ::com::sun::star::auth::XRestKeyMap Item);
     ::com::sun::star::util::DateTime getItemCreated([in] ::com::sun::star::auth::XRestKeyMap Item,
                                                     [in] ::com::sun::star::util::DateTime TimeStamp);
     ::com::sun::star::util::DateTime getItemModified([in] ::com::sun::star::auth::XRestKeyMap Item,
@@ -77,9 +77,9 @@ interface XRestProvider: com::sun::star::uno::XInterface
     sequence <string> getItemParent([in] ::com::sun::star::auth::XRestKeyMap Item,
                                     [in] string RootId);
     string getResponseId([in] ::com::sun::star::auth::XRestKeyMap Response,
-                         [in] ::com::sun::star::auth::XRestKeyMap Item);
-    string getResponseName([in] ::com::sun::star::auth::XRestKeyMap Response,
-                           [in] ::com::sun::star::auth::XRestKeyMap Item);
+                         [in] string Default);
+    string getResponseTitle([in] ::com::sun::star::auth::XRestKeyMap Response,
+                            [in] string Default);
     [attribute, readonly] ::com::sun::star::uno::XInterface Request;
     [attribute, readonly] string Scheme;
     [attribute, readonly] string Plugin;

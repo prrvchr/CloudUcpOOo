@@ -244,7 +244,7 @@ class Content(unohelper.Base,
                 sf.writeFile(target, inputstream)
                 inputstream.closeInput()
                 # We need to commit change: Size is the property chainning all DataSource change
-                if not self.Identifier.User.updateSize(id, sf.getSize(target)):
+                if not self.Identifier.User.updateSize(id, self.Identifier.Id, sf.getSize(target)):
                     print("Content.execute(): transfer 4: ERROR")
                     raise CommandAbortedException("Error while saving file: %s" % source, self)
                 #ucb = getUcb(self.ctx)

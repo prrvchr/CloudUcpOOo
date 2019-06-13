@@ -79,12 +79,12 @@ class User(unohelper.Base,
 
     def updateLoaded(self, itemid, value, default):
         return self.DataSource.updateLoaded(self.Id, itemid, value, default)
-    def updateTitle(self, itemid, value, default):
-        return self.synchronize(self.DataSource.updateTitle(self.Id, itemid, value, default))
-    def updateSize(self, itemid, size):
-        return self.synchronize(self.DataSource.updateSize(self.Id, itemid, size))
-    def updateTrashed(self, itemid, value, default):
-        return self.synchronize(self.DataSource.updateTrashed(self.Id, itemid, value, default))
+    def updateTitle(self, itemid, parentid, value, default):
+        return self.synchronize(self.DataSource.updateTitle(self.Id, itemid, parentid, value, default))
+    def updateSize(self, itemid, parentid, size):
+        return self.synchronize(self.DataSource.updateSize(self.Id, itemid, parentid, size))
+    def updateTrashed(self, itemid, parentid, value, default):
+        return self.synchronize(self.DataSource.updateTrashed(self.Id, itemid, parentid, value, default))
 
     def checkNewIdentifier(self):
         self.DataSource.checkNewIdentifier(self.MetaData)

@@ -4,7 +4,7 @@
 import uno
 import unohelper
 
-from com.sun.star.frame import XTerminateListener
+from com.sun.star.util import XCloseListener
 from com.sun.star.lang import XServiceInfo
 from com.sun.star.logging.LogLevel import INFO
 from com.sun.star.logging.LogLevel import SEVERE
@@ -34,13 +34,15 @@ class ContentProvider(unohelper.Base,
                       XServiceInfo,
                       XContentIdentifierFactory,
                       XContentProvider,
+                      XCloseListener,
                       XParameterizedContentProvider,
-                      XTerminateListener,
                       XRestContentProvider):
     def __init__(self, ctx):
         print("ContentProvider.__init__()***********************")
         msg = "ContentProvider loading ..."
         self.ctx = ctx
+        self.Scheme = ''
+        self.Plugin = ''
         self.DataSource = None
         self.Logger = getLogger(self.ctx)
         self._defaultUser = None
@@ -61,24 +63,32 @@ class ContentProvider(unohelper.Base,
             print("ContentProvider.registerInstance() DataBase Connection ERROR: %s" % e)
             return None
         print("ContentProvider.registerInstance() 4")
+        self.Scheme = template
+        self.Plugin = plugin
+        datasource.Connection.Parent.DatabaseDocument.addCloseListener(self)
         self.DataSource = datasource
-        #desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
-        #desktop.addTerminateListener(self)
         provider = getUcb(self.ctx).registerContentProvider(self, template, replace)
-        print("ContentProvider.registerInstance() 5")
+        print("ContentProvider.registerInstance() FIN")
         return provider
     def deregisterInstance(self, template, argument):
+        print("ContentProvider.deregisterInstance() 1")
         getUcb(self.ctx).deregisterContentProvider(self, template)
+        print("ContentProvider.deregisterInstance() FIN")
 
-    # XTerminateListener
-    def queryTermination(self, event):
-        pass
-    def notifyTermination(self, event):
-        if self.DataSource.shutdownConnection(False):
-            level, msg = INFO, "Shutdown database ... closing connection ... Done"
-        else:
-            level, msg = SEVERE, "Shutdown database ... connection alredy closed !!!"
-        self.Logger.logp(level, "ContentProvider", "notifyTermination()", msg)
+    # XCloseListener
+    def queryClosing(self, source, ownership):
+        try:
+            print("ContentProvider.queryClosing() 1 %s" % ownership)
+            self.deregisterInstance(self.Scheme, self.Plugin)
+            print("ContentProvider.queryClosing() 2")
+            query = 'SHUTDOWN COMPACT;'
+            statement = self.DataSource.Connection.createStatement()
+            statement.execute(query)
+            print("ContentProvider.queryClosing() FIN")
+        except Exception as e:
+            print("ContentProvider.queryClosing().Error: %s - %s" % (e, traceback.print_exc()))
+    def notifyClosing(self, source):
+        print("ContentProvider.notifyClosing() FIN")
 
     # XContentIdentifierFactory
     def createContentIdentifier(self, url):

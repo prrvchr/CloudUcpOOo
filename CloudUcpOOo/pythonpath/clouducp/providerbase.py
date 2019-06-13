@@ -92,7 +92,7 @@ class ProviderBase(ProviderObject,
 
     def getItemId(self, item):
         raise NotImplementedError
-    def getItemName(self, item):
+    def getItemTitle(self, item):
         raise NotImplementedError
     def getItemCreated(self, item, timestamp=None):
         raise NotImplementedError
@@ -139,9 +139,12 @@ class ProviderBase(ProviderObject,
         self.SessionMode = self.Request.getSessionMode(self.Host)
 
     def initializeUser(self, name):
+        print("ProviderBase.initializeUser() 1")
         self.SessionMode = self.Request.getSessionMode(self.Host)
         if self.isOnLine():
+            print("ProviderBase.initializeUser() 2")
             return self.Request.initializeUser(name)
+        print("ProviderBase.initializeUser() FIN")
         return True
 
     # Can be rewrited method
@@ -154,8 +157,8 @@ class ProviderBase(ProviderObject,
 
     def getRootId(self, item):
         return self.getItemId(item)
-    def getRootName(self, item):
-        return self.getItemName(item)
+    def getRootTitle(self, item):
+        return self.getItemTitle(item)
     def getRootCreated(self, item, timestamp=None):
         return self.getItemCreated(item, timestamp)
     def getRootModified(self, item, timestamp=None):
@@ -175,16 +178,16 @@ class ProviderBase(ProviderObject,
     def getRootIsVersionable(self, item):
         return self.getItemIsVersionable(item)
 
-    def getResponseId(self, response, item):
+    def getResponseId(self, response, default):
         id = self.getItemId(response)
         if not id:
-            id = self.getItemId(item)
+            id = default
         return id
-    def getResponseName(self, response, item):
-        name = self.getItemName(response)
-        if not name:
-            name = self.getItemName(item)
-        return name
+    def getResponseTitle(self, response, default):
+        title = self.getItemTitle(response)
+        if not title:
+            title = default
+        return title
     def getTimeStamp(self):
         return datetime.datetime.now().strftime(self.TimeStampPattern)
     def transform(self, name, value):
@@ -219,28 +222,27 @@ class ProviderBase(ProviderObject,
         return self.Request.execute(parameter)
 
     def getUploader(self, datasource):
+        print("Provider.getUploader() 1")
         return self.Request.getUploader(datasource)
 
-    def _getKeyMapFromResult(self, result, keymap, transform=False):
-        #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
-        for i in range(1, result.MetaData.ColumnCount +1):
-            dbtype = result.MetaData.getColumnTypeName(i)
-            name = result.MetaData.getColumnName(i)
-            if dbtype == 'VARCHAR':
-                value = result.getString(i)
-            elif dbtype == 'TIMESTAMP':
-                value = result.getTimestamp(i)
-            elif dbtype == 'BOOLEAN':
-                value = result.getBoolean(i)
-            elif dbtype == 'BIGINT' or dbtype == 'SMALLINT':
-                value = result.getLong(i)
-            else:
-                #print("DataSource._getKetMapFromResult() %s - %s" % (dbtype, name))
-                continue
-            #print("DataSource._getKetMapFromResult() %s - %s - %s" % (i, name, value))
-            if result.wasNull():
-                value = None
-            if transform:
-                value = self.transform(name, value)
-            keymap.insertValue(name, value)
-        return keymap
+    def getUploadParameter(self, identifier, new):
+        print("Provider.getUploadParameter() 1")
+        if new:
+            parameter = self.getRequestParameter('getNewUploadLocation', identifier)
+        else:
+            parameter = self.getRequestParameter('getUploadLocation', identifier)
+        print("Provider.getUploadParameter() 2")
+        response = self.Request.execute(parameter)
+        if response.IsPresent:
+            print("Provider.getUploadParameter() 3")
+            return self.getRequestParameter('getUploadStream', response.Value)
+        return None
+
+    def getUpdateParameter(self, identifier, new, key):
+        if new:
+            parameter = self.getRequestParameter('insertContent', identifier)
+        elif key == 'Title':
+            parameter = self.getRequestParameter('updateTitle', identifier)
+        elif key == 'Trashed':
+            parameter = self.getRequestParameter('updateTrashed', identifier)
+        return parameter
