@@ -25,10 +25,10 @@ except ImportError:
     pass
 from .user import User
 
-from .datasourcehelper import getDataSourceConnection
 from .datasourcehelper import getDataSourceUrl
-from .datasourcehelper import getSqlQuery
+from .datasourcehelper import getDataSourceConnection
 from .datasourcehelper import getKeyMapFromResult
+from .datasourcequeries import getSqlQuery
 from .dbtools import parseDateTime
 from .unotools import getResourceLocation
 from .unotools import getPropertyValue
@@ -303,10 +303,7 @@ class DataSource(unohelper.Base,
         select = self._getDataSourceCall('getChildren')
         scroll = 'com.sun.star.sdbc.ResultSetType.SCROLL_INSENSITIVE'
         select.ResultSetType = uno.getConstantByName(scroll)
-        # LibreOffice Columns:
-        #    ['Title', 'Size', 'DateModified', 'DateCreated', 'IsFolder', 'TargetURL', 'IsHidden',
-        #     'IsVolume', 'IsRemote', 'IsRemoveable', 'IsFloppy', 'IsCompactDisc']
-        # OpenOffice Columns:
+        # OpenOffice / LibreOffice Columns:
         #    ['Title', 'Size', 'DateModified', 'DateCreated', 'IsFolder', 'TargetURL', 'IsHidden',
         #     'IsVolume', 'IsRemote', 'IsRemoveable', 'IsFloppy', 'IsCompactDisc']
         # "TargetURL" is done by CONCAT(BaseURL,'/',Title or Id)...
@@ -372,7 +369,7 @@ class DataSource(unohelper.Base,
         uploader = self.Provider.getUploader(self)
         for item in self._getItemToSync(user):
             print("DataSource.synchronize(): 3")
-            response = self._syncItem(item, uploader)
+            response = self._syncItem(uploader, item)
             print("DataSource.synchronize(): 4")
             if response is None:
                 continue
@@ -394,28 +391,25 @@ class DataSource(unohelper.Base,
         select.close()
         return items
 
-    def _syncItem(self, item, uploader):
+    def _syncItem(self, uploader, item):
         try:
             print("DataSource._syncItem(): 1")
             response = False
             mode = item.getValue('Mode')
             print("DataSource._syncItem(): 2 %s" % mode)
             if mode == SYNC_FOLDER:
-                parameter = self.Provider.getUpdateParameter(item, True, '')
-                response = self.Provider.updateContent(parameter)
+                response = self.Provider.createNewFolder(item)
             elif mode == SYNC_FILE:
-                parameter = self.Provider.getUploadParameter(item, True)
-                response = None if uploader.start(item, parameter) else False
+                response = self.Provider.createNewFile(uploader, item)
+            elif mode == SYNC_CREATED:
+                response = self.Provider.rewriteFile(uploader, item, True)
             elif mode == SYNC_REWRITED:
                 print("DataSource._syncItem(): 3")
-                parameter = self.Provider.getUploadParameter(item, False)
-                response = None if uploader.start(item, parameter) else False
+                response = self.Provider.rewriteFile(uploader, item, False)
             elif mode == SYNC_RENAMED:
-                parameter = self.Provider.getUpdateParameter(item, False, 'Title')
-                response = self.Provider.updateContent(parameter)
+                response = self.Provider.updateTitle(item)
             elif mode == SYNC_TRASHED:
-                parameter = self.Provider.getUpdateParameter(item, False, 'Trashed')
-                response = self.Provider.updateContent(parameter)
+                response = self.Provider.updateTrashed(item)
             return response
         except Exception as e:
             print("DataSource._syncItem().Error: %s - %s" % (e, traceback.print_exc()))
@@ -443,13 +437,16 @@ class DataSource(unohelper.Base,
         return '' if row != 1 else newid
 
     def insertNewDocument(self, userid, itemid, parentid, content):
-        mode = SYNC_FILE
-        return self._insertNewContent(userid, itemid, parentid, content, mode)
+        if self.Provider.TwoStepCreation:
+            modes = (SYNC_CREATED, SYNC_REWRITED)
+        else:
+            modes = (SYNC_FILE, )
+        return self._insertNewContent(userid, itemid, parentid, content, modes)
     def insertNewFolder(self, userid, itemid, parentid, content):
-        mode = SYNC_FOLDER
-        return self._insertNewContent(userid, itemid, parentid, content, mode)
+        mode = (SYNC_FOLDER, )
+        return self._insertNewContent(userid, itemid, parentid, content, modes)
 
-    def _insertNewContent(self, userid, itemid, parentid, content, mode):
+    def _insertNewContent(self, userid, itemid, parentid, content, modes):
         print("DataSource._insertNewContent() %s - %s" % (itemid, content.getValue('Title')))
         c1 = self._getDataSourceCall('insertItem')
         c1.setString(1, content.getValue("Title"))
@@ -480,11 +477,12 @@ class DataSource(unohelper.Base,
         c4.setString(1, userid)
         c4.setString(2, itemid)
         c4.setString(3, parentid)
-        c4.setLong(4, mode)
-        row += c4.executeUpdate()
+        for mode in modes:
+            c4.setLong(4, mode)
+            row += c4.execute()
         c4.close()
         print("DataSource._insertNewContent() %s" % row)
-        return row == 4
+        return row == 3 + len(modes)
 
     def updateLoaded(self, userid, itemid, value, default):
         update = self._getDataSourceCall('updateLoaded')
@@ -594,12 +592,8 @@ class DataSource(unohelper.Base,
     def _getDataSourceCall(self, name, cache=False):
         if name in self._Calls:
             return self._Calls[name]
-        queries = self.Connection.getQueries()
-        if queries.hasByName(name):
-            call = self.Connection.prepareCommand(name, QUERY)
-        else:
-            query = getSqlQuery(name)
-            call = self.Connection.prepareCall(query)
+        query = getSqlQuery(name)
+        call = self.Connection.prepareCall(query)
         if cache:
             self._Calls[name] = call
         return call

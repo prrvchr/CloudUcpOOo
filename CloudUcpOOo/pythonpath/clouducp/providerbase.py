@@ -78,6 +78,9 @@ class ProviderBase(ProviderObject,
     @property
     def IdentifierRange(self):
         return (0, 0)
+    @property
+    def TwoStepCreation(self):
+        return False
 
     # Must be implemented method
     def getRequestParameter(self, method, data):
@@ -228,7 +231,7 @@ class ProviderBase(ProviderObject,
     def getUploadParameter(self, identifier, new):
         print("Provider.getUploadParameter() 1")
         if new:
-            parameter = self.getRequestParameter('getNewUploadLocation', identifier)
+            parameter = self.insertNewFile(identifier)
         else:
             parameter = self.getRequestParameter('getUploadLocation', identifier)
         print("Provider.getUploadParameter() 2")
@@ -240,9 +243,34 @@ class ProviderBase(ProviderObject,
 
     def getUpdateParameter(self, identifier, new, key):
         if new:
-            parameter = self.getRequestParameter('insertContent', identifier)
+            parameter = self.getRequestParameter('insertNewFolder', identifier)
         elif key == 'Title':
             parameter = self.getRequestParameter('updateTitle', identifier)
         elif key == 'Trashed':
             parameter = self.getRequestParameter('updateTrashed', identifier)
         return parameter
+
+    def createNewFile(self, item):
+        return None
+
+    def createNewFolder(self, item):
+        parameter = self.getRequestParameter('createNewFolder', item)
+        return self.updateContent(parameter)
+
+    def rewriteFile(self, uploader, item, new=False):
+        method = 'getNewUploadLocation' if new else 'getUploadLocation'
+        parameter = self.getRequestParameter(method, item)
+        response = self.Request.execute(parameter)
+        if response.IsPresent:
+            print("Provider.rewriteFile()")
+            parameter = self.getRequestParameter('getUploadStream', response.Value)
+            return None if uploader.start(item, parameter) else False
+        return False
+
+    def updateTitle(self, item):
+        parameter = self.getRequestParameter('updateTitle', item)
+        return self.updateContent(parameter)
+
+    def updateTrashed(self, item):
+        parameter = self.getRequestParameter('updateTrashed', item)
+        return self.updateContent(parameter)

@@ -96,6 +96,7 @@ interface XRestProvider: com::sun::star::uno::XInterface
     [attribute, readonly] long Chunk;
     [attribute, readonly] long Buffer;
     [attribute, readonly] string SourceURL;
+    [attribute, readonly] boolean TwoStepCreation;
     [attribute, readonly] string Error;
 
 };
