@@ -5,8 +5,6 @@ import uno
 
 from .unolib import InteractionHandler
 
-g_extension = ''
-
 
 def getSimpleFile(ctx):
     return ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
@@ -17,7 +15,6 @@ def getFileSequence(ctx, url, default=None):
     if fs.exists(url):
         length, sequence = getSequence(fs.openFileRead(url), fs.getSize(url))
     elif default is not None and fs.exists(default):
-        inputstream = fs.openFileRead(default)
         length, sequence = getSequence(fs.openFileRead(default), fs.getSize(default))
     return length, sequence
 
@@ -98,9 +95,9 @@ def getCurrentLocale(ctx):
         locale.Country = service.getLanguageCountryInfo(locale).Country
     return locale
 
-def getStringResource(ctx, identifier, locale=None, filename='DialogStrings'):
+def getStringResource(ctx, identifier, path=None, filename='DialogStrings', locale=None):
     service = 'com.sun.star.resource.StringResourceWithLocation'
-    location = getResourceLocation(ctx, identifier)
+    location = getResourceLocation(ctx, identifier, path)
     if locale is None:
         locale = getCurrentLocale(ctx)
     arguments = (location, True, locale, filename, '', InteractionHandler())

@@ -9,13 +9,11 @@ from com.sun.star.ucb import InteractiveAugmentedIOException
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 
+from .configuration import g_identifier
+
 from .unotools import getProperty
 from .unotools import getPropertyValue
 from .unotools import getNamedValueSet
-
-g_identifier = 'com.gmail.prrvchr.extensions.CloudUcpOOo'
-g_auth = 'com.gmail.prrvchr.extensions.OAuth2OOo'
-g_timeout = (15, 60)
 
 
 def getConnectionMode(ctx, host):

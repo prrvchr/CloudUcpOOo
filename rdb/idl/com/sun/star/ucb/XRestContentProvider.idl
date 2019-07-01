@@ -10,6 +10,7 @@ interface XRestContentProvider: com::sun::star::uno::XInterface
 {
 
     [attribute, readonly] ::com::sun::star::ucb::XRestDataSource DataSource;
+    [attribute, readonly] ::com::sun::star::uno::XInterface Logger;
 
 };
 

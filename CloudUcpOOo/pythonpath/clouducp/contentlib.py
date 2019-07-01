@@ -17,9 +17,9 @@ from com.sun.star.ucb import XCommandInfo
 from com.sun.star.ucb import XCommandInfoChangeNotifier
 from com.sun.star.ucb import UnsupportedCommandException
 
+from .configuration import g_oauth2
 from .contenttools import getUcb
 from .contenttools import getParametersRequest
-from .contenttools import g_auth
 from .unolib import PropertySet
 from .unotools import getProperty
 
@@ -39,8 +39,7 @@ class NoOAuth2(object):
 
 class OAuth2OOo(NoOAuth2):
     def __init__(self, ctx, scheme, username=None):
-        name = '%s.OAuth2Service' % g_auth
-        self.service = ctx.ServiceManager.createInstanceWithContext(name, ctx)
+        self.service = ctx.ServiceManager.createInstanceWithContext(g_oauth2, ctx)
         self.service.ResourceUrl = scheme
         if username is not None:
             self.service.UserName = username

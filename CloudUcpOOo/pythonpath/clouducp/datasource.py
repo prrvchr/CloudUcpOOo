@@ -40,16 +40,16 @@ import traceback
 class DataSource(unohelper.Base,
                  XCloseListener,
                  XRestDataSource):
-    def __init__(self, ctx, scheme, plugin):
+    def __init__(self, ctx, provider, scheme, plugin, logger):
         self.ctx = ctx
         print("DataSource.__init__() 1")
-        service = '%s.Provider' % plugin
-        self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        self.Provider = provider
         print("DataSource.__init__() 2")
         self._Statement = None
         self._CahedUser = {}
         self._Calls = {}
         self._Error = ''
+        self.Logger = logger
         url = getDataSourceUrl(ctx, scheme, plugin)
         print("DataSource.__init__() 3")
         connection = getDataSourceConnection(ctx, url)
@@ -84,27 +84,30 @@ class DataSource(unohelper.Base,
         return user
 
     def initializeUser(self, name, error):
-        print("DataSource.initializeUser() 1")
-        user = KeyMap()
-        if not name:
-            error = "ERROR: Can't retrieve a UserName from Handler"
-            return user, error
-        print("DataSource.initializeUser() 2")
-        if not self.Provider.initializeUser(name):
-            error = "ERROR: No authorization for User: %s" % name
-            return user, error
-        print("DataSource.initializeUser() 3")
-        user = self._selectUser(name)
-        if not user.IsPresent:
-            print("DataSource.initializeUser() 4")
-            if self.Provider.isOnLine():
-                user = self._getUser(name)
-                if not user.IsPresent:
-                    error = "ERROR: Can't retrieve User: %s from provider" % name
-            else:
-                error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
-        print("DataSource.initializeUser() FIN")
-        return user.Value, error
+        try:
+            print("DataSource.initializeUser() 1")
+            user = KeyMap()
+            if not name:
+                error = "ERROR: Can't retrieve a UserName from Handler"
+                return user, error
+            print("DataSource.initializeUser() 2")
+            if not self.Provider.initializeUser(name):
+                error = "ERROR: No authorization for User: %s" % name
+                return user, error
+            print("DataSource.initializeUser() 3")
+            user = self._selectUser(name)
+            if not user.IsPresent:
+                print("DataSource.initializeUser() 4")
+                if self.Provider.isOnLine():
+                    user = self._getUser(name)
+                    if not user.IsPresent:
+                        error = "ERROR: Can't retrieve User: %s from provider" % name
+                else:
+                    error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
+            print("DataSource.initializeUser() FIN")
+            return user.Value, error
+        except Exception as e:
+            print("DataSource.initializeUser().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _getContentType(self):
         try:
@@ -443,7 +446,7 @@ class DataSource(unohelper.Base,
             modes = (SYNC_FILE, )
         return self._insertNewContent(userid, itemid, parentid, content, modes)
     def insertNewFolder(self, userid, itemid, parentid, content):
-        mode = (SYNC_FOLDER, )
+        modes = (SYNC_FOLDER, )
         return self._insertNewContent(userid, itemid, parentid, content, modes)
 
     def _insertNewContent(self, userid, itemid, parentid, content, modes):

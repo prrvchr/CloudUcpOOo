@@ -59,8 +59,8 @@ def getKeyMapFromResult(result, keymap=None, provider=None):
     item = KeyMap() if keymap is None else keymap
     #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
     for i in range(1, result.MetaData.ColumnCount +1):
-        dbtype = result.MetaData.getColumnTypeName(i)
         name = result.MetaData.getColumnName(i)
+        dbtype = result.MetaData.getColumnTypeName(i)
         if dbtype == 'VARCHAR':
             value = result.getString(i)
         elif dbtype == 'TIMESTAMP':

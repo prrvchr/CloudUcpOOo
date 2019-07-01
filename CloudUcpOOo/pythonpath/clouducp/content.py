@@ -58,7 +58,6 @@ class Content(unohelper.Base,
     def __init__(self, ctx, identifier, data):
         try:
             self.ctx = ctx
-            self.Logger = getLogger(self.ctx)
             msg = "DriveFolderContent loading ... "
             self.Identifier = identifier
             self.MetaData = data
@@ -66,10 +65,10 @@ class Content(unohelper.Base,
             self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
             self._commandInfo = self._getCommandInfo()
             self._propertySetInfo = self._getPropertySetInfo()
-            self._newTitle = ''
             self.contentListeners = []
             msg += "Done."
-            self.Logger.logp(INFO, "DriveFolderContent", "__init__()", msg)
+            if self.Logger:
+                self.Logger.logp(INFO, "DriveFolderContent", "__init__()", msg)
             print("Content.__init__() FIN")
         except Exception as e:
             print("Content.__init__().Error: %s - %s" % (e, traceback.print_exc()))
@@ -83,6 +82,9 @@ class Content(unohelper.Base,
     @property
     def CanAddChild(self):
         return self.MetaData.getValue('CanAddChild')
+    @property
+    def Logger(self):
+        return self.Identifier.User.DataSource.Logger
 
     # XChild
     def getParent(self):
@@ -229,11 +231,8 @@ class Content(unohelper.Base,
                         # - createNewContent: for creating an empty new Content
                         # - Insert at new Content for committing change
                         # To execute these commands, we must throw an exception
-                        # But we need to keep 'NewTitle' for building the Uri
-                        self._newTitle = title
                         msg = "Couln't handle Url: %s" % source
-                        print("Content.execute(): transfer 2:\n    transfer: %s - %s - %s" %  \
-                                                                    (source, id, self._newTitle))
+                        print("Content.execute(): transfer 2:\n    transfer: %s - %s" % (source, id))
                         raise InteractiveBadTransferURLException(msg, self)
                 print("Content.execute(): transfer 3:\n    transfer: %s - %s" % (source, id))
                 sf = getSimpleFile(self.ctx)

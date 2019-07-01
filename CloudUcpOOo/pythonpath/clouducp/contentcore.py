@@ -36,7 +36,6 @@ def getPropertiesValues(source, properties, logger=None):
             level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
         if logger:
             logger.logp(level, source.__class__.__name__, "getPropertiesValues()", msg)
-        print("%s.getPropertiesValues() %s" % (source.__class__.__name__, msg))
         namedvalues.append(getNamedValue(property.Name, value))
     return tuple(namedvalues)
 
@@ -54,7 +53,6 @@ def setPropertiesValues(source, context, properties, logger=None):
             result = uno.Any('com.sun.star.beans.UnknownPropertyException', error)
         if logger:
             logger.logp(level, source.__class__.__name__, "setPropertiesValues()", msg)
-        print("%s.setPropertiesValues() %s" % (source.__class__.__name__, msg))
         results.append(result)
     return tuple(results)
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .configuration import g_oauth2
+from .configuration import g_identifier
 
 from .datasource import DataSource
 from .providerbase import ProviderBase
@@ -29,7 +30,6 @@ from .contenttools import getSessionMode
 from .contenttools import getContentEvent
 from .contenttools import getContentInfo
 from .contenttools import propertyChange
-from .contenttools import g_identifier
 
 from .dbtools import getDataSourceConnection
 from .dbtools import getDataSourceUrl
@@ -41,6 +41,7 @@ from .logger import getLogger
 from .logger import getLoggerSetting
 from .logger import setLoggerSetting
 from .logger import getLoggerUrl
+from .logger import isLoggerEnabled
 
 from .unocore import PropertyContainer
 

@@ -46,6 +46,31 @@ class Identifier(unohelper.Base,
         else:
             self.MetaData = KeyMap()
 
+    @property
+    def Id(self):
+        return self.MetaData.getDefaultValue('Id', None)
+    @property
+    def IsRoot(self):
+        return self.MetaData.getDefaultValue('IsRoot', False)
+    @property
+    def IsValid(self):
+        return all((self.Id, not self.Error))
+    @property
+    def IsNew(self):
+        return self.MetaData.getValue('IsNew')
+    @property
+    def BaseURI(self):
+        return self.MetaData.getValue('BaseURI')
+    @property
+    def BaseURL(self):
+        return self.MetaData.getValue('BaseURL')
+    @property
+    def Logger(self):
+        return self.User.DataSource.Logger
+    @property
+    def Error(self):
+        return self.User.Error if self.User.Error else self._Error
+
     def getContent(self):
         print("Identifier.getContent()")
         if self.IsNew:
@@ -72,28 +97,6 @@ class Identifier(unohelper.Base,
             data = self.User.getItem(self.MetaData)
         data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
         return Content(self.ctx, self, data)
-
-    @property
-    def Id(self):
-        return self.MetaData.getDefaultValue('Id', None)
-    @property
-    def IsRoot(self):
-        return self.MetaData.getDefaultValue('IsRoot', False)
-    @property
-    def IsValid(self):
-        return all((self.Id, not self.Error))
-    @property
-    def IsNew(self):
-        return self.MetaData.getValue('IsNew')
-    @property
-    def BaseURI(self):
-        return self.MetaData.getValue('BaseURI')
-    @property
-    def BaseURL(self):
-        return self.MetaData.getValue('BaseURL')
-    @property
-    def Error(self):
-        return self.User.Error if self.User.Error else self._Error
 
     def setTitle(self, title, isfolder):
         id = self.Id if isfolder else title

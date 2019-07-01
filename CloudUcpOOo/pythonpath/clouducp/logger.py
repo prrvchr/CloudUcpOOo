@@ -6,10 +6,13 @@ import uno
 from .unotools import getConfiguration
 
 
-def getLogger(ctx=None, logger='org.openoffice.logging.DefaultLogger'):
-    if ctx is None:
-        ctx = uno.getComponentContext()
+def getLogger(ctx, logger='org.openoffice.logging.DefaultLogger'):
     return ctx.getValueByName('/singletons/com.sun.star.logging.LoggerPool').getNamedLogger(logger)
+
+def isLoggerEnabled(ctx, logger='org.openoffice.logging.DefaultLogger'):
+    level = _getLoggerConfiguration(ctx, logger).LogLevel
+    enabled = _isLoggerEnabled(level)
+    return enabled
 
 def getLoggerSetting(ctx, logger='org.openoffice.logging.DefaultLogger'):
     enabled, index = _getLogIndex(ctx, logger)
@@ -31,10 +34,13 @@ def getLoggerUrl(ctx, logger='org.openoffice.logging.DefaultLogger'):
 def _getLogIndex(ctx, logger='org.openoffice.logging.DefaultLogger'):
     index = 7
     level = _getLoggerConfiguration(ctx, logger).LogLevel
-    enabled = level != uno.getConstantByName('com.sun.star.logging.LogLevel.OFF')
+    enabled = _isLoggerEnabled(level)
     if enabled:
         index = _getLogLevels().index(level)
     return enabled, index
+
+def _isLoggerEnabled(level):
+    return level != uno.getConstantByName('com.sun.star.logging.LogLevel.OFF')
 
 def _setLogIndex(ctx, enabled, index, logger='org.openoffice.logging.DefaultLogger'):
     level = uno.getConstantByName('com.sun.star.logging.LogLevel.OFF')

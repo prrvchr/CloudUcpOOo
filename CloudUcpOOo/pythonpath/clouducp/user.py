@@ -50,6 +50,9 @@ class User(unohelper.Base,
     def IsValid(self):
         return all((self.Id, self.Name, self.RootId, self.RootName, not self.Error))
     @property
+    def Logger(self):
+        return self.DataSource.Logger
+    @property
     def Error(self):
         return self.DataSource.Error if self.DataSource.Error else self._Error
 
