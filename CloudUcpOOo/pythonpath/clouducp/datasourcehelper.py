@@ -105,8 +105,8 @@ def _createDataSource(ctx, scheme, path, url):
         print("DataSourceHelper._createDataSource().Error: %s - %s" % (e, traceback.print_exc()))
 
 def _getDataSourceUrl(scheme, url, shutdown):
-    location = uno.fileUrlToSystemPath(url)
-    return '%sfile:%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
+    path = uno.fileUrlToSystemPath('%s/%s' % (url, scheme))
+    return '%sfile:%s%s%s' % (g_protocol, path, g_options, g_shutdow if shutdown else '')
 
 def _createDataBase(datasource, scheme):
     try:
