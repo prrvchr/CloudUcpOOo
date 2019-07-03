@@ -38,13 +38,19 @@ def getDataSourceUrl(ctx, scheme, plugin):
         print("DataSourceHelper.getDataSourceUrl().Error: %s - %s" % (e, traceback.print_exc()))
 
 def getDataSourceConnection(ctx, url, logger):
-    msg = "Try to connect to DataSource:"
+    msg = "Try to connect to DataSource: 1"
     logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     connection = None
     dbcontext = ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
+    msg = "Try to connect to DataSource: 2"
+    logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     try:
+        msg = "Try to connect to DataSource: 3"
+        logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
         datasource = dbcontext.getByName(url)
         connection = datasource.getIsolatedConnection('', '')
+        msg = "Try to connect to DataSource: 4"
+        logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     except Exception as e:
         msg += " ... Error: %s - %s" % (e, traceback.print_exc())
         logger.logp(SEVERE, "DataSource", "getDataSourceConnection()", msg)
