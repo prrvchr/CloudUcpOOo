@@ -89,8 +89,9 @@ def _createDataSource(ctx, scheme, path, url):
         print("DataSourceHelper._createDataSource() 1")
         datasource = dbcontext.createInstance()
         datasource.URL = _getDataSourceUrl(scheme, path, False)
+        path = _getDefaultJarPath(ctx)
         info = (getPropertyValue('JavaDriverClass', g_class),
-                getPropertyValue('JavaDriverClassPath', '%s/%s' % (path, g_jar)))
+                getPropertyValue('JavaDriverClassPath', path))
         datasource.Info = info
         datasource.DatabaseDocument.storeAsURL(url, ())
         #odb = datasource.DatabaseDocument
@@ -107,6 +108,13 @@ def _createDataSource(ctx, scheme, path, url):
 def _getDataSourceUrl(scheme, url, shutdown):
     path = uno.fileUrlToSystemPath('%s/%s' % (url, scheme))
     return '%sfile:%s%s%s' % (g_protocol, path, g_options, g_shutdow if shutdown else '')
+
+def _getDefaultJarPath(ctx):
+    pathsub = ctx.ServiceManager.createInstance('com.sun.star.util.PathSubstitution')
+    path = pathsub.substituteVariables('$(prog)', True)
+    jarpath = '%s/classes/%s' % (path, g_jar)
+    print("DataSourceHelper._getDefaultJarPath() JarPath: %s" % jarpath)
+    return jarpath
 
 def _createDataBase(datasource, scheme):
     try:
