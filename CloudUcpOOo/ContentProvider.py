@@ -67,12 +67,13 @@ class ContentProvider(unohelper.Base,
             return None
         self.Scheme = scheme
         self.Plugin = plugin
+        msg = "ContentProvider registerInstance: addCloseListener ... Done"
+        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg)
         datasource.Connection.Parent.DatabaseDocument.addCloseListener(self)
         self.DataSource = datasource
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
         self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
         provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
-        print("ContentProvider.registerInstance() %s" % provider)
         return provider
     def deregisterInstance(self, scheme, argument):
         getUcb(self.ctx).deregisterContentProvider(self, scheme)
