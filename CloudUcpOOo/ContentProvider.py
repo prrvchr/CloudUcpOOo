@@ -20,7 +20,6 @@ from clouducp import g_identifier
 from clouducp import DataSource
 from clouducp import InteractionRequestParameters
 from clouducp import getInteractionHandler
-from clouducp import getLogger
 from clouducp import isLoggerEnabled
 from clouducp import getUcb
 from clouducp import getUri
@@ -45,32 +44,35 @@ class ContentProvider(unohelper.Base,
         self.Plugin = ''
         self.DataSource = None
         self._defaultUser = None
+        self.Logger = self._getLogger()
+        msg = "ContentProvider: %s loading ... Done" % g_identifier
+        self.Logger.logp(INFO, 'ContentProvider', '__init__()', msg)
 
     def __del__(self):
-       msg = "ContentProvider unloading ... Done"
-       self._logp(INFO, "ContentProvider", "__del__()", msg)
+       msg = "ContentProvider; %s unloading ... Done" % g_identifier
+       self.Logger.logp(INFO, "ContentProvider", "__del__()", msg)
 
     # XParameterizedContentProvider
     def registerInstance(self, scheme, plugin, replace):
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Started"
-        self._logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
         datasource = DataSource(self.ctx, scheme, plugin)
         if not datasource.IsValid:
-            self._logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
+            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
             return None
         self.Scheme = scheme
         self.Plugin = plugin
         datasource.Connection.Parent.DatabaseDocument.addCloseListener(self)
         self.DataSource = datasource
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
-        self._logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
         provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
         print("ContentProvider.registerInstance() %s" % provider)
         return provider
     def deregisterInstance(self, scheme, argument):
         getUcb(self.ctx).deregisterContentProvider(self, scheme)
         msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
-        self._logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
+        self.Logger.logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
 
     # XCloseListener
     def queryClosing(self, source, ownership):
@@ -79,21 +81,21 @@ class ContentProvider(unohelper.Base,
         statement = self.DataSource.Connection.createStatement()
         statement.execute(query)
         msg = "ContentProvider queryClosing: Scheme: %s ... Done"
-        self._logp(INFO, "ContentProvider", "queryClosing()", msg % self.Scheme)
+        self.Logger.logp(INFO, "ContentProvider", "queryClosing()", msg % self.Scheme)
     def notifyClosing(self, source):
         pass
 
     # XContentIdentifierFactory
     def createContentIdentifier(self, url):
         msg = "Identifier: %s ..." % url
-        self._logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         url = self._getUrl(url)
         uri = getUri(self.ctx, url)
         name = self._getUserName(uri)
         user = self.DataSource.getUser(name)
         identifier = user.getIdentifier(uri)
         msg = "Identifier: %s ... Done" % identifier.getContentIdentifier()
-        self._logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         return identifier
 
     # XContentProvider
@@ -101,11 +103,11 @@ class ContentProvider(unohelper.Base,
         url = identifier.getContentIdentifier()
         if not identifier.IsValid:
             msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
-            self._logp(INFO, "ContentProvider", "queryContent()", msg)
+            self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
             raise IllegalIdentifierException(identifier.Error, self)
         content = identifier.getContent()
         msg = "Identitifer: %s ... Done" % url
-        self._logp(INFO, "ContentProvider", "queryContent()", msg)
+        self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
         return content
 
     def compareContentIds(self, id1, id2):
@@ -123,7 +125,7 @@ class ContentProvider(unohelper.Base,
             msg += " are not the same..."
             compare = 10
         msg += " ... Done"
-        self._logp(INFO, "ContentProvider", "compareContentIds()", msg)
+        self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
 
     def _getUrl(self, identifier):
@@ -158,9 +160,10 @@ class ContentProvider(unohelper.Base,
                 return result.Value
         return ''
 
-    def _logp(self, level, source, method, message):
-        if self.DataSource:
-            self.DataSource.Provider.Request.logp(level, source, method, message)
+    def _getLogger(self, logger='org.openoffice.logging.DefaultLogger'):
+        singleton = '/singletons/com.sun.star.logging.LoggerPool'
+        return self.ctx.getValueByName(singleton).getNamedLogger(logger)
+
 
     # XServiceInfo
     def supportsService(self, service):
