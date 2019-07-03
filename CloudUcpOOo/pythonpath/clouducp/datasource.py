@@ -35,30 +35,37 @@ class DataSource(unohelper.Base,
                  XCloseListener,
                  XRestDataSource):
     def __init__(self, ctx, scheme, plugin):
+        self.ctx = ctx
+        self._Statement = None
+        self._CahedUser = {}
+        self._Calls = {}
+        self._Error = ''
+        self.Logger = self._getLogger()
+        msg = "DataSource: %s loading ... Started" % scheme
+        self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
+        service = '%s.Provider' % plugin
         try:
-            self.ctx = ctx
-            print("DataSource.__init__() 1")
-            service = '%s.Provider' % plugin
             self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-            print("DataSource.__init__() 2")
-            self._Statement = None
-            self._CahedUser = {}
-            self._Calls = {}
-            self._Error = ''
-            url = getDataSourceUrl(ctx, scheme, plugin)
-            print("DataSource.__init__() 3")
-            connection = getDataSourceConnection(ctx, url)
-            if not connection:
-                self._Error = "Could not connect to DataSource at URL: %s" % url
-            else:
-                # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
-                self._Statement = connection.createStatement()
-                folder, link = self._getContentType()
-                print("DataSource.__init__() 4 %s - %s" % (link, folder))
-                self.Provider.initialize(scheme, plugin, folder, link)
-            print("DataSource.__init__() FIN")
         except Exception as e:
-            print("DataSource.__init__().Error: %s - %s" % (e, traceback.print_exc()))
+            msg = "DataSource loading: Error: %s - %s" % (e, traceback.print_exc())
+            self.Logger.logp(SEVERE, "DataSource", "__init__()", msg)
+        else:
+            url = getDataSourceUrl(ctx, scheme, plugin)
+            try:
+                connection = getDataSourceConnection(ctx, url)
+            except Exception as e:
+                msg = "Error: %s - %s" % (e, traceback.print_exc())
+                self.Logger.logp(SEVERE, "DataSource", "getDataSourceConnection()", msg)
+            else:
+                if not connection:
+                    self._Error = "Could not connect to DataSource at URL: %s" % url
+                else:
+                    # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+                    self._Statement = connection.createStatement()
+                    folder, link = self._getContentType()
+                    self.Provider.initialize(scheme, plugin, folder, link)
+                msg = "DataSource: %s loading ... Done" % scheme
+                self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
 
     @property
     def Connection(self):
@@ -599,3 +606,7 @@ class DataSource(unohelper.Base,
         if cache:
             self._Calls[name] = call
         return call
+
+    def _getLogger(self, logger='org.openoffice.logging.DefaultLogger'):
+        singleton = '/singletons/com.sun.star.logging.LoggerPool'
+        return self.ctx.getValueByName(singleton).getNamedLogger(logger)
