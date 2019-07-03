@@ -56,7 +56,12 @@ class ContentProvider(unohelper.Base,
     def registerInstance(self, scheme, plugin, replace):
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Started"
         self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
-        datasource = DataSource(self.ctx, scheme, plugin)
+        try:
+            datasource = DataSource(self.ctx, scheme, plugin)
+        except Exception as e:
+            msg = "ContentProvider registerInstance: Error: %s - %s" % (e, traceback.print_exc())
+            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", msg)
+            return None
         if not datasource.IsValid:
             self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
             return None
