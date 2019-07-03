@@ -48,7 +48,7 @@ def getDataSourceConnection(ctx, url, logger):
         datasource = dbcontext.getByName(url)
         msg = "Try to connect to DataSource: 3"
         logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
-        connection = datasource.getIsolatedConnection('', '')
+        connection = datasource.getConnection('', '')
         msg = "Try to connect to DataSource: 4"
         logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     except Exception as e:
