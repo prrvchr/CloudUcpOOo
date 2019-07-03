@@ -4,7 +4,6 @@
 import uno
 import unohelper
 
-from com.sun.star.util import XCloseListener
 from com.sun.star.lang import XEventListener
 from com.sun.star.logging.LogLevel import INFO
 from com.sun.star.logging.LogLevel import SEVERE
@@ -34,7 +33,6 @@ import traceback
 
 
 class DataSource(unohelper.Base,
-                 XCloseListener,
                  XRestDataSource):
     def __init__(self, ctx, scheme, plugin):
         self.ctx = ctx
@@ -52,7 +50,7 @@ class DataSource(unohelper.Base,
             msg = "DataSource loading: Error: %s - %s" % (e, traceback.print_exc())
             self.Logger.logp(SEVERE, "DataSource", "__init__()", msg)
         else:
-            url = getDataSourceUrl(ctx, scheme, plugin)
+            url = getDataSourceUrl(self.ctx, scheme, plugin)
             try:
                 connection = getDataSourceConnection(ctx, url)
             except Exception as e:
@@ -61,13 +59,14 @@ class DataSource(unohelper.Base,
             else:
                 if not connection:
                     self._Error = "Could not connect to DataSource at URL: %s" % url
+                    self.Logger.logp(SEVERE, 'DataSource', '__init__()', self._Error)
                 else:
                     # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
                     self._Statement = connection.createStatement()
                     folder, link = self._getContentType()
                     self.Provider.initialize(scheme, plugin, folder, link)
-                msg = "DataSource: %s loading ... Done" % scheme
-                self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
+                    msg = "DataSource: %s loading ... Done" % scheme
+                    self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
 
     @property
     def Connection(self):
