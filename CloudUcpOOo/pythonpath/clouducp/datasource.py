@@ -52,7 +52,7 @@ class DataSource(unohelper.Base,
         else:
             url = getDataSourceUrl(self.ctx, scheme, plugin)
             try:
-                connection = getDataSourceConnection(ctx, url)
+                connection = getDataSourceConnection(ctx, url, self.Logger)
             except Exception as e:
                 msg = "Error: %s - %s" % (e, traceback.print_exc())
                 self.Logger.logp(SEVERE, "DataSource", "getDataSourceConnection()", msg)

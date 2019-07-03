@@ -5,6 +5,8 @@ import uno
 import unohelper
 
 from com.sun.star.sdbc import SQLException
+from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 
 from .unotools import getPropertyValue
 from .unotools import getResourceLocation
@@ -35,17 +37,19 @@ def getDataSourceUrl(ctx, scheme, plugin):
     except Exception as e:
         print("DataSourceHelper.getDataSourceUrl().Error: %s - %s" % (e, traceback.print_exc()))
 
-def getDataSourceConnection(ctx, url):
-    print("DataSourceHelper.getDataSource() 1")
+def getDataSourceConnection(ctx, url, logger):
+    msg = "Try to connect to DataSource at Url: %s" % url
     connection = None
     dbcontext = ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
     try:
         datasource = dbcontext.getByName(url)
-        print("DataSourceHelper.getDataSource() 2")
         connection = datasource.getIsolatedConnection('', '')
     except Exception as e:
-        pass
-    print("DataSourceHelper.getDataSource() FIN")
+        msg += " ... Error: %s - %s" % (e, traceback.print_exc())
+        logger.logp(SEVERE, "DataSource", "getDataSourceConnection()", msg)
+    else:
+        msg += " ... Done"
+        logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     return connection
 
 def getKeyMapFromResult(result, item, provider=None):
