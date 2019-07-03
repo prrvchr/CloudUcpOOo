@@ -6,6 +6,8 @@ import unohelper
 
 from com.sun.star.util import XCloseListener
 from com.sun.star.lang import XEventListener
+from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 from com.sun.star.sdb.CommandType import QUERY
 from com.sun.star.ucb import XRestDataSource
 from com.sun.star.ucb.ConnectionMode import ONLINE
