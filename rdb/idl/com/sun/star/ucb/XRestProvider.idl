@@ -34,17 +34,18 @@ interface XRestProvider: com::sun::star::uno::XInterface
     ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getUser([in] string Name);
     ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getRoot([in] ::com::sun::star::auth::XRestKeyMap User);
     ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> getItem([in] ::com::sun::star::auth::XRestKeyMap Identifier);
-    ::com::sun::star::auth::RestRequestParameter getUpdateParameter([in] ::com::sun::star::auth::XRestKeyMap Item,
-                                                                    [in] boolean New,
-                                                                    [in] string Method);
-    ::com::sun::star::auth::RestRequestParameter getUploadParameter([in] ::com::sun::star::auth::XRestKeyMap Item,
-                                                                   [in] boolean New);
     ::com::sun::star::container::XEnumeration getFolderContent([in] ::com::sun::star::auth::XRestKeyMap content);
     ::com::sun::star::io::XInputStream getDocumentContent([in] ::com::sun::star::auth::XRestKeyMap content);
     ::com::sun::star::auth::RestRequestParameter getRequestParameter([in] string Method,
                                                                      [in] ::com::sun::star::auth::XRestKeyMap Data);
-    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> updateContent([in] ::com::sun::star::auth::RestRequestParameter Parameter);
     ::com::sun::star::uno::XInterface getUploader([in] ::com::sun::star::uno::XInterface DataSource);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> createFile([in] ::com::sun::star::auth::XRestKeyMap Item);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> createFolder([in] ::com::sun::star::auth::XRestKeyMap Item);
+    any uploadFile([in] ::com::sun::star::uno::XInterface Uploader,
+                   [in] ::com::sun::star::auth::XRestKeyMap Item,
+                   [in] boolean New);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> updateTitle([in] ::com::sun::star::auth::XRestKeyMap Item);
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> updateTrashed([in] ::com::sun::star::auth::XRestKeyMap Item);
     string getUserId([in] ::com::sun::star::auth::XRestKeyMap User);
     string getUserName([in] ::com::sun::star::auth::XRestKeyMap User);
     string getUserDisplayName([in] ::com::sun::star::auth::XRestKeyMap User);

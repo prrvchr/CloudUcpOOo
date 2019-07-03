@@ -38,14 +38,15 @@ class OptionsDialog(unohelper.Base,
                     XDialogEventHandler):
     def __init__(self, ctx):
         self.ctx = ctx
-        self.stringResource = getStringResource(self.ctx, g_identifier, 'CloudUcpOOo', 'OptionsDialog')
-        print("PyOptionsDialog.__init__() 1")
+        self.stringResource = getStringResource(self.ctx, g_identifier, 'CloudUcpOOo')
+        print("OptionsDialog.__init__() 1")
 
     def __del__(self):
-        print("PyOptionsDialog.__del__()***********************")
+        print("OptionsDialog.__del__()***********************")
 
     # XContainerWindowEventHandler, XDialogEventHandler
     def callHandlerMethod(self, dialog, event, method):
+        print("OptionsDialog.callHandlerMethod() 1")
         handled = False
         if method == 'external_event':
             if event == 'ok':
@@ -69,28 +70,29 @@ class OptionsDialog(unohelper.Base,
         elif method == 'LoadUcp':
             self._doLoadUcp(dialog)
             handled = True
-        elif method == 'ViewFile':
-            self._doViewFile(dialog)
+        elif method == 'UnloadUcp':
+            self._doUnloadUcp(dialog)
+            handled = True
+        elif method == 'Changed':
+            self._doChanged(dialog, event.Source)
             handled = True
         return handled
     def getSupportedMethodNames(self):
-        return ('external_event', 'Logger', 'ViewLog', 'ClearLog', 'LoadUcp', 'ViewFile')
+        print("OptionsDialog.getSupportedMethodNames() 1")
+        return ('external_event', 'Logger', 'ViewLog', 'ClearLog', 'Changed', 'LoadUcp', 'UnloadUcp')
 
-    def _doViewFile(self, dialog):
-        try:
-            print("PyOptionsDialog._doViewFile() 1")
-            #url = registerDataBase(self.ctx, g_scheme)
-            #desktop = self.ctx.ServiceManager.createInstance('com.sun.star.frame.Desktop')
-            #desktop.loadComponentFromURL(url, '_default', 0, ())
-            configuration = getConfiguration(self.ctx, 'org.openoffice.Office.Java')
-            mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
-            mri.inspect(configuration)
-            print("PyOptionsDialog._doViewFile() 2")
-        except Exception as e:
-            print("PyOptionsDialog._doViewFile().Error: %s - %s" % (e, traceback.print_exc()))
+    def _doChanged(self, dialog, control):
+        enabled = control.SelectedItemPos != -1
+        dialog.getControl(control.Model.Tag).Model.Enabled = enabled
+        print("OptionsDialog._doChanged() 1")
 
     def _loadSetting(self, dialog):
-        self._loadLoggerSetting(dialog)
+        try:
+            print("OptionsDialog._loadSetting() 1")
+            self._loadLoggerSetting(dialog)
+            self._loadUcpSetting(dialog)
+        except Exception as e:
+            print("OptionsDialog._loadSetting().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _saveSetting(self, dialog):
         self._saveLoggerSetting(dialog)
@@ -116,7 +118,7 @@ class OptionsDialog(unohelper.Base,
             dialog.execute()
             dialog.dispose()
         except Exception as e:
-            print("PyOptionsDialog._doViewLog().Error: %s - %s" % (e, traceback.print_exc()))
+            print("OptionsDialog._doViewLog().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _doClearLog(self, dialog):
         try:
@@ -132,23 +134,35 @@ class OptionsDialog(unohelper.Base,
             length, sequence = getFileSequence(self.ctx, url)
             text = sequence.value.decode('utf-8')
             dialog.getControl('TextField1').Text = text
-            print("PyOptionsDialog._doClearLog() 1")
+            print("OptionsDialog._doClearLog() 1")
         except Exception as e:
-            print("PyOptionsDialog._doClearLog().Error: %s - %s" % (e, traceback.print_exc()))
+            print("OptionsDialog._doClearLog().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _doLoadUcp(self, dialog):
         try:
-            print("PyOptionsDialog._doLoadUcp() 1")
-            #provider = getUcp(self.ctx, g_scheme)
-            #if provider.supportsService('com.sun.star.ucb.ContentProviderProxy'):
-                #ucp = provider.getContentProvider()
-            #    ucp = createService('com.gmail.prrvchr.extensions.CloudUcpOOo.ContentProvider', self.ctx)
-            #    provider = ucp.registerInstance(g_scheme, '', True)
-            #    self._toogleSync(dialog, True)
-            print("PyOptionsDialog._doLoadUcp() 2")
-            #identifier = getUcb(self.ctx).createContentIdentifier('%s:///' % g_scheme)
+            print("OptionsDialog._doLoadUcp() 1")
+            scheme = dialog.getControl('ListBox1').SelectedItem
+            provider = self._getProvider(scheme)
+            if provider.supportsService('com.sun.star.ucb.ContentProviderProxy'):
+                print("OptionsDialog._doLoadUcp() 2")
+                provider = provider.getContentProvider()
+                control = dialog.getControl('ListBox2')
+                control.Model.StringItemList = self._getSchemes(True)
+                self. _doChanged(dialog, control)
+            print("OptionsDialog._doLoadUcp() 3")
         except Exception as e:
-            print("PyOptionsDialog._doLoadUcp().Error: %s - %s" % (e, traceback.print_exc()))
+            print("OptionsDialog._doLoadUcp().Error: %s - %s" % (e, traceback.print_exc()))
+
+    def _doUnloadUcp(self, dialog):
+        try:
+            control = dialog.getControl('ListBox2')
+            scheme = control.SelectedItem
+            self._getProvider(scheme).deregisterInstance(scheme, '')
+            control.Model.StringItemList = self._getSchemes(True)
+            self. _doChanged(dialog, control)
+            print("OptionsDialog._doUnloadUcp() 1")
+        except Exception as e:
+            print("OptionsDialog._doUnloadUcp().Error: %s - %s" % (e, traceback.print_exc()))
 
     def _getLogDialog(self, window):
         url = 'vnd.sun.star.script:CloudUcpOOo.LogDialog?location=application'
@@ -163,17 +177,39 @@ class OptionsDialog(unohelper.Base,
     def _loadLoggerSetting(self, dialog):
         try:
             enabled, index, handler = getLoggerSetting(self.ctx)
-            print("PyOptionsDialog._loadLoggerSetting() %s %s %s" % (enabled, index, handler))
+            print("OptionsDialog._loadLoggerSetting() %s %s %s" % (enabled, index, handler))
             dialog.getControl('CheckBox1').State = int(enabled)
-            print("PyOptionsDialog._loadLoggerSetting() 2")
+            print("OptionsDialog._loadLoggerSetting() 2")
             self._setLoggerLevel(dialog.getControl('ComboBox1'), index)
-            print("PyOptionsDialog._loadLoggerSetting() 3")
+            print("OptionsDialog._loadLoggerSetting() 3")
             dialog.getControl('OptionButton%s' % handler).State = 1
-            print("PyOptionsDialog._loadLoggerSetting() 4")
+            print("OptionsDialog._loadLoggerSetting() 4")
             self._doLogger(dialog, enabled)
-            print("PyOptionsDialog._loadLoggerSetting() 5")
+            print("OptionsDialog._loadLoggerSetting() 5")
         except Exception as e:
-            print("PyOptionsDialog._loadLoggerSetting().Error: %s - %s" % (e, traceback.print_exc()))
+            print("OptionsDialog._loadLoggerSetting().Error: %s - %s" % (e, traceback.print_exc()))
+
+    def _loadUcpSetting(self, dialog):
+        dialog.getControl('ListBox1').Model.StringItemList = self._getSchemes()
+        dialog.getControl('ListBox2').Model.StringItemList = self._getSchemes(True)
+
+    def _getSchemes(self, loaded=False):
+        schemes = []
+        for info in getUcb(self.ctx).queryContentProviders():
+            provider = info.ContentProvider
+            if loaded:
+                if not provider or provider.supportsService('com.sun.star.ucb.ContentProviderProxy'):
+                    continue
+            schemes.append(info.Scheme)
+        return tuple(schemes)
+
+    def _getProvider(self, scheme):
+        provider = None
+        for info in getUcb(self.ctx).queryContentProviders():
+            if info.Scheme == scheme:
+                provider = info.ContentProvider
+                break
+        return provider
 
     def _setLoggerLevel(self, control, index):
         name = control.Model.Name

@@ -17,12 +17,6 @@ from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RENAMED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_REWRITED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 
-# oauth2 is only available after OAuth2OOo as been loaded...
-try:
-    from oauth2 import KeyMap
-except ImportError:
-    print("DataSource IMPORT ERROR ******************************************************")
-    pass
 from .user import User
 
 from .datasourcehelper import getDataSourceUrl
@@ -40,28 +34,31 @@ import traceback
 class DataSource(unohelper.Base,
                  XCloseListener,
                  XRestDataSource):
-    def __init__(self, ctx, provider, scheme, plugin, logger):
-        self.ctx = ctx
-        print("DataSource.__init__() 1")
-        self.Provider = provider
-        print("DataSource.__init__() 2")
-        self._Statement = None
-        self._CahedUser = {}
-        self._Calls = {}
-        self._Error = ''
-        self.Logger = logger
-        url = getDataSourceUrl(ctx, scheme, plugin)
-        print("DataSource.__init__() 3")
-        connection = getDataSourceConnection(ctx, url)
-        if not connection:
-            self._Error = "Could not connect to DataSource at URL: %s" % url
-        else:
-            # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
-            self._Statement = connection.createStatement()
-            folder, link = self._getContentType()
-            print("DataSource.__init__() 4 %s - %s" % (link, folder))
-            self.Provider.initialize(scheme, plugin, folder, link)
-        print("DataSource.__init__() FIN")
+    def __init__(self, ctx, scheme, plugin):
+        try:
+            self.ctx = ctx
+            print("DataSource.__init__() 1")
+            service = '%s.Provider' % plugin
+            self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+            print("DataSource.__init__() 2")
+            self._Statement = None
+            self._CahedUser = {}
+            self._Calls = {}
+            self._Error = ''
+            url = getDataSourceUrl(ctx, scheme, plugin)
+            print("DataSource.__init__() 3")
+            connection = getDataSourceConnection(ctx, url)
+            if not connection:
+                self._Error = "Could not connect to DataSource at URL: %s" % url
+            else:
+                # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+                self._Statement = connection.createStatement()
+                folder, link = self._getContentType()
+                print("DataSource.__init__() 4 %s - %s" % (link, folder))
+                self.Provider.initialize(scheme, plugin, folder, link)
+            print("DataSource.__init__() FIN")
+        except Exception as e:
+            print("DataSource.__init__().Error: %s - %s" % (e, traceback.print_exc()))
 
     @property
     def Connection(self):
@@ -86,7 +83,7 @@ class DataSource(unohelper.Base,
     def initializeUser(self, name, error):
         try:
             print("DataSource.initializeUser() 1")
-            user = KeyMap()
+            user = self.Provider.Request.getKeyMap()
             if not name:
                 error = "ERROR: Can't retrieve a UserName from Handler"
                 return user, error
@@ -125,14 +122,14 @@ class DataSource(unohelper.Base,
     def _selectUser(self, name):
         print("DataSource._selectUser() 1")
         user = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.auth.XRestKeyMap>')
-        user.Value = KeyMap()
+        user.Value = self.Provider.Request.getKeyMap()
         select = self._getDataSourceCall('getUser')
         select.setString(1, name)
         result = select.executeQuery()
         if result.next():
             user.IsPresent = True
             print("DataSource._selectUser() 2")
-            user.Value = getKeyMapFromResult(result)
+            user.Value = getKeyMapFromResult(result, self.Provider.Request.getKeyMap())
         select.close()
         print("DataSource._selectUser() 3")
         return user
@@ -164,7 +161,8 @@ class DataSource(unohelper.Base,
             self._executeRootCall('insert', userid, root, timestamp)
         user = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.auth.XRestKeyMap>')
         user.IsPresent = True
-        user.Value = KeyMap(**{'UserId': userid})
+        user.Value = self.Provider.Request.getKeyMap()
+        user.Value.insertValue('UserId', userid)
         user.Value.insertValue('RootId', rootid)
         user.Value.insertValue('RootName', self.Provider.getRootTitle(root))
         print("DataSource._insertUser() 2")
@@ -210,7 +208,7 @@ class DataSource(unohelper.Base,
         select.setString(2, identifier.getValue('Id'))
         result = select.executeQuery()
         if result.next():
-            item = getKeyMapFromResult(result)
+            item = getKeyMapFromResult(result, self.Provider.Request.getKeyMap())
         select.close()
         return item
 
@@ -224,7 +222,8 @@ class DataSource(unohelper.Base,
         c1.close()
         c2.close()
         id = self.Provider.getItemId(item)
-        identifier = KeyMap(**{'Id': id})
+        identifier = self.Provider.Request.getKeyMap()
+        identifier.insertValue('Id', id)
         return self._selectItem(user, identifier)
 
     def _prepareItemCall(self, method, delete, insert, user, item, timestamp):
@@ -401,14 +400,14 @@ class DataSource(unohelper.Base,
             mode = item.getValue('Mode')
             print("DataSource._syncItem(): 2 %s" % mode)
             if mode == SYNC_FOLDER:
-                response = self.Provider.createNewFolder(item)
+                response = self.Provider.createFolder(item)
             elif mode == SYNC_FILE:
-                response = self.Provider.createNewFile(uploader, item)
+                response = self.Provider.createFile(uploader, item)
             elif mode == SYNC_CREATED:
-                response = self.Provider.rewriteFile(uploader, item, True)
+                response = self.Provider.uploadFile(uploader, item, True)
             elif mode == SYNC_REWRITED:
                 print("DataSource._syncItem(): 3")
-                response = self.Provider.rewriteFile(uploader, item, False)
+                response = self.Provider.uploadFile(uploader, item, False)
             elif mode == SYNC_RENAMED:
                 response = self.Provider.updateTitle(item)
             elif mode == SYNC_TRASHED:

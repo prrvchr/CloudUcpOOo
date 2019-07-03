@@ -10,12 +10,6 @@ from com.sun.star.ucb.ConnectionMode import ONLINE
 
 from com.sun.star.ucb import XRestProvider
 
-# oauth2 is only available after OAuth2OOo as been loaded...
-try:
-    from oauth2 import KeyMap
-except ImportError:
-    pass
-
 from .dbtools import parseDateTime
 from .unotools import getResourceLocation
 from .configuration import g_oauth2
@@ -119,11 +113,6 @@ class ProviderBase(ProviderObject,
     def getItemParent(self, item, rootid):
         raise NotImplementedError
 
-    def getUploadParameter(self, item, new):
-        raise NotImplementedError
-    def getUpdateParameter(self, item, new, key):
-        raise NotImplementedError
-
     # Base method
     def parseDateTime(self, timestamp, format='%Y-%m-%dT%H:%M:%S.%fZ'):
         return parseDateTime(timestamp, format)
@@ -200,7 +189,7 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter('getNewIdentifier', user)
         return self.Request.getEnumerator(parameter)
     def getUser(self, name):
-        data = KeyMap()
+        data = self.Request.getKeyMap()
         data.insertValue('Id', name)
         parameter = self.getRequestParameter('getUser', data)
         return self.Request.execute(parameter)
@@ -220,57 +209,31 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter('getFolderContent', content)
         return self.Request.getEnumerator(parameter)
 
-    def updateContent(self, parameter):
-        print("Provider.updateContent() 1")
-        return self.Request.execute(parameter)
-
     def getUploader(self, datasource):
         print("Provider.getUploader() 1")
         return self.Request.getUploader(datasource)
 
-    def getUploadParameter(self, identifier, new):
-        print("Provider.getUploadParameter() 1")
-        if new:
-            parameter = self.insertNewFile(identifier)
-        else:
-            parameter = self.getRequestParameter('getUploadLocation', identifier)
-        print("Provider.getUploadParameter() 2")
-        response = self.Request.execute(parameter)
-        if response.IsPresent:
-            print("Provider.getUploadParameter() 3")
-            return self.getRequestParameter('getUploadStream', response.Value)
+    def createFile(self, item):
         return None
 
-    def getUpdateParameter(self, identifier, new, key):
-        if new:
-            parameter = self.getRequestParameter('insertNewFolder', identifier)
-        elif key == 'Title':
-            parameter = self.getRequestParameter('updateTitle', identifier)
-        elif key == 'Trashed':
-            parameter = self.getRequestParameter('updateTrashed', identifier)
-        return parameter
-
-    def createNewFile(self, item):
-        return None
-
-    def createNewFolder(self, item):
+    def createFolder(self, item):
         parameter = self.getRequestParameter('createNewFolder', item)
-        return self.updateContent(parameter)
+        return self.Request.execute(parameter)
 
-    def rewriteFile(self, uploader, item, new=False):
+    def uploadFile(self, uploader, item, new=False):
         method = 'getNewUploadLocation' if new else 'getUploadLocation'
         parameter = self.getRequestParameter(method, item)
         response = self.Request.execute(parameter)
         if response.IsPresent:
-            print("Provider.rewriteFile()")
+            print("Provider.uploadFile()")
             parameter = self.getRequestParameter('getUploadStream', response.Value)
             return None if uploader.start(item, parameter) else False
         return False
 
     def updateTitle(self, item):
         parameter = self.getRequestParameter('updateTitle', item)
-        return self.updateContent(parameter)
+        return self.Request.execute(parameter)
 
     def updateTrashed(self, item):
         parameter = self.getRequestParameter('updateTrashed', item)
-        return self.updateContent(parameter)
+        return self.Request.execute(parameter)

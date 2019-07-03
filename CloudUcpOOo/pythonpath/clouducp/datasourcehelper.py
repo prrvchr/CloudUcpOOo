@@ -6,13 +6,6 @@ import unohelper
 
 from com.sun.star.sdbc import SQLException
 
-# oauth2 is only available after OAuth2OOo as been loaded...
-try:
-    from oauth2 import KeyMap
-except ImportError:
-    print("DataSourceHelper IMPORT ERROR ******************************************************")
-    pass
-
 from .unotools import getPropertyValue
 from .unotools import getResourceLocation
 from .unotools import getSimpleFile
@@ -55,8 +48,7 @@ def getDataSourceConnection(ctx, url):
     print("DataSourceHelper.getDataSource() FIN")
     return connection
 
-def getKeyMapFromResult(result, keymap=None, provider=None):
-    item = KeyMap() if keymap is None else keymap
+def getKeyMapFromResult(result, item, provider=None):
     #print("DataSource._getKetMapFromResult() %s" % result.MetaData.ColumnCount)
     for i in range(1, result.MetaData.ColumnCount +1):
         name = result.MetaData.getColumnName(i)
@@ -106,24 +98,27 @@ def _getDataSourceUrl(scheme, url, shutdown):
     return '%sfile:%s/%s%s%s' % (g_protocol, location, scheme, g_options, g_shutdow if shutdown else '')
 
 def _createDataBase(datasource, scheme):
-    print("DataSourceHelper._createDataBase() 1")
-    connection = datasource.getConnection('', '')
-    statement = connection.createStatement()
-    statement.executeQuery(getSqlQuery('createSettingsTable'))
-    statement.executeQuery(getSqlQuery('setSettingsSource') %  scheme)
-    statement.executeQuery(getSqlQuery('setSettingsReadOnly'))
-    statement.executeQuery(getSqlQuery('createUsersTable'))
-    statement.executeQuery(getSqlQuery('createItemsTable'))
-    statement.executeQuery(getSqlQuery('createParentsTable'))
-    statement.executeQuery(getSqlQuery('createCapabilitiesTable'))
-    statement.executeQuery(getSqlQuery('createIdentifiersTable'))
-    statement.executeQuery(getSqlQuery('createSynchronizesTable'))
-    statement.executeQuery(getSqlQuery('createItemView'))
-    statement.executeQuery(getSqlQuery('createChildView'))
-    statement.executeQuery(getSqlQuery('createSyncView'))
-    connection.close()
-    connection.dispose()
-    print("DataSourceHelper._createDataBase() FIN")
+    try:
+        print("DataSourceHelper._createDataBase() 1")
+        connection = datasource.getConnection('', '')
+        statement = connection.createStatement()
+        statement.executeQuery(getSqlQuery('createSettingsTable'))
+        statement.executeQuery(getSqlQuery('setSettingsSource') %  scheme)
+        statement.executeQuery(getSqlQuery('setSettingsReadOnly'))
+        statement.executeQuery(getSqlQuery('createUsersTable'))
+        statement.executeQuery(getSqlQuery('createItemsTable'))
+        statement.executeQuery(getSqlQuery('createParentsTable'))
+        statement.executeQuery(getSqlQuery('createCapabilitiesTable'))
+        statement.executeQuery(getSqlQuery('createIdentifiersTable'))
+        statement.executeQuery(getSqlQuery('createSynchronizesTable'))
+        statement.executeQuery(getSqlQuery('createItemView'))
+        statement.executeQuery(getSqlQuery('createChildView'))
+        statement.executeQuery(getSqlQuery('createSyncView'))
+        connection.close()
+        connection.dispose()
+        print("DataSourceHelper._createDataBase() FIN")
+    except Exception as e:
+        print("DataSourceHelper._createDataBase().Error: %s - %s" % (e, traceback.print_exc()))
 
 def _registerDataSource(ctx, path, scheme, location, shutdown=False):
     print("DataSourceHelper._registerDataSource() 1")

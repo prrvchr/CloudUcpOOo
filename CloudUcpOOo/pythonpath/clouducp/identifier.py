@@ -15,11 +15,6 @@ from com.sun.star.beans.PropertyAttribute import TRANSIENT
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
-try:
-    from oauth2 import KeyMap
-except ImportError:
-    print("Identifier IMPORT ERROR ******************************************************")
-
 from .content import Content
 
 from .contenttools import getUri
@@ -44,7 +39,7 @@ class Identifier(unohelper.Base,
         if self.User.IsValid:
             self.MetaData, self._Error = self.User.initializeIdentifier(uri, isnew, self._Error)
         else:
-            self.MetaData = KeyMap()
+            self.MetaData = self.User.DataSource.Provider.Request.getKeyMap()
 
     @property
     def Id(self):
@@ -77,7 +72,8 @@ class Identifier(unohelper.Base,
             timestamp = parseDateTime()
             isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
             isdocument = self.User.DataSource.Provider.isDocument(self._ContentType)
-            data = KeyMap(**{'Id': id})
+            data = self.User.DataSource.Provider.Request.getKeyMap()
+            data.insertValue('Id', id)
             data.insertValue('ContentType', self._ContentType)
             data.insertValue('DateCreated', timestamp)
             data.insertValue('DateModified', timestamp)

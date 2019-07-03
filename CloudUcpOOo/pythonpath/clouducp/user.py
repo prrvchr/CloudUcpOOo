@@ -8,13 +8,6 @@ from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb import XRestUser
 
-# oauth2 is only available after OAuth2OOo as been loaded...
-try:
-    from oauth2 import KeyMap
-except ImportError:
-    print("User IMPORT ERROR ******************************************************")
-    pass
-
 from .identifier import Identifier
 
 import traceback
@@ -137,7 +130,7 @@ class User(unohelper.Base,
             error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
             print("User.initializeIdentifier() Error: %s" % error)
         paths.insert(0, self.Name)
-        identifier = KeyMap()
+        identifier = self.DataSource.Provider.Request.getKeyMap()
         identifier.insertValue('Id', id)
         identifier.insertValue('IsRoot', isroot)
         identifier.insertValue('IsNew', isnew)

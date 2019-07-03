@@ -44,39 +44,33 @@ class ContentProvider(unohelper.Base,
         self.Scheme = ''
         self.Plugin = ''
         self.DataSource = None
-        self.Logger = getLogger(self.ctx) if isLoggerEnabled(self.ctx) else None
         self._defaultUser = None
-        if self.Logger:
-           msg = "ContentProvider loading ... Done"
-           self.Logger.logp(INFO, "ContentProvider", "__init__()", msg)
 
     def __del__(self):
-        if self.Logger:
-           msg = "ContentProvider unloading ... Done"
-           self.Logger.logp(INFO, "ContentProvider", "__del__()", msg)
+       msg = "ContentProvider unloading ... Done"
+       self._logp(INFO, "ContentProvider", "__del__()", msg)
 
     # XParameterizedContentProvider
     def registerInstance(self, scheme, plugin, replace):
-        service = '%s.Provider' % plugin
-        provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-        datasource = DataSource(self.ctx, provider, scheme, plugin, self.Logger)
+        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Started"
+        self._logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        datasource = DataSource(self.ctx, scheme, plugin)
         if not datasource.IsValid:
-            if self.Logger:
-                self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
+            self._logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
             return None
         self.Scheme = scheme
         self.Plugin = plugin
         datasource.Connection.Parent.DatabaseDocument.addCloseListener(self)
         self.DataSource = datasource
-        if self.Logger:
-            msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
-            self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
-        return getUcb(self.ctx).registerContentProvider(self, scheme, replace)
+        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
+        self._logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
+        print("ContentProvider.registerInstance() %s" % provider)
+        return provider
     def deregisterInstance(self, scheme, argument):
         getUcb(self.ctx).deregisterContentProvider(self, scheme)
-        if self.Logger:
-            msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
-            self.Logger.logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
+        msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
+        self._logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
 
     # XCloseListener
     def queryClosing(self, source, ownership):
@@ -84,39 +78,34 @@ class ContentProvider(unohelper.Base,
         query = 'SHUTDOWN COMPACT;'
         statement = self.DataSource.Connection.createStatement()
         statement.execute(query)
-        if self.Logger:
-            msg = "ContentProvider queryClosing: Scheme: %s ... Done"
-            self.Logger.logp(INFO, "ContentProvider", "queryClosing()", msg % self.Scheme)
+        msg = "ContentProvider queryClosing: Scheme: %s ... Done"
+        self._logp(INFO, "ContentProvider", "queryClosing()", msg % self.Scheme)
     def notifyClosing(self, source):
         pass
 
     # XContentIdentifierFactory
     def createContentIdentifier(self, url):
-        if self.Logger:
-            msg = "Identifier: %s ..." % url
-            self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+        msg = "Identifier: %s ..." % url
+        self._logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         url = self._getUrl(url)
         uri = getUri(self.ctx, url)
         name = self._getUserName(uri)
         user = self.DataSource.getUser(name)
         identifier = user.getIdentifier(uri)
-        if self.Logger:
-           msg = "Identifier: %s ... Done" % identifier.getContentIdentifier()
-           self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+        msg = "Identifier: %s ... Done" % identifier.getContentIdentifier()
+        self._logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
         return identifier
 
     # XContentProvider
     def queryContent(self, identifier):
         url = identifier.getContentIdentifier()
         if not identifier.IsValid:
-            if self.Logger:
-                msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
-                self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+            msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
+            self._logp(INFO, "ContentProvider", "queryContent()", msg)
             raise IllegalIdentifierException(identifier.Error, self)
         content = identifier.getContent()
-        if self.Logger:
-            msg = "Identitifer: %s ... Done" % url
-            self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+        msg = "Identitifer: %s ... Done" % url
+        self._logp(INFO, "ContentProvider", "queryContent()", msg)
         return content
 
     def compareContentIds(self, id1, id2):
@@ -133,9 +122,8 @@ class ContentProvider(unohelper.Base,
         elif id1.IsValid and not id2.IsValid:
             msg += " are not the same..."
             compare = 10
-        if self.Logger:
-            msg += " ... Done"
-            self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
+        msg += " ... Done"
+        self._logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
 
     def _getUrl(self, identifier):
@@ -169,6 +157,10 @@ class ContentProvider(unohelper.Base,
                 self._defaultUser = result.Value
                 return result.Value
         return ''
+
+    def _logp(self, level, source, method, message):
+        if self.DataSource:
+            self.DataSource.Provider.Request.logp(level, source, method, message)
 
     # XServiceInfo
     def supportsService(self, service):

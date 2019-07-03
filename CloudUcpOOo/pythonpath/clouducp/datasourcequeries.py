@@ -8,8 +8,9 @@ def getSqlQuery(name):
         c2 = '"Set1" VARCHAR(100) NOT NULL'
         c3 = '"Set2" VARCHAR(100) NOT NULL'
         c4 = '"Set3" VARCHAR(100) NOT NULL'
-        columns = (c1, c2, c3, c4)
-        query = 'CREATE TEXT TABLE "Settings"(%s)' % ','.join(columns)
+        c = (c1, c2, c3, c4)
+        p = ','.join(c)
+        query = 'CREATE TEXT TABLE "Settings"(%s)' % p
     elif name == 'setSettingsSource':
         query = 'SET TABLE "Settings" SOURCE "%s.csv"'
     elif name == 'setSettingsReadOnly':
@@ -22,8 +23,9 @@ def getSqlQuery(name):
         c5 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
         k1 = 'PRIMARY KEY("UserId")'
         k2 = 'CONSTRAINT "UniqueUserName" UNIQUE("UserName")'
-        columns = (c1, c2, c3, c4, c5, k1, k2)
-        query = 'CREATE CACHED TABLE "Users"(%s)' % ','.join(columns)
+        c = (c1, c2, c3, c4, c5, k1, k2)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Users"(%s)' % p
     elif name == 'createItemsTable':
         c1 = '"ItemId" VARCHAR(100) NOT NULL'
         c2 = '"Title" VARCHAR(100)'
@@ -35,19 +37,24 @@ def getSqlQuery(name):
         c8 = '"Loaded" SMALLINT DEFAULT 0 NOT NULL'
         c9 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
         k1 = 'PRIMARY KEY("ItemId")'
-        columns = (c1, c2, c3, c4, c5, c6, c7, c8, c9, k1)
-        query = 'CREATE CACHED TABLE "Items"(%s)' % ','.join(columns)
+        c = (c1, c2, c3, c4, c5, c6, c7, c8, c9, k1)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Items"(%s)' % p
     elif name == 'createParentsTable':
         c1 = '"UserId" VARCHAR(100) NOT NULL'
         c2 = '"ItemId" VARCHAR(100) NOT NULL'
         c3 = '"ChildId" VARCHAR(100) NOT NULL'
         c4 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
         k1 = 'PRIMARY KEY("UserId","ItemId","ChildId")'
-        k2 = 'CONSTRAINT "ForeignParentUsers" FOREIGN KEY("UserId") REFERENCES "Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
-        k3 = 'CONSTRAINT "ForeignParentItems" FOREIGN KEY("ItemId") REFERENCES "Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
-        k4 = 'CONSTRAINT "ForeignChildItems" FOREIGN KEY("ChildId") REFERENCES "Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
-        columns = (c1, c2, c3, c4, k1, k2, k3, k4)
-        query = 'CREATE CACHED TABLE "Parents"(%s)' % ','.join(columns)
+        k2 = 'CONSTRAINT "ForeignParentUsers" FOREIGN KEY("UserId") REFERENCES '
+        k2 += '"Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
+        k3 = 'CONSTRAINT "ForeignParentItems" FOREIGN KEY("ItemId") REFERENCES '
+        k3 += '"Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
+        k4 = 'CONSTRAINT "ForeignChildItems" FOREIGN KEY("ChildId") REFERENCES '
+        k4 += '"Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
+        c = (c1, c2, c3, c4, k1, k2, k3, k4)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Parents"(%s)' % p
     elif name == 'createCapabilitiesTable':
         c1 = '"UserId" VARCHAR(100) NOT NULL'
         c2 = '"ItemId" VARCHAR(100) NOT NULL'
@@ -57,18 +64,23 @@ def getSqlQuery(name):
         c6 = '"IsVersionable" BOOLEAN DEFAULT FALSE NOT NULL'
         c7 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
         k1 = 'PRIMARY KEY("UserId","ItemId")'
-        k2 = 'CONSTRAINT "ForeignCapabilitiesUsers" FOREIGN KEY("UserId") REFERENCES "Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
-        k3 = 'CONSTRAINT "ForeignCapabilitiesItems" FOREIGN KEY("ItemId") REFERENCES "Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
-        columns = (c1, c2, c3, c4, c5, c6, c7, k1, k2, k3)
-        query = 'CREATE CACHED TABLE "Capabilities"(%s)' % ','.join(columns)
+        k2 = 'CONSTRAINT "ForeignCapabilitiesUsers" FOREIGN KEY("UserId") REFERENCES '
+        k2 += '"Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
+        k3 = 'CONSTRAINT "ForeignCapabilitiesItems" FOREIGN KEY("ItemId") REFERENCES '
+        k3 += '"Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
+        c = (c1, c2, c3, c4, c5, c6, c7, k1, k2, k3)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Capabilities"(%s)' % p
     elif name == 'createIdentifiersTable':
         c1 = '"Id" VARCHAR(100) NOT NULL'
         c2 = '"UserId" VARCHAR(100) NOT NULL'
         c3 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
         k1 = 'PRIMARY KEY("Id")'
-        k2 = 'CONSTRAINT "ForeignIdentifiersUsers" FOREIGN KEY("UserId") REFERENCES PUBLIC."Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
-        columns = (c1, c2, c3, k1, k2)
-        query = 'CREATE CACHED TABLE "Identifiers"(%s)' % ','.join(columns)
+        k2 = 'CONSTRAINT "ForeignIdentifiersUsers" FOREIGN KEY("UserId") REFERENCES '
+        k2 += 'PUBLIC."Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
+        c = (c1, c2, c3, k1, k2)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Identifiers"(%s)' % p
     elif name == 'createSynchronizesTable':
         c1 = '"SyncId" BIGINT GENERATED BY DEFAULT AS IDENTITY'
         c2 = '"UserId" VARCHAR(100) NOT NULL'
@@ -76,59 +88,222 @@ def getSqlQuery(name):
         c4 = '"ParentId" VARCHAR(100) NOT NULL'
         c5 = '"SyncMode" SMALLINT DEFAULT 0 NOT NULL'
         c6 = '"TimeStamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL'
-        k1 = 'CONSTRAINT "ForeignSynchronizesUsers" FOREIGN KEY("UserId") REFERENCES "Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
-        k2 = 'CONSTRAINT "ForeignSynchronizesItems" FOREIGN KEY("ItemId") REFERENCES "Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
-        columns = (c1, c2, c3, c4, c5, c6, k1, k2)
-        query = 'CREATE CACHED TABLE "Synchronizes"(%s)' % ','.join(columns)
+        k1 = 'CONSTRAINT "ForeignSynchronizesUsers" FOREIGN KEY("UserId") REFERENCES '
+        k1 += '"Users"("UserId") ON DELETE CASCADE ON UPDATE CASCADE'
+        k2 = 'CONSTRAINT "ForeignSynchronizesItems" FOREIGN KEY("ItemId") REFERENCES '
+        k2 += '"Items"("ItemId") ON DELETE CASCADE ON UPDATE CASCADE'
+        c = (c1, c2, c3, c4, c5, c6, k1, k2)
+        p = ','.join(c)
+        query = 'CREATE CACHED TABLE "Synchronizes"(%s)' % p
     elif name == 'createItemView':
-        c1 = '"UserId","ItemId","Title","DateCreated","DateModified","ContentType","MediaType","IsFolder","IsLink","IsDocument","Size","Trashed","Loaded","CanAddChild","CanRename","IsReadOnly","IsVersionable","IsRoot","RootId"'
-        c2 = '"U"."UserId","I"."ItemId","I"."Title","I"."DateCreated","I"."DateModified",CASE WHEN "I"."MediaType" IN ("S"."Set2","S"."Set3") THEN "I"."MediaType" ELSE "S"."Set1" END,"I"."MediaType","I"."MediaType"="S"."Set2","I"."MediaType"="S"."Set3","I"."MediaType"!="S"."Set2" AND "I"."MediaType"!="S"."Set3","I"."Size","I"."Trashed","I"."Loaded","C"."CanAddChild","C"."CanRename","C"."IsReadOnly","C"."IsVersionable","I"."ItemId"="U"."RootId","U"."RootId" FROM "Settings" AS "S","Items" AS "I" JOIN "Capabilities" AS "C" ON "I"."ItemId"="C"."ItemId" JOIN "Users" AS "U" ON "C"."UserId"="U"."UserId" WHERE "S"."Setting"=\'ContentType\''
-        query = 'CREATE VIEW "Item" (%s) AS SELECT %s' % (c1, c2)
+        c1 = '"UserId"'
+        c2 = '"ItemId"'
+        c3 = '"Title"'
+        c4 = '"DateCreated"'
+        c5 = '"DateModified"'
+        c6 = '"ContentType"'
+        c7 = '"MediaType"'
+        c8 = '"IsFolder"'
+        c9 = '"IsLink"'
+        c10 = '"IsDocument"'
+        c11 = '"Size"'
+        c12 = '"Trashed"'
+        c13 = '"Loaded"'
+        c14 = '"CanAddChild"'
+        c15 = '"CanRename"'
+        c16 = '"IsReadOnly"'
+        c17 = '"IsVersionable"'
+        c18 = '"IsRoot"'
+        c19 = '"RootId"'
+        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19)
+        s1 = '"U"."UserId"'
+        s2 = '"I"."ItemId"'
+        s3 = '"I"."Title"'
+        s4 = '"I"."DateCreated"'
+        s5 = '"I"."DateModified"'
+        s6 = 'CASE WHEN "I"."MediaType" IN ("S"."Set2","S"."Set3") '
+        s6 += 'THEN "I"."MediaType" ELSE "S"."Set1" END'
+        s7 = '"I"."MediaType"'
+        s8 = '"I"."MediaType"="S"."Set2"'
+        s9 = '"I"."MediaType"="S"."Set3"'
+        s10 = '"I"."MediaType"!="S"."Set2" AND "I"."MediaType"!="S"."Set3"'
+        s11 = '"I"."Size"'
+        s12 = '"I"."Trashed"'
+        s13 = '"I"."Loaded"'
+        s14 = '"C"."CanAddChild"'
+        s15 = '"C"."CanRename"'
+        s16 = '"C"."IsReadOnly"'
+        s17 = '"C"."IsVersionable"'
+        s18 = '"I"."ItemId"="U"."RootId"'
+        s19 = '"U"."RootId"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19)
+        f = '"Settings" AS "S","Items" AS "I" JOIN "Capabilities" AS "C" '
+        f += 'ON "I"."ItemId"="C"."ItemId" JOIN "Users" AS "U" ON "C"."UserId"="U"."UserId"'
+        w = '"S"."Setting"=\'ContentType\''
+        p = (','.join(c), ','.join(s), f, w)
+        query = 'CREATE VIEW "Item" (%s) AS SELECT %s FROM %s WHERE %s' % p
     elif name == 'createChildView':
-        c1 = '"UserId","ItemId","ParentId","Title","DateCreated","DateModified","IsFolder","Size","IsHidden","IsVolume","IsRemote","IsRemoveable","IsFloppy","IsCompactDisc","Loaded"'
-        c2 = '"I"."UserId","I"."ItemId","P"."ItemId","I"."Title","I"."DateCreated","I"."DateModified","I"."IsFolder","I"."Size",FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,"I"."Loaded" FROM "Item" AS "I" JOIN "Parents" AS "P" ON "I"."ItemId"="P"."ChildId" AND "I"."UserId"="P"."UserId"'
-        query = 'CREATE VIEW "Child" (%s) AS SELECT %s' % (c1, c2)
+        c1 = '"UserId"'
+        c2 = '"ItemId"'
+        c3 = '"ParentId"'
+        c4 = '"Title"'
+        c5 = '"DateCreated"'
+        c6 = '"DateModified"'
+        c7= '"IsFolder"'
+        c8 = '"Size"'
+        c9 = '"IsHidden"'
+        c10 = '"IsVolume"'
+        c11 = '"IsRemote"'
+        c12 = '"IsRemoveable"'
+        c13 = '"IsFloppy"'
+        c14 = '"IsCompactDisc"'
+        c15 = '"Loaded"'
+        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15)
+        s1 = '"I"."UserId"'
+        s2 = '"I"."ItemId"'
+        s3 = '"P"."ItemId"'
+        s4 = '"I"."Title"'
+        s5 = '"I"."DateCreated"'
+        s6 = '"I"."DateModified"'
+        s7 = '"I"."IsFolder"'
+        s8 = '"I"."Size"'
+        s9 = 'FALSE'
+        s10 = 'FALSE'
+        s11 = 'FALSE'
+        s12 = 'FALSE'
+        s13 = 'FALSE'
+        s14 = 'FALSE'
+        s15 = '"I"."Loaded"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15)
+        f = '"Item" AS "I" JOIN "Parents" AS "P" '
+        f += 'ON "I"."UserId"="P"."UserId" AND "I"."ItemId"="P"."ChildId"'
+        p = (','.join(c), ','.join(s), f)
+        query = 'CREATE VIEW "Child" (%s) AS SELECT %s FROM %s' % p
     elif name == 'createSyncView':
-        c1 = '"SyncId","UserId","Id","ParentId","Title","DateCreated","DateModified","MediaType","IsFolder","Size","Trashed","Mode","IsRoot","AtRoot"'
-        c2 = '"S"."SyncId","S"."UserId","S"."ItemId","S"."ParentId","I"."Title","I"."DateCreated","I"."DateModified","I"."MediaType","I"."IsFolder","I"."Size","I"."Trashed","S"."SyncMode","I"."IsRoot","S"."ParentId"="I"."RootId" FROM "Synchronizes" AS "S" JOIN "Item" AS "I" ON "S"."ItemId"="I"."ItemId" AND "S"."UserId"="I"."UserId"'
-        query = 'CREATE VIEW "Sync" (%s) AS SELECT %s' % (c1, c2)
+        c1 = '"SyncId"'
+        c2 = '"UserId"'
+        c3 = '"Id"'
+        c4 = '"ParentId"'
+        c5 = '"Title"'
+        c6 = '"DateCreated"'
+        c7 = '"DateModified"'
+        c8 = '"MediaType"'
+        c9 = '"IsFolder"'
+        c10 = '"Size"'
+        c11 = '"Trashed"'
+        c12 = '"Mode"'
+        c13 = '"IsRoot"'
+        c14 = '"AtRoot"'
+        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14)
+        s1 = '"S"."SyncId"'
+        s2 = '"S"."UserId"'
+        s3 = '"S"."ItemId"'
+        s4 = '"S"."ParentId"'
+        s5 = '"I"."Title"'
+        s6 = '"I"."DateCreated"'
+        s7 = '"I"."DateModified"'
+        s8 = '"I"."MediaType"'
+        s9 = '"I"."IsFolder"'
+        s10 = '"I"."Size"'
+        s11 = '"I"."Trashed"'
+        s12 = '"S"."SyncMode"'
+        s13 = '"I"."IsRoot"'
+        s14 = '"S"."ParentId"="I"."RootId"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14)
+        f =  '"Synchronizes" AS "S" JOIN "Item" AS "I" '
+        f += 'ON "S"."ItemId"="I"."ItemId" AND "S"."UserId"="I"."UserId"'
+        p = (','.join(c), ','.join(s), f)
+        query = 'CREATE VIEW "Sync" (%s) AS SELECT %s FROM %s' % p
     elif name == 'getSetting':
         query = 'SELECT "Set2", "Set3" FROM "Settings" WHERE "Setting" = ?'
     elif name == 'getUser':
-        query = 'SELECT "U"."UserId", "U"."RootId", "I"."Title" "RootName" FROM "Users" "U" JOIN "Items" "I" ON "U"."RootId" = "I"."ItemId" WHERE "U"."UserName" = ?'
+        c1 = '"U"."UserId"'
+        c2 = '"U"."RootId"'
+        c3 = '"I"."Title" "RootName"'
+        c = (c1, c2, c3)
+        f = '"Users" "U" JOIN "Items" "I" ON "U"."RootId" = "I"."ItemId"'
+        p = (','.join(c), f)
+        query = 'SELECT %s FROM %s WHERE "U"."UserName" = ?' % p
     elif name == 'getItem':
-        query = 'SELECT "ItemId" "Id", "Title", "Title" "TitleOnServer", "DateCreated", "DateModified", "ContentType", "MediaType", "Size", "Trashed", "IsRoot", "IsFolder", "IsDocument", "CanAddChild", "CanRename", "IsReadOnly", "IsVersionable", "Loaded", \'\' "CasePreservingURL", FALSE "IsHidden", FALSE "IsVolume", FALSE "IsRemote", FALSE "IsRemoveable", FALSE "IsFloppy", FALSE "IsCompactDisc" FROM "Item" WHERE "UserId" = ? AND "ItemId" = ?'
+        c1 = '"ItemId" "Id"'
+        c2 = '"Title"'
+        c3 = '"Title" "TitleOnServer"'
+        c4 = '"DateCreated"'
+        c5 = '"DateModified"'
+        c6 = '"ContentType"'
+        c7 = '"MediaType"'
+        c8 = '"Size"'
+        c9 = '"Trashed"'
+        c10 = '"IsRoot"'
+        c11 = '"IsFolder"'
+        c12 = '"IsDocument"'
+        c13 = '"CanAddChild"'
+        c14 = '"CanRename"'
+        c15 = '"IsReadOnly"'
+        c16 = '"IsVersionable"'
+        c17 = '"Loaded"'
+        c18 = '\'\' "CasePreservingURL"'
+        c19 = 'FALSE "IsHidden"'
+        c20 = 'FALSE "IsVolume"'
+        c21 = 'FALSE "IsRemote"'
+        c22 = 'FALSE "IsRemoveable"'
+        c23 = 'FALSE "IsFloppy"'
+        c24 = 'FALSE "IsCompactDisc"'
+        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,c24)
+        p  =','.join(c)
+        query = 'SELECT %s FROM "Item" WHERE "UserId" = ? AND "ItemId" = ?' % p
     elif name == 'getChildren':
-        query = 'SELECT "Title", "Size", "DateModified", "DateCreated", "IsFolder", CASE WHEN "IsFolder" = TRUE THEN CONCAT( ?, CONCAT( \'/\', "ItemId" ) ) ELSE CONCAT( ?, CONCAT( \'/\', "Title" ) ) END "TargetURL", "IsHidden", "IsVolume", "IsRemote", "IsRemoveable", "IsFloppy", "IsCompactDisc" FROM "Child" WHERE "UserId" = ? AND "ParentId" = ? AND ( "IsFolder" = TRUE OR "Loaded" >= ? )'
+        c1 = '"Title"'
+        c2 = '"Size"'
+        c3 = '"DateModified"'
+        c4 = '"DateCreated"'
+        c5 = '"IsFolder"'
+        c6 = 'CASE WHEN "IsFolder" THEN ? || \'/\' || "ItemId" ELSE ? || \'/\' || "Title" END '
+        c6 += '"TargetURL"'
+        c7 = '"IsHidden"'
+        c8 = '"IsVolume"'
+        c9 = '"IsRemote"'
+        c10 = '"IsRemoveable"'
+        c11 = '"IsFloppy"'
+        c12 = '"IsCompactDisc"'
+        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12)
+        w = '"UserId" = ? AND "ParentId" = ? AND ("IsFolder" = TRUE OR "Loaded" >= ?)'
+        p = (','.join(c), w)
+        query = 'SELECT %s FROM "Child" WHERE %s' % p
     elif name == 'getChildId':
-        query = 'SELECT "ItemId" FROM "Child" WHERE "UserId" = ? AND "ParentId" = ? AND "Title" = ?'
+        w = '"UserId" = ? AND "ParentId" = ? AND "Title" = ?'
+        query = 'SELECT "ItemId" FROM "Child" WHERE %s' % w
     elif name == 'getNewIdentifier':
         query = 'SELECT "Id" FROM "Identifiers" WHERE "UserId" = ? ORDER BY "TimeStamp" LIMIT 1'
     elif name == 'countNewIdentifier':
         query = 'SELECT COUNT( "Id" ) "Id" FROM "Identifiers" WHERE "UserId" = ?'
     elif name == 'countChildTitle':
-        query = 'SELECT COUNT( "Title" ) FROM "Child" WHERE "UserId" = ? AND "ParentId" = ? AND "Title" = ?'
+        w = '"UserId" = ? AND "ParentId" = ? AND "Title" = ?'
+        query = 'SELECT COUNT( "Title" ) FROM "Child" WHERE %s' % w
     elif name == 'isChildId':
-        query = 'SELECT CAST( COUNT( 1 ) AS "BOOLEAN" ) "IsChild" FROM "Parents" WHERE "UserId" = ? AND "ChildId" = ? AND "ItemId" = ?'
+        c = 'CAST(COUNT(1) AS "BOOLEAN") "IsChild"'
+        w = '"UserId" = ? AND "ChildId" = ? AND "ItemId" = ?'
+        query = 'SELECT %s FROM "Parents" WHERE %s' % (c, w)
     elif name == 'isIdentifier':
-        query = 'SELECT CAST( COUNT( 1 ) AS "BOOLEAN" ) "IsIdentifier" FROM "Items" WHERE "ItemId" = ?'
+        c = 'CAST(COUNT(1) AS "BOOLEAN") "IsIdentifier"'
+        query = 'SELECT %s FROM "Items" WHERE "ItemId" = ?' % c
     elif name == 'getItemToSync':
         query = 'SELECT * FROM "Sync" WHERE "UserId" = ? ORDER BY "SyncId"'
     elif name == 'insertUser':
-        columns = '"UserName","DisplayName","RootId","TimeStamp","UserId"'
-        query = 'INSERT INTO "Users" (%s) VALUES (?,?,?,?,?)' % columns
+        c = '"UserName","DisplayName","RootId","TimeStamp","UserId"'
+        query = 'INSERT INTO "Users" (%s) VALUES (?,?,?,?,?)' % c
     elif name == 'insertItem':
-        columns = '"Title","DateCreated","DateModified","MediaType","Size","Trashed","ItemId"'
-        query = 'INSERT INTO "Items" (%s) VALUES (?,?,?,?,?,?,?)' % columns
+        c = '"Title","DateCreated","DateModified","MediaType","Size","Trashed","ItemId"'
+        query = 'INSERT INTO "Items" (%s) VALUES (?,?,?,?,?,?,?)' % c
     elif name == 'updateItem':
-        columns = '"Title"=?,"DateCreated"=?,"DateModified"=?,"MediaType"=?,"Size"=?,"Trashed"=?'
-        query = 'UPDATE "Items" SET %s WHERE "ItemId"=?' % columns
+        c = '"Title"=?,"DateCreated"=?,"DateModified"=?,"MediaType"=?,"Size"=?,"Trashed"=?'
+        query = 'UPDATE "Items" SET %s WHERE "ItemId"=?' % c
     elif name == 'insertCapability':
-        columns = '"CanAddChild","CanRename","IsReadOnly","IsVersionable","UserId","ItemId"'
-        query = 'INSERT INTO "Capabilities" (%s) VALUES (?,?,?,?,?,?)' % columns
+        c = '"CanAddChild","CanRename","IsReadOnly","IsVersionable","UserId","ItemId"'
+        query = 'INSERT INTO "Capabilities" (%s) VALUES (?,?,?,?,?,?)' % c
     elif name == 'updateCapability':
-        columns = '"CanAddChild"=?,"CanRename"=?,"IsReadOnly"=?,"IsVersionable"=?'
-        query = 'UPDATE "Capabilities" SET %s WHERE "UserId"=? AND "ItemId"=?' % columns
+        c = '"CanAddChild"=?,"CanRename"=?,"IsReadOnly"=?,"IsVersionable"=?'
+        query = 'UPDATE "Capabilities" SET %s WHERE "UserId"=? AND "ItemId"=?' % c
     elif name == 'deleteParent':
         query = 'DELETE FROM "Parents" WHERE "UserId"=? AND "ChildId"=?'
     elif name == 'insertParent':
@@ -142,8 +317,8 @@ def getSqlQuery(name):
     elif name == 'updateTrashed':
         query = 'UPDATE "Items" SET "Trashed"=? WHERE "ItemId"=?'
     elif name == 'insertSyncMode':
-        columns = '"SyncId","UserId","ItemId","ParentId","SyncMode"'
-        query = 'INSERT INTO "Synchronizes" (%s) VALUES (NULL,?,?,?,?)' % columns
+        c = '"SyncId","UserId","ItemId","ParentId","SyncMode"'
+        query = 'INSERT INTO "Synchronizes" (%s) VALUES (NULL,?,?,?,?)' % c
     elif name == 'deleteSyncMode':
         query = 'DELETE FROM "Synchronizes" WHERE "SyncId"=?'
     elif name == 'updateItemId':

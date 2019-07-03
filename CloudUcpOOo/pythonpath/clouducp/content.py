@@ -84,7 +84,7 @@ class Content(unohelper.Base,
         return self.MetaData.getValue('CanAddChild')
     @property
     def Logger(self):
-        return self.Identifier.User.DataSource.Logger
+        return self.Identifier.User.DataSource.Provider.Request.Logger
 
     # XChild
     def getParent(self):
