@@ -58,7 +58,7 @@ class Content(unohelper.Base,
     def __init__(self, ctx, identifier, data):
         try:
             self.ctx = ctx
-            msg = "DriveFolderContent loading ... "
+            msg = "Content loading ... "
             self.Identifier = identifier
             self.MetaData = data
             creatablecontent = self._getCreatableContentsInfo()
@@ -68,7 +68,7 @@ class Content(unohelper.Base,
             self.contentListeners = []
             msg += "Done."
             if self.Logger:
-                self.Logger.logp(INFO, "DriveFolderContent", "__init__()", msg)
+                self.Logger.logp(INFO, "Content", "__init__()", msg)
             print("Content.__init__() FIN")
         except Exception as e:
             print("Content.__init__().Error: %s - %s" % (e, traceback.print_exc()))

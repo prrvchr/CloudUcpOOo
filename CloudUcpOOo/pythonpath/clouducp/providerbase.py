@@ -37,6 +37,11 @@ class ProviderBase(ProviderObject,
         self.SessionMode = OFFLINE
         self._Error = ''
 
+    # Base properties
+    @property
+    def Error(self):
+        return self.Request.Error if self.Request.Error else self._Error
+
     # Must be implemented properties
     @property
     def Host(self):
@@ -59,11 +64,6 @@ class ProviderBase(ProviderObject,
     @property
     def Buffer(self):
         raise NotImplementedError
-
-    # Base properties
-    @property
-    def Error(self):
-        return self.Request.Error if self.Request.Error else self._Error
 
     # Can be rewrited properties
     @property

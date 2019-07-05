@@ -4,6 +4,8 @@
 import uno
 import unohelper
 
+from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb import XRestUser
@@ -16,19 +18,20 @@ import traceback
 class User(unohelper.Base,
            XRestUser):
     def __init__(self, ctx, datasource, name):
-        print("User.__init__() 1")
+        level = INFO
+        msg = "User loading"
         self.ctx = ctx
-        self.Name = name
-        print("User.__init__() 2")
         self.DataSource = datasource
-        print("User.__init__() 3")
+        self.Name = name
         self._Error = ''
         self.MetaData, self._Error = self.DataSource.initializeUser(name, '')
-        print("User.__init__() 4 %s" % self._Error)
         if self.IsValid:
-            print("User.__init__() 5")
             self.checkNewIdentifier()
-            print("User.__init__() 6")
+            msg += " ... Done"
+        else:
+            level = SEVERE
+            msg += " ... ERROR: %s" % self.Error
+        self.Logger.logp(level, "User", "__init__()", msg)
 
     @property
     def Id(self):

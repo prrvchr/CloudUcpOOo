@@ -35,38 +35,31 @@ import traceback
 class DataSource(unohelper.Base,
                  XRestDataSource):
     def __init__(self, ctx, scheme, plugin):
+        level = SEVERE
+        msg = "DataSource for Scheme: %s loading ... " % scheme
         self.ctx = ctx
         self._Statement = None
         self._CahedUser = {}
         self._Calls = {}
         self._Error = ''
-        self.Logger = self._getLogger()
-        msg = "DataSource: %s loading ... Started" % scheme
-        self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
         service = '%s.Provider' % plugin
-        try:
-            self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-        except Exception as e:
-            msg = "DataSource loading: Error: %s - %s" % (e, traceback.print_exc())
-            self.Logger.logp(SEVERE, "DataSource", "__init__()", msg)
-        else:
+        self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        if self.IsValid:
             url = getDataSourceUrl(self.ctx, scheme, plugin)
-            try:
-                connection = getDataSourceConnection(ctx, url, self.Logger)
-            except Exception as e:
-                msg = "Error: %s - %s" % (e, traceback.print_exc())
-                self.Logger.logp(SEVERE, "DataSource", "getDataSourceConnection()", msg)
+            connection = getDataSourceConnection(ctx, url, self.Logger)
+            if not connection:
+                self._Error = "Could not connect to DataSource at URL: %s" % url
+                msg += "ERROR: %s" % self.Error
             else:
-                if not connection:
-                    self._Error = "Could not connect to DataSource at URL: %s" % url
-                    self.Logger.logp(SEVERE, 'DataSource', '__init__()', self._Error)
-                else:
-                    # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
-                    self._Statement = connection.createStatement()
-                    folder, link = self._getContentType()
-                    self.Provider.initialize(scheme, plugin, folder, link)
-                    msg = "DataSource: %s loading ... Done" % scheme
-                    self.Logger.logp(INFO, 'DataSource', '__init__()', msg)
+                # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
+                self._Statement = connection.createStatement()
+                folder, link = self._getContentType()
+                self.Provider.initialize(scheme, plugin, folder, link):
+                level = INFO
+                msg += "Done"
+        else:
+            msg += "ERROR: %s" % self.Error
+        self.Logger.logp(level, 'DataSource', '__init__()', msg)
 
     @property
     def Connection(self):
@@ -76,7 +69,11 @@ class DataSource(unohelper.Base,
         return not self.Error
     @property
     def Error(self):
-        return self.Provider.Error if self.Provider else self._Error
+        return self.Provider.Error if self.Provider.Error else self._Error
+    @property
+    def Logger(self):
+        return self.Provider.Request.Logger
+
 
     def getUser(self, name):
         # User never change... we can cache it...
