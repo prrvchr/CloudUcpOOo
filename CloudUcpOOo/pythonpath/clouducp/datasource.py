@@ -54,7 +54,7 @@ class DataSource(unohelper.Base,
                 # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
                 self._Statement = connection.createStatement()
                 folder, link = self._getContentType()
-                self.Provider.initialize(scheme, plugin, folder, link):
+                self.Provider.initialize(scheme, plugin, folder, link)
                 level = INFO
                 msg += "Done"
         else:
