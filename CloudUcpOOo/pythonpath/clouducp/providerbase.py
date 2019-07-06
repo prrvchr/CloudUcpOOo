@@ -26,8 +26,7 @@ class ProviderBase(ProviderObject,
                    unohelper.Base,
                    XServiceInfo,
                    XRestProvider):
-    def __init__(self, ctx):
-        self.ctx = ctx
+    def __init__(self):
         self.Request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
         self.Scheme = None
         self.Plugin = None
