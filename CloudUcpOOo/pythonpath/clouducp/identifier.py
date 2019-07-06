@@ -8,6 +8,8 @@ from com.sun.star.container import XChild
 from com.sun.star.lang import NoSupportException
 from com.sun.star.ucb import XContentIdentifier
 from com.sun.star.ucb import XRestIdentifier
+from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 from com.sun.star.beans.PropertyAttribute import BOUND
 from com.sun.star.beans.PropertyAttribute import CONSTRAINED
 from com.sun.star.beans.PropertyAttribute import READONLY
