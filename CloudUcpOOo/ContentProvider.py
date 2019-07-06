@@ -93,16 +93,19 @@ class ContentProvider(unohelper.Base,
 
     # XContentIdentifierFactory
     def createContentIdentifier(self, url):
-        msg = "Identifier: %s ..." % url
-        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
-        url = self._getUrl(url)
-        uri = getUri(self.ctx, url)
-        name = self._getUserName(uri)
-        user = self.DataSource.getUser(name)
-        identifier = user.getIdentifier(uri)
-        msg = "Identifier: %s ... Done" % identifier.getContentIdentifier()
-        self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
-        return identifier
+        try:
+            msg = "Identifier: %s ... " % url
+            url = self._getUrl(url)
+            uri = getUri(self.ctx, url)
+            name = self._getUserName(uri)
+            user = self.DataSource.getUser(name)
+            identifier = user.getIdentifier(uri)
+            msg += "Done"
+            self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+            return identifier
+        except Exception as e:
+            msg += "Error: %s - %s" % (e, traceback.print_exc())
+            self.Logger.logp(SEVERE, "ContentProvider", "createContentIdentifier()", msg)
 
     # XContentProvider
     def queryContent(self, identifier):
