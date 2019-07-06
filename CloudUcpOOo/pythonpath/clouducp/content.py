@@ -22,6 +22,7 @@ from com.sun.star.ucb.ContentInfoAttribute import KIND_LINK
 from com.sun.star.ucb.ContentAction import INSERTED
 from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 
 # oauth2 is only available after OAuth2OOo as been loaded...
 try:
@@ -83,7 +84,7 @@ class Content(unohelper.Base,
         return self.MetaData.getValue('CanAddChild')
     @property
     def Logger(self):
-        return self.Identifier.User.DataSource
+        return self.Identifier.User.DataSource.Logger
 
     # XChild
     def getParent(self):
