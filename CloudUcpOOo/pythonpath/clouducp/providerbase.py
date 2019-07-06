@@ -26,20 +26,15 @@ class ProviderBase(ProviderObject,
                    unohelper.Base,
                    XServiceInfo,
                    XRestProvider):
-    def __init__(self):
-        self.Request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
-        self.Scheme = None
-        self.Plugin = None
-        self.Link = None
-        self.Folder = None
-        self.SourceURL = None
-        self.SessionMode = OFFLINE
-        self._Error = ''
 
     # Base properties
     @property
     def Error(self):
         return self.Request.Error if self.Request.Error else self._Error
+
+    # Private method
+    def _getRequest(self, ctx):
+        return ctx.ServiceManager.createInstanceWithContext(g_oauth2, ctx)
 
     # Must be implemented properties
     @property
