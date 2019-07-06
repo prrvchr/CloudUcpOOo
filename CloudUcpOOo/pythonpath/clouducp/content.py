@@ -67,8 +67,7 @@ class Content(unohelper.Base,
             self._propertySetInfo = self._getPropertySetInfo()
             self.contentListeners = []
             msg += "Done."
-            if self.Logger:
-                self.Logger.logp(INFO, "Content", "__init__()", msg)
+            self.Logger.logp(INFO, "Content", "__init__()", msg)
             print("Content.__init__() FIN")
         except Exception as e:
             print("Content.__init__().Error: %s - %s" % (e, traceback.print_exc()))
@@ -84,7 +83,7 @@ class Content(unohelper.Base,
         return self.MetaData.getValue('CanAddChild')
     @property
     def Logger(self):
-        return self.Identifier.User.DataSource.Provider.Request.Logger
+        return self.Identifier.User.DataSource
 
     # XChild
     def getParent(self):
@@ -131,6 +130,8 @@ class Content(unohelper.Base,
         return 0
     def execute(self, command, id, environment):
         try:
+            msg = "command.Name: %s" % command.Name
+            self.Logger.logp(INFO, "Content", "execute()", msg)
             print("Content.execute(): %s" % command.Name)
             if command.Name == 'getCommandInfo':
                 return CommandInfo(self._commandInfo)
@@ -256,10 +257,14 @@ class Content(unohelper.Base,
                     pass #must delete object
             elif command.Name == 'flush' and self.IsFolder:
                 print("Content.execute(): flush")
+        except CommandAbortedException as e:
+            raise e
         except InteractiveBadTransferURLException as e:
             raise e
         except Exception as e:
             print("Content.execute().Error: %s - %s - %s" % (command.Name, e, traceback.print_exc()))
+            msg += " ERROR: %s" % e
+            self.Logger.logp(SEVERE, "Content", "execute()", msg)
 
     def abort(self, id):
         pass

@@ -30,6 +30,8 @@ class Identifier(unohelper.Base,
                  XRestIdentifier,
                  XChild):
     def __init__(self, ctx, user, uri, contenttype=None):
+        level = INFO
+        msg = "Identifier loading"
         self.ctx = ctx
         self.User = user
         self._Uri = uri.getUriReference()
@@ -38,8 +40,12 @@ class Identifier(unohelper.Base,
         self._Error = ''
         if self.User.IsValid:
             self.MetaData, self._Error = self.User.initializeIdentifier(uri, isnew, self._Error)
+            msg += " ... Done"
         else:
             self.MetaData = self.User.DataSource.Provider.Request.getKeyMap()
+            level = SEVERE
+            msg += " ... ERROR: %s" % self.Error
+        self.Logger.logp(level, "Identifier", "__init__()", msg)
 
     @property
     def Id(self):
