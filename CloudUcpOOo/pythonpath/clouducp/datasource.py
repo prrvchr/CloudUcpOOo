@@ -297,7 +297,7 @@ class DataSource(unohelper.Base,
         enumerator = self.Provider.getFolderContent(content)
         while enumerator.hasMoreElements():
             item = enumerator.nextElement()
-            msg = "ItemId: %s" self.Provider.getItemId(item)
+            msg = "ItemId: %s" % self.Provider.getItemId(item)
             self.Logger.logp(INFO, 'DataSource', '_updateFolderContent()', msg)
             updated.append(self._mergeItem(c1, c2, c3, c4, c5, c6, userid, rootid, item, timestamp))
         c1.close()
