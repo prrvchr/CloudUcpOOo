@@ -292,9 +292,13 @@ class DataSource(unohelper.Base,
         userid = user.getValue('UserId')
         rootid = user.getValue('RootId')
         timestamp = parseDateTime()
+        msg = "Started"
+        self.Logger.logp(INFO, 'DataSource', '_updateFolderContent()', msg)
         enumerator = self.Provider.getFolderContent(content)
         while enumerator.hasMoreElements():
             item = enumerator.nextElement()
+            msg = "ItemId: %s" self.Provider.getItemId(item)
+            self.Logger.logp(INFO, 'DataSource', '_updateFolderContent()', msg)
             updated.append(self._mergeItem(c1, c2, c3, c4, c5, c6, userid, rootid, item, timestamp))
         c1.close()
         c2.close()
@@ -302,6 +306,8 @@ class DataSource(unohelper.Base,
         c4.close()
         c5.close()
         c6.close()
+        msg = "Done"
+        self.Logger.logp(INFO, 'DataSource', '_updateFolderContent()', msg)
         return all(updated)
 
     def _mergeItem(self, c1, c2, c3, c4, c5, c6, userid, rootid, item, timestamp):
