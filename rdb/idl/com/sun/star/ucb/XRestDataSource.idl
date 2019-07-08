@@ -7,6 +7,7 @@
 #include <com/sun/star/sdbc/XConnection.idl>
 #include <com/sun/star/sdbc/XStatement.idl>
 #include <com/sun/star/beans/Optional.idl>
+#include <com/sun/star/logging/XLogger.idl>
 
 module com { module sun { module star { module ucb {
 
@@ -71,6 +72,7 @@ interface XRestDataSource: com::sun::star::uno::XInterface
 
     [attribute, readonly] ::com::sun::star::sdbc::XConnection Connection;
     [attribute, readonly] ::com::sun::star::ucb::XRestProvider Provider;
+    [attribute, readonly] ::com::sun::star::logging::XLogger Logger;
     [attribute, readonly] boolean IsValid;
     [attribute, readonly] string Error;
 

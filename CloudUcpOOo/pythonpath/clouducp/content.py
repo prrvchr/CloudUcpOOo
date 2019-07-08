@@ -24,6 +24,8 @@ from com.sun.star.ucb.ContentAction import EXCHANGED
 from com.sun.star.logging.LogLevel import INFO
 from com.sun.star.logging.LogLevel import SEVERE
 
+from com.sun.star.ucb import XRestContent
+
 # oauth2 is only available after OAuth2OOo as been loaded...
 try:
     from oauth2 import KeyMap
@@ -55,7 +57,8 @@ class Content(unohelper.Base,
               XContent,
               XCommandProcessor2,
               XContentCreator,
-              XChild):
+              XChild,
+              XRestContent):
     def __init__(self, ctx, identifier, data):
         try:
             self.ctx = ctx
@@ -150,6 +153,8 @@ class Content(unohelper.Base,
                 if self.IsFolder:
                     # Not Used: command.Argument.Properties - Implement me ;-)
                     select = self.Identifier.getFolderContent(self.MetaData)
+                    msg += " IsFolder: %s" % self.IsFolder
+                    self.Logger.logp(INFO, "Content", "execute()", msg)
                     return DynamicResultSet(self.ctx, select)
                 elif self.IsDocument:
                     sf = getSimpleFile(self.ctx)
