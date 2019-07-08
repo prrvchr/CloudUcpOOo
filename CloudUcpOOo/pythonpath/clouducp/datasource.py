@@ -272,8 +272,12 @@ class DataSource(unohelper.Base,
         return row
 
     def getFolderContent(self, user, identifier, content, updated):
+        msg = "Loaded: %s" % content.getValue('Loaded')
+        self.Logger.logp(INFO, 'DataSource', 'getFolderContent()', msg)
         if ONLINE == content.getValue('Loaded') == self.Provider.SessionMode:
             updated = self._updateFolderContent(user, content)
+            msg = "Updated: %s" % updated
+            self.Logger.logp(INFO, 'DataSource', 'getFolderContent()', msg)
         select = self._getChildren(user, identifier)
         return select, updated
 

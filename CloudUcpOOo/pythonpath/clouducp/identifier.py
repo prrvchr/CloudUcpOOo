@@ -170,6 +170,8 @@ class Identifier(unohelper.Base,
     def getFolderContent(self, content):
         select, updated = self.User.getFolderContent(self.MetaData, content, False)
         if updated:
+            msg = "updated: %s" % updated
+            self.Logger.logp(INFO, "Identifier", "getFolderContent()", msg)
             loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
             content.insertValue('Loaded', loaded)
         return select
