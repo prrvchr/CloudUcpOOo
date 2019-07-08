@@ -5,6 +5,8 @@ import uno
 import unohelper
 
 from com.sun.star.lang import XServiceInfo
+from com.sun.star.logging.LogLevel import INFO
+from com.sun.star.logging.LogLevel import SEVERE
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
@@ -201,6 +203,8 @@ class ProviderBase(ProviderObject,
     def getFolderContent(self, content):
         print("ProviderBase.getFolderContent() 1")
         parameter = self.getRequestParameter('getFolderContent', content)
+        msg = "getRequestParameter"
+        self.Request.Logger.logp(INFO, 'ProviderBase', 'getFolderContent()', msg)
         return self.Request.getEnumerator(parameter)
 
     def getUploader(self, datasource):
