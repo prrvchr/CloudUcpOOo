@@ -75,7 +75,6 @@ class Identifier(unohelper.Base,
         return self.User.Error if self.User.Error else self._Error
 
     def getContent(self):
-        print("Identifier.getContent()")
         if self.IsNew:
             timestamp = parseDateTime()
             isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
@@ -139,26 +138,22 @@ class Identifier(unohelper.Base,
     # XRestIdentifier
     def createNewIdentifier(self, contenttype):
         url = self.BaseURL
-        print("Identifier.createNewIdentifier() 1 %s" % url)
         uri = getUri(self.ctx, url)
         return Identifier(self.ctx, self.User, uri, contenttype)
 
     def getDocumentContent(self, sf, content, size):
-        print("Identifier.getDocumentContent() 1")
         size = 0
         url = '%s/%s' % (self.User.DataSource.Provider.SourceURL, self.Id)
-        print("Identifier.getDocumentContent() 2")
         if content.getValue('Loaded') == OFFLINE and sf.exists(url):
             size = sf.getSize(url)
             return url, size
-        print("Identifier.getDocumentContent() 3")
         stream = self.User.DataSource.Provider.getDocumentContent(content)
         if stream:
             try:
                 sf.writeFile(url, stream)
             except Exception as e:
-                print("Identifier.getDocumentContent().Error: %s - %s" % (e, traceback.print_exc()))
-                pass
+                msg = "ERROR: %s - %s" % (e, traceback.print_exc())
+                self.Logger.logp(SEVERE, "Identifier", "getDocumentContent()", msg)
             else:
                 size = sf.getSize(url)
                 loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
@@ -170,8 +165,6 @@ class Identifier(unohelper.Base,
     def getFolderContent(self, content):
         select, updated = self.User.getFolderContent(self.MetaData, content, False)
         if updated:
-            msg = "updated: %s" % updated
-            self.Logger.logp(INFO, "Identifier", "getFolderContent()", msg)
             loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
             content.insertValue('Loaded', loaded)
         return select
@@ -179,7 +172,6 @@ class Identifier(unohelper.Base,
     # XContentIdentifier
     def getContentIdentifier(self):
         url = self._Uri
-        print("Identifier.getContentIdentifier(): %s" % url)
         return url
     def getContentProviderScheme(self):
         return self.User.DataSource.Provider.Scheme

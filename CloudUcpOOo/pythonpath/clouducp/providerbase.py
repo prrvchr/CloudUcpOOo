@@ -127,12 +127,9 @@ class ProviderBase(ProviderObject,
         self.SessionMode = self.Request.getSessionMode(self.Host)
 
     def initializeUser(self, name):
-        print("ProviderBase.initializeUser() 1")
         self.SessionMode = self.Request.getSessionMode(self.Host)
         if self.isOnLine():
-            print("ProviderBase.initializeUser() 2")
             return self.Request.initializeUser(name)
-        print("ProviderBase.initializeUser() FIN")
         return True
 
     # Can be rewrited method
@@ -197,18 +194,13 @@ class ProviderBase(ProviderObject,
         return self.Request.execute(parameter)
 
     def getDocumentContent(self, content):
-        print("ProviderBase.getDocumentContent() 1")
         parameter = self.getRequestParameter('getDocumentContent', content)
         return self.Request.getInputStream(parameter, self.Chunk, self.Buffer)
     def getFolderContent(self, content):
-        print("ProviderBase.getFolderContent() 1")
         parameter = self.getRequestParameter('getFolderContent', content)
-        msg = "getRequestParameter"
-        self.Request.Logger.logp(INFO, 'ProviderBase', 'getFolderContent()', msg)
         return self.Request.getEnumerator(parameter)
 
     def getUploader(self, datasource):
-        print("Provider.getUploader() 1")
         return self.Request.getUploader(datasource)
 
     def createFile(self, item):
@@ -223,7 +215,6 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter(method, item)
         response = self.Request.execute(parameter)
         if response.IsPresent:
-            print("Provider.uploadFile()")
             parameter = self.getRequestParameter('getUploadStream', response.Value)
             return None if uploader.start(item, parameter) else False
         return False

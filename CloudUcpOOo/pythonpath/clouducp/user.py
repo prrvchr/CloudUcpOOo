@@ -131,7 +131,6 @@ class User(unohelper.Base,
             id = self._searchId(paths[::-1], basename)
         if not id:
             error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
-            print("User.initializeIdentifier() Error: %s" % error)
         paths.insert(0, self.Name)
         identifier = self.DataSource.Provider.Request.getKeyMap()
         identifier.insertValue('Id', id)
@@ -142,7 +141,6 @@ class User(unohelper.Base,
         identifier.insertValue('BaseURI', baseuri)
         baseurl = baseuri if isroot else '%s/%s' % (baseuri, id)
         identifier.insertValue('BaseURL', baseurl)
-        print("User.initializeIdentifier() FIN")
         return identifier, error
 
     def synchronize(self, value):

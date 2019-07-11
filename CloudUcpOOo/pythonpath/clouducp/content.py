@@ -60,21 +60,17 @@ class Content(unohelper.Base,
               XChild,
               XRestContent):
     def __init__(self, ctx, identifier, data):
-        try:
-            self.ctx = ctx
-            msg = "Content loading ... "
-            self.Identifier = identifier
-            self.MetaData = data
-            creatablecontent = self._getCreatableContentsInfo()
-            self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
-            self._commandInfo = self._getCommandInfo()
-            self._propertySetInfo = self._getPropertySetInfo()
-            self.contentListeners = []
-            msg += "Done."
-            self.Logger.logp(INFO, "Content", "__init__()", msg)
-            print("Content.__init__() FIN")
-        except Exception as e:
-            print("Content.__init__().Error: %s - %s" % (e, traceback.print_exc()))
+        self.ctx = ctx
+        msg = "Content loading ... "
+        self.Identifier = identifier
+        self.MetaData = data
+        creatablecontent = self._getCreatableContentsInfo()
+        self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
+        self._commandInfo = self._getCommandInfo()
+        self._propertySetInfo = self._getPropertySetInfo()
+        self.contentListeners = []
+        msg += "Done."
+        self.Logger.logp(INFO, "Content", "__init__()", msg)
 
     @property
     def IsFolder(self):
@@ -92,40 +88,28 @@ class Content(unohelper.Base,
     # XChild
     def getParent(self):
         if self.Identifier.IsRoot:
-            print("Content.getParent() 1")
             return XInterface()
         identifier = self.Identifier.getParent()
-        print("Content.getParent() 2 %s" % identifier.getContentIdentifier())
         return identifier.getContent()
     def setParent(self, parent):
-        print("Content.setParent()")
         raise NoSupportException('Parent can not be set', self)
 
     # XContentCreator
     def queryCreatableContentsInfo(self):
         return self.MetaData.getValue('CreatableContentsInfo')
     def createNewContent(self, info):
-        try:
-            print("Content.createNewContent() 1 %s" % info)
-            identifier = self.Identifier.createNewIdentifier(info.Type)
-            print("Content.createNewContent() 2 %s" % info.Type)
-            return identifier.getContent()
-        except Exception as e:
-            print("Content.createNewContent().Error: %s - %s" % (e, traceback.print_exc()))
+        identifier = self.Identifier.createNewIdentifier(info.Type)
+        return identifier.getContent()
 
     # XContent
     def getIdentifier(self):
-        print("Content.getIdentifier()")
         return self.Identifier
     def getContentType(self):
-        print("Content.getContentType()")
         return self.MetaData.getValue('ContentType')
     def addContentEventListener(self, listener):
-        print("Content.addContentEventListener()")
         if listener not in self.contentListeners:
             self.contentListeners.append(listener)
     def removeContentEventListener(self, listener):
-        print("Content.removeContentEventListener()")
         if listener in self.contentListeners:
             self.contentListeners.remove(listener)
 
@@ -136,7 +120,6 @@ class Content(unohelper.Base,
         try:
             msg = "command.Name: %s" % command.Name
             self.Logger.logp(INFO, "Content", "execute()", msg)
-            print("Content.execute(): %s" % command.Name)
             if command.Name == 'getCommandInfo':
                 return CommandInfo(self._commandInfo)
             elif command.Name == 'getPropertySetInfo':
@@ -147,7 +130,6 @@ class Content(unohelper.Base,
             elif command.Name == 'setPropertyValues':
                 return setPropertiesValues(self, environment, command.Argument, self.Logger)
             elif command.Name == 'delete':
-                print("Content.execute(): delete")
                 self.MetaData.insertValue('Trashed', self.Identifier.updateTrashed(True, False))
             elif command.Name == 'open':
                 if self.IsFolder:
@@ -173,11 +155,10 @@ class Content(unohelper.Base,
                         s.setStream(sf.openFileReadWrite(url))
             elif command.Name == 'insert':
                 if self.IsFolder:
-                    print("Content.execute() insert")
                     mediatype = self.Identifier.User.DataSource.Provider.Folder
                     self.MetaData.insertValue('MediaType', mediatype)
                     if self.Identifier.insertNewFolder(self.MetaData):
-                        print("Content.execute(): insert %s" % mediatype)
+                        pass
                     #identifier = self.getIdentifier()
                     #ucp = getUcp(self.ctx, identifier.getContentProviderScheme())
                     #self.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), ucp)
@@ -188,7 +169,6 @@ class Content(unohelper.Base,
                 elif self.IsDocument:
                     # The Insert command is only used to create a new document (File Save As)
                     # it saves content from createNewContent from the parent folder
-                    print("Content.execute(): insert %s" % command.Argument)
                     stream = command.Argument.Data
                     replace = command.Argument.ReplaceExisting
                     sf = getSimpleFile(self.ctx)
@@ -202,16 +182,14 @@ class Content(unohelper.Base,
                         self.MetaData.insertValue('MediaType', mediatype)
                         stream.closeInput()
                         if self.Identifier.insertNewDocument(self.MetaData):
-                            print("Content.execute(): insert %s" % mediatype)
+                            pass
                         #ucp = getUcp(self.ctx, identifier.getContentProviderScheme())
                         #self.addPropertiesChangeListener(('Id', 'Name', 'Size', 'Trashed', 'Loaded'), ucp)
                         #propertyChange(self, 'Id', identifier.Id, CREATED | FILE)
                         #parent = identifier.getParent()
                         #event = getContentEvent(self, INSERTED, self, parent)
                         #ucp.queryContent(parent).notify(event)
-                print("Content.execute(): insert FIN")
             elif command.Name == 'createNewContent' and self.IsFolder:
-                print("Content.execute(): createNewContent %s" % command.Argument)
                 return self.createNewContent(command.Argument)
             elif command.Name == 'transfer' and self.IsFolder:
                 # Transfer command is used for document 'File Save' or 'File Save As'
@@ -223,8 +201,6 @@ class Content(unohelper.Base,
                 source = command.Argument.SourceURL
                 move = command.Argument.MoveData
                 clash = command.Argument.NameClash
-                print("Content.execute(): transfer 1:\nSource: %s\nId: %s\nMove: %s\nClash: %s" \
-                                 % (source, title, move, clash))
                 # We check if 'command.Argument.NewTitle' is an Id
                 if self.Identifier.isChildId(title):
                     id = title
@@ -239,9 +215,7 @@ class Content(unohelper.Base,
                         # - Insert at new Content for committing change
                         # To execute these commands, we must throw an exception
                         msg = "Couln't handle Url: %s" % source
-                        print("Content.execute(): transfer 2:\n    transfer: %s - %s" % (source, id))
                         raise InteractiveBadTransferURLException(msg, self)
-                print("Content.execute(): transfer 3:\n    transfer: %s - %s" % (source, id))
                 sf = getSimpleFile(self.ctx)
                 if not sf.exists(source):
                     raise CommandAbortedException("Error while saving file: %s" % source, self)
@@ -251,24 +225,21 @@ class Content(unohelper.Base,
                 inputstream.closeInput()
                 # We need to commit change: Size is the property chainning all DataSource change
                 if not self.Identifier.User.updateSize(id, self.Identifier.Id, sf.getSize(target)):
-                    print("Content.execute(): transfer 4: ERROR")
                     raise CommandAbortedException("Error while saving file: %s" % source, self)
                 #ucb = getUcb(self.ctx)
                 #identifier = ucb.createContentIdentifier('%s/%s' % (self.Identifier.BaseURL, title))
                 #data = getPropertyValueSet({'Size': sf.getSize(target)})
                 #content = ucb.queryContent(identifier)
                 #executeContentCommand(content, 'setPropertyValues', data, environment)
-                print("Content.execute(): transfer 4: FIN")
                 if move:
                     pass #must delete object
             elif command.Name == 'flush' and self.IsFolder:
-                print("Content.execute(): flush")
+                pass
         except CommandAbortedException as e:
             raise e
         except InteractiveBadTransferURLException as e:
             raise e
         except Exception as e:
-            print("Content.execute().Error: %s - %s - %s" % (command.Name, e, traceback.print_exc()))
             msg += " ERROR: %s" % e
             self.Logger.logp(SEVERE, "Content", "execute()", msg)
 
