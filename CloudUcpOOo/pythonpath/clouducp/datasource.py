@@ -361,7 +361,7 @@ class DataSource(unohelper.Base,
             elif response and response.IsPresent:
                 results.append(self._updateSync(item, response.Value))
             else:
-                msg = "ERROR: ItemId: %s " % item.getDefaultValue('Id')
+                msg = "ERROR: ItemId: %s" % item.getDefaultValue('Id')
                 self.Logger.logp(SEVERE, "DataSource", "synchronize()", msg)
                 continue
         return value if all(results) else None
@@ -374,7 +374,7 @@ class DataSource(unohelper.Base,
         while result.next():
             items.append(getKeyMapFromResult(result, user, self.Provider))
         select.close()
-        msg = "Items to Sync: %s " % len(items)
+        msg = "Items to Sync: %s" % len(items)
         self.Logger.logp(INFO, "DataSource", "_getItemToSync()", msg)
         return items
 
@@ -415,7 +415,7 @@ class DataSource(unohelper.Base,
         delete = self._getDataSourceCall('deleteSyncMode')
         delete.setLong(1, item.getValue('SyncId'))
         row = delete.executeUpdate()
-        msg = "execute deleteSyncMode OldId: %s - NewId: %s - Row: %s" (oldid, newid, row)
+        msg = "execute deleteSyncMode OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
         self.Logger.logp(INFO, "DataSource", "_updateSync", msg)
         delete.close()
         if row and newid != oldid:
@@ -423,7 +423,7 @@ class DataSource(unohelper.Base,
             update.setString(1, newid)
             update.setString(2, oldid)
             row = update.executeUpdate()
-            msg = "execute updateItemId OldId: %s - NewId: %s - Row: %s" (oldid, newid, row)
+            msg = "execute updateItemId OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
             self.Logger.logp(INFO, "DataSource", "_updateSync", msg)
             update.close()
         return '' if row != 1 else newid
