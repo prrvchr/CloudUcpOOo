@@ -12,7 +12,7 @@ from com.sun.star.ucb.ConnectionMode import ONLINE
 
 from com.sun.star.ucb import XRestProvider
 
-from .dbtools import parseDateTime
+from .datasourcehelper import parseDateTime
 from .unotools import getResourceLocation
 from .configuration import g_oauth2
 
@@ -35,8 +35,11 @@ class ProviderBase(ProviderObject,
         return self.Request.Error if self.Request.Error else self._Error
 
     # Private method
-    def _getRequest(self, ctx):
-        return ctx.ServiceManager.createInstanceWithContext(g_oauth2, ctx)
+    def _getRequest(self):
+        request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
+        if not request:
+            self._Error = "ERROR: service: %s is not available... Check your extensions" % g_oauth2
+        return request
 
     # Must be implemented properties
     @property

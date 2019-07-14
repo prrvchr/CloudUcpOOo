@@ -17,12 +17,13 @@ from com.sun.star.beans.PropertyAttribute import TRANSIENT
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
-from .content import Content
+from .configuration import g_identifier
+#from .content import Content
 
 from .contenttools import getUri
 from .unotools import getProperty
 from .unotools import getResourceLocation
-from .dbtools import parseDateTime
+from .datasourcehelper import parseDateTime
 
 import traceback
 
@@ -99,7 +100,10 @@ class Identifier(unohelper.Base,
         else:
             data = self.User.getItem(self.MetaData)
         data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
-        return Content(self.ctx, self, data)
+        service = '%s.Content' % g_identifier
+        content = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        content.initialize(self, data)
+        return content
 
     def setTitle(self, title, isfolder):
         id = self.Id if isfolder else title

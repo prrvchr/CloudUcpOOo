@@ -7,11 +7,13 @@ import unohelper
 from com.sun.star.uno import XInterface
 from com.sun.star.uno import RuntimeException as UnoRuntimeException
 from com.sun.star.container import XChild
+from com.sun.star.lang import XServiceInfo
 from com.sun.star.lang import XComponent
 from com.sun.star.lang import NoSupportException
 from com.sun.star.ucb import XContent
 from com.sun.star.ucb import XCommandProcessor2
 from com.sun.star.ucb import XContentCreator
+from com.sun.star.ucb import XCommandInfoChangeNotifier
 from com.sun.star.ucb import InteractiveBadTransferURLException
 from com.sun.star.ucb import CommandAbortedException
 from com.sun.star.beans import XPropertiesChangeNotifier
@@ -29,49 +31,45 @@ from com.sun.star.logging.LogLevel import SEVERE
 
 from com.sun.star.ucb import XRestContent
 
+from clouducp import g_identifier
+from clouducp import CommandInfo
+from clouducp import Row
+from clouducp import DynamicResultSet
+from clouducp import PropertySetInfo
 
-from .contentlib import CommandInfo
-from .contentlib import Row
-from .contentlib import DynamicResultSet
-from .unolib import PropertySetInfo
-
-from .contentcore import getPropertiesValues
-from .contentcore import setPropertiesValues
-from .contenttools import getCommandInfo
-from .contenttools import getContentInfo
-from .contenttools import getUcb
-from .contenttools import getUcp
-from .contenttools import getUri
-from .contenttools import getMimeType
-from .unotools import getSimpleFile
-from .unotools import getProperty
-from .unotools import getPropertyValueSet
-from .logger import getLogger
+from clouducp import getPropertiesValues
+from clouducp import setPropertiesValues
+from clouducp import getCommandInfo
+from clouducp import getContentInfo
+from clouducp import getUcb
+from clouducp import getUcp
+from clouducp import getUri
+from clouducp import getMimeType
+from clouducp import getSimpleFile
+from clouducp import getProperty
+from clouducp import getPropertyValueSet
+from clouducp import getLogger
 
 import traceback
 
 
+# pythonloader looks for a static g_ImplementationHelper variable
+g_ImplementationHelper = unohelper.ImplementationHelper()
+g_ImplementationName = '%s.Content' % g_identifier
+
+
 class Content(unohelper.Base,
+              XServiceInfo,
               XComponent,
               XContent,
               XCommandProcessor2,
               XContentCreator,
               XChild,
               XPropertiesChangeNotifier,
+              XCommandInfoChangeNotifier,
               XRestContent):
-    def __init__(self, ctx, identifier, data):
+    def __init__(self, ctx):
         self.ctx = ctx
-        msg = "Content loading ... "
-        self.Identifier = identifier
-        self.MetaData = data
-        creatablecontent = self._getCreatableContentsInfo()
-        self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
-        self._commandInfo = self._getCommandInfo()
-        self._propertySetInfo = self._getPropertySetInfo()
-        self.contentListeners = []
-        self._propertiesListener = {}
-        msg += "Done."
-        self.Logger.logp(INFO, "Content", "__init__()", msg)
 
     @property
     def IsFolder(self):
@@ -85,6 +83,27 @@ class Content(unohelper.Base,
     @property
     def Logger(self):
         return self.Identifier.User.DataSource.Logger
+
+    def initialize(self, identifier, data):
+        self.Identifier = identifier
+        self.MetaData = data
+        msg = "Content loading ... "
+        creatablecontent = self._getCreatableContentsInfo()
+        self.MetaData.insertValue('CreatableContentsInfo', creatablecontent)
+        self._commandInfo = self._getCommandInfo()
+        self._propertySetInfo = self._getPropertySetInfo()
+        self.contentListeners = []
+        self._propertiesListener = {}
+        msg += "Done."
+        self.Logger.logp(INFO, "Content", "initialize()", msg)
+        #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+        #mri.inspect(self)
+
+    # XCommandInfoChangeNotifier
+    def addCommandInfoChangeListener(self, listener):
+        print("Content.addCommandInfoChangeListener()")
+    def removeCommandInfoChangeListener(self, listener):
+        print("Content.removeCommandInfoChangeListener()")
 
     # XComponent
     def dispose(self):
@@ -143,6 +162,8 @@ class Content(unohelper.Base,
             msg = "command.Name: %s" % command.Name
             self.Logger.logp(INFO, "Content", "execute()", msg)
             if command.Name == 'getCommandInfo':
+                msg = "command.Name: %s ******************************************" % command.Name
+                self.Logger.logp(INFO, "Content", "execute()", msg)
                 return CommandInfo(self._commandInfo)
             elif command.Name == 'getPropertySetInfo':
                 return PropertySetInfo(self._propertySetInfo)
@@ -264,7 +285,6 @@ class Content(unohelper.Base,
         except Exception as e:
             msg += " ERROR: %s" % e
             self.Logger.logp(SEVERE, "Content", "execute()", msg)
-
     def abort(self, id):
         pass
     def releaseCommandIdentifier(self, id):
@@ -315,6 +335,7 @@ class Content(unohelper.Base,
     def _getPropertySetInfo(self):
         RO = 0 if self.Identifier.IsNew else READONLY
         properties = {}
+        properties['ObjectId'] = getProperty('ObjectId', 'string', BOUND | RO)
         properties['ContentType'] = getProperty('ContentType', 'string', BOUND | RO)
         properties['MediaType'] = getProperty('MediaType', 'string', BOUND | READONLY)
         properties['IsDocument'] = getProperty('IsDocument', 'boolean', BOUND | RO)
@@ -338,3 +359,16 @@ class Content(unohelper.Base,
         properties['IsFloppy'] = getProperty('IsFloppy', 'boolean', BOUND | RO)
         properties['IsCompactDisc'] = getProperty('IsCompactDisc', 'boolean', BOUND | RO)
         return properties
+
+    # XServiceInfo
+    def supportsService(self, service):
+        return g_ImplementationHelper.supportsService(g_ImplementationName, service)
+    def getImplementationName(self):
+        return g_ImplementationName
+    def getSupportedServiceNames(self):
+        return g_ImplementationHelper.getSupportedServiceNames(g_ImplementationName)
+
+
+g_ImplementationHelper.addImplementation(Content,
+                                         g_ImplementationName,
+                                        (g_ImplementationName, 'com.sun.star.ucb.Content'))

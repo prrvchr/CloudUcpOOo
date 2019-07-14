@@ -7,7 +7,7 @@
 #include <com/sun/star/uri/XUriReference.idl>
 #include <com/sun/star/ucb/XSimpleFileAccess.idl>
 #include <com/sun/star/util/DateTime.idl>
-#include <com/sun/star/sdbc/XStatement.idl>
+#include <com/sun/star/sdbc/XPreparedStatement.idl>
 #include <com/sun/star/io/XInputStream.idl>
 #include <com/sun/star/ucb/ContentInfo.idl>
 
@@ -18,7 +18,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
 
     ::com::sun::star::uno::XInterface getContent();
     ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string ContentType);
-    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content);
+    ::com::sun::star::sdbc::XPreparedStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content);
     string getDocumentContent([in] XSimpleFileAccess Sf,
                               [in] ::com::sun::star::auth::XRestKeyMap Content,
                               [out] long Size);

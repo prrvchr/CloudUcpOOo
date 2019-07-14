@@ -101,8 +101,8 @@ def getSqlQuery(name):
         c3 = '"Title"'
         c4 = '"DateCreated"'
         c5 = '"DateModified"'
-        c6 = '"ContentType"'
-        c7 = '"MediaType"'
+        c6 = '"MediaType"'
+        c7 = '"ContentType"'
         c8 = '"IsFolder"'
         c9 = '"IsLink"'
         c10 = '"IsDocument"'
@@ -121,9 +121,8 @@ def getSqlQuery(name):
         s3 = '"I"."Title"'
         s4 = '"I"."DateCreated"'
         s5 = '"I"."DateModified"'
-        s6 = 'CASE WHEN "I"."MediaType" IN ("S"."Set2","S"."Set3") '
-        s6 += 'THEN "I"."MediaType" ELSE "S"."Set1" END'
-        s7 = '"I"."MediaType"'
+        s6 = '"I"."MediaType"'
+        s7 = 'CASE WHEN %s IN ("S"."Set2","S"."Set3") THEN %s ELSE "S"."Set1" END' % (s6, s6)
         s8 = '"I"."MediaType"="S"."Set2"'
         s9 = '"I"."MediaType"="S"."Set3"'
         s10 = '"I"."MediaType"!="S"."Set2" AND "I"."MediaType"!="S"."Set3"'
@@ -225,41 +224,42 @@ def getSqlQuery(name):
         p = (','.join(c), f)
         query = 'SELECT %s FROM %s WHERE "U"."UserName" = ?' % p
     elif name == 'getItem':
-        c1 = '"ItemId" "Id"'
-        c2 = '"Title"'
-        c3 = '"Title" "TitleOnServer"'
-        c4 = '"DateCreated"'
-        c5 = '"DateModified"'
-        c6 = '"ContentType"'
-        c7 = '"MediaType"'
-        c8 = '"Size"'
-        c9 = '"Trashed"'
-        c10 = '"IsRoot"'
-        c11 = '"IsFolder"'
-        c12 = '"IsDocument"'
-        c13 = '"CanAddChild"'
-        c14 = '"CanRename"'
-        c15 = '"IsReadOnly"'
-        c16 = '"IsVersionable"'
-        c17 = '"Loaded"'
-        c18 = '\'\' "CasePreservingURL"'
-        c19 = 'FALSE "IsHidden"'
-        c20 = 'FALSE "IsVolume"'
-        c21 = 'FALSE "IsRemote"'
-        c22 = 'FALSE "IsRemoveable"'
-        c23 = 'FALSE "IsFloppy"'
-        c24 = 'FALSE "IsCompactDisc"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,c24)
-        p  =','.join(c)
-        query = 'SELECT %s FROM "Item" WHERE "UserId" = ? AND "ItemId" = ?' % p
+        c = []
+        c.append('"ItemId" "Id"')
+        c.append('"ItemId" "ObjectId"')
+        c.append('"Title"')
+        c.append('"Title" "TitleOnServer"')
+        c.append('"DateCreated"')
+        c.append('"DateModified"')
+        c.append('"ContentType"')
+        c.append('"MediaType"')
+        c.append('"Size"')
+        c.append('"Trashed"')
+        c.append('"IsRoot"')
+        c.append('"IsFolder"')
+        c.append('"IsDocument"')
+        c.append('"CanAddChild"')
+        c.append('"CanRename"')
+        c.append('"IsReadOnly"')
+        c.append('"IsVersionable"')
+        c.append('"Loaded"')
+        c.append('\'\' "CasePreservingURL"')
+        c.append('FALSE "IsHidden"')
+        c.append('FALSE "IsVolume"')
+        c.append('FALSE "IsRemote"')
+        c.append('FALSE "IsRemoveable"')
+        c.append('FALSE "IsFloppy"')
+        c.append('FALSE "IsCompactDisc"')
+        query = 'SELECT %s FROM "Item" WHERE "UserId" = ? AND "ItemId" = ?' % ','.join(c)
     elif name == 'getChildren':
+        c0 = '"ItemId"'
         c1 = '"Title"'
         c2 = '"Size"'
         c3 = '"DateModified"'
         c4 = '"DateCreated"'
         c5 = '"IsFolder"'
-        c6 = 'CASE WHEN "IsFolder" THEN ? || \'/\' || "ItemId" ELSE ? || \'/\' || "Title" END '
-        c6 += '"TargetURL"'
+        c6 = '"TargetURL"'
+        c6 = "CASE WHEN %s = TRUE THEN ? || '/' || %s ELSE ? || '/' || %s END %s" % (c5, c0, c1, c6)
         c7 = '"IsHidden"'
         c8 = '"IsVolume"'
         c9 = '"IsRemote"'

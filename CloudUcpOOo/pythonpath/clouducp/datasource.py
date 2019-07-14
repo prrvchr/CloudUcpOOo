@@ -23,8 +23,8 @@ from .user import User
 from .datasourcehelper import getDataSourceUrl
 from .datasourcehelper import getDataSourceConnection
 from .datasourcehelper import getKeyMapFromResult
+from .datasourcehelper import parseDateTime
 from .datasourcequeries import getSqlQuery
-from .dbtools import parseDateTime
 from .unotools import getResourceLocation
 from .unotools import getPropertyValue
 

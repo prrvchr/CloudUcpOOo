@@ -9,8 +9,6 @@ from com.sun.star.ucb import InteractiveAugmentedIOException
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 
-from .configuration import g_identifier
-
 from .unotools import getProperty
 from .unotools import getPropertyValue
 from .unotools import getNamedValueSet
@@ -29,35 +27,6 @@ def getSessionMode(ctx, host):
         connection.close()
         mode = ONLINE
     return mode
-
-def createContentUser(ctx, datasource, plugin, username=None):
-    service = '%s.ContentUser' % plugin
-    namedvalue = getNamedValueSet({'DataSource': datasource, 'Name': username})
-    contentuser = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
-    return contentuser
-
-def createContentIdentifier(ctx, plugin, user, uri):
-    service = '%s.ContentIdentifier' % plugin
-    namedvalue = getNamedValueSet({'User': user, 'Uri': uri})
-    contentidentifier = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
-    return contentidentifier
-
-def createContent(ctx, identifier, data, plugin, folder, link, documents):
-    content, service = None, None
-    mimetype = data.get('MimeType', 'application/octet-stream')
-    if mimetype == folder:
-        service = '%s.FolderContent' % g_identifier
-    elif mimetype == link:
-        pass
-    elif mimetype in (documents):
-        service = '%s.DocumentContent' % plugin
-    else:
-        service = '%s.DocumentContent' % g_identifier
-    if service is not None:
-        namedvalue = getNamedValueSet({'Identifier': identifier})
-        namedvalue += getNamedValueSet(data)
-        content = ctx.ServiceManager.createInstanceWithArgumentsAndContext(service, namedvalue, ctx)
-    return content
 
 def propertyChange(source, name, oldvalue, newvalue):
     if name in source.propertiesListener:
@@ -121,12 +90,12 @@ def getCommand(name, argument, handle=-1):
     command.Argument = argument
     return command
 
-def getCommandInfo(name, typename=None, handle=-1):
+def getCommandInfo(name, unotype=None, handle=-1):
     command = uno.createUnoStruct('com.sun.star.ucb.CommandInfo')
     command.Name = name
+    if unotype:
+        command.ArgType = unotype
     command.Handle = handle
-    if typename is not None:
-        command.ArgType = uno.getTypeByName(typename)
     return command
 
 def getContentInfo(ctype, attributes=0, properties=()):
@@ -168,11 +137,11 @@ def getParametersRequest(source, connection, message):
     r.Connection = connection
     return r
 
-def getInteractiveAugmentedIOException(message, source, Classification, code, arguments):
+def getInteractiveAugmentedIOException(message, source, classification, code, arguments):
     e = InteractiveAugmentedIOException()
     e.Message = message
     e.Context = source
-    e.Classification = uno.Enum('com.sun.star.task.InteractionClassification', Classification)
+    e.Classification = uno.Enum('com.sun.star.task.InteractionClassification', classification)
     e.Code = uno.Enum('com.sun.star.ucb.IOErrorCode', code)
     e.Arguments = arguments
     return e

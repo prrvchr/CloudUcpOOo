@@ -5,7 +5,7 @@
 #include <com/sun/star/ucb/XRestProvider.idl>
 #include <com/sun/star/auth/XRestKeyMap.idl>
 #include <com/sun/star/sdbc/XConnection.idl>
-#include <com/sun/star/sdbc/XStatement.idl>
+#include <com/sun/star/sdbc/XPreparedStatement.idl>
 #include <com/sun/star/beans/Optional.idl>
 #include <com/sun/star/logging/XLogger.idl>
 
@@ -21,10 +21,10 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                          [in] string ItemId);
     ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap User,
                                              [in] ::com::sun::star::auth::XRestKeyMap Identifier);
-    ::com::sun::star::sdbc::XStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap User,
-                                                        [in] ::com::sun::star::auth::XRestKeyMap Identifier,
-                                                        [in] ::com::sun::star::auth::XRestKeyMap Content,
-                                                        [out] boolean Updated);
+    ::com::sun::star::sdbc::XPreparedStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap User,
+                                                                [in] ::com::sun::star::auth::XRestKeyMap Identifier,
+                                                                [in] ::com::sun::star::auth::XRestKeyMap Content,
+                                                                [out] boolean Updated);
     boolean insertNewDocument([in] string UserId,
                               [in] string ItemId,
                               [in] string ParentId,

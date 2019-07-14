@@ -149,30 +149,31 @@ class CommandInfo(unohelper.Base,
                   XCommandInfo):
     def __init__(self, commands={}):
         self.commands = commands
+        print("CommandInfo.__init__()")
     # XCommandInfo
     def getCommands(self):
-        print("PyCommandInfo.getCommands()")
+        print("CommandInfo.getCommands()")
         return tuple(self.commands.values())
     def getCommandInfoByName(self, name):
-        print("PyCommandInfo.getCommandInfoByName(): %s" % name)
+        print("CommandInfo.getCommandInfoByName(): %s" % name)
         if name in self.commands:
             return self.commands[name]
-        print("PyCommandInfo.getCommandInfoByName() Error: %s" % name)
+        print("CommandInfo.getCommandInfoByName() Error: %s" % name)
         msg = 'Cant getCommandInfoByName, UnsupportedCommandException: %s' % name
         raise UnsupportedCommandException(msg, self)
     def getCommandInfoByHandle(self, handle):
-        print("PyCommandInfo.getCommandInfoByHandle(): %s" % handle)
+        print("CommandInfo.getCommandInfoByHandle(): %s" % handle)
         for command in self.commands.values():
             if command.Handle == handle:
                 return command
-        print("PyCommandInfo.getCommandInfoByHandle() Error: %s" % handle)
+        print("CommandInfo.getCommandInfoByHandle() Error: %s" % handle)
         msg = 'Cant getCommandInfoByHandle, UnsupportedCommandException: %s' % handle
         raise UnsupportedCommandException(msg, self)
     def hasCommandByName(self, name):
-        print("PyCommandInfo.hasCommandByName(): %s" % name)
+        print("CommandInfo.hasCommandByName(): %s" % name)
         return name in self.commands
     def hasCommandByHandle(self, handle):
-        print("PyCommandInfo.hasCommandByHandle(): %s" % handle)
+        print("CommandInfo.hasCommandByHandle(): %s" % handle)
         for command in self.commands.values():
             if command.Handle == handle:
                 return True
@@ -254,13 +255,10 @@ class DynamicResultSet(unohelper.Base,
     def getStaticResultSet(self):
         return ContentResultSet(self.ctx, self.select)
     def setListener(self, listener):
-        print("DynamicResultSet.setListener():")
         pass
     def connectToCache(self, cache):
-        print("DynamicResultSet.connectToCache():")
         pass
     def getCapabilities(self):
-        print("DynamicResultSet.getCapabilities():")
         return uno.getConstantByName('com.sun.star.ucb.ContentResultSetCapability.SORTED')
 
 
@@ -278,9 +276,8 @@ class ContentResultSet(unohelper.Base,
         self.IsRowCountFinal = True
         result.beforeFirst()
         self.result = result
-        print("ContentResultSet.__init__(): %s" % self.RowCount)
     def __del__(self):
-        print("ContentResultSet.__del__(): **************")
+        pass
     def _getPropertySetInfo(self):
         properties = {}
         readonly = uno.getConstantByName('com.sun.star.beans.PropertyAttribute.READONLY')

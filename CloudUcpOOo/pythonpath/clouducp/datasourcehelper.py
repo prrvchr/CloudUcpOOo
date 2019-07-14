@@ -22,6 +22,7 @@ from .configuration import g_options
 from .configuration import g_shutdow
 from .datasourcequeries import getSqlQuery
 
+import datetime
 import traceback
 
 
@@ -67,6 +68,39 @@ def getKeyMapFromResult(result, item, provider=None):
             value = provider.transform(name, value)
         item.insertValue(name, value)
     return item
+
+def parseDateTime(timestr='', format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    if not timestr:
+        t = datetime.datetime.now()
+    else:
+        t = datetime.datetime.strptime(timestr, format)
+    return _getDateTime(t.microsecond, t.second, t.minute, t.hour, t.day, t.month, t.year)
+
+def unparseDateTime(t=None):
+    if t is None:
+        return datetime.datetime.now().strftime(g_datetime)
+    millisecond = 0
+    if hasattr(t, 'HundredthSeconds'):
+        millisecond = t.HundredthSeconds * 10
+    elif hasattr(t, 'NanoSeconds'):
+        millisecond = t.NanoSeconds // 1000000
+    return '%s-%s-%sT%s:%s:%s.%03dZ' % (t.Year, t.Month, t.Day, t.Hours, t.Minutes, t.Seconds, millisecond)
+
+def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year=1970, utc=True):
+    t = uno.createUnoStruct('com.sun.star.util.DateTime')
+    t.Year = year
+    t.Month = month
+    t.Day = day
+    t.Hours = hour
+    t.Minutes = minute
+    t.Seconds = second
+    if hasattr(t, 'HundredthSeconds'):
+        t.HundredthSeconds = microsecond // 10000
+    elif hasattr(t, 'NanoSeconds'):
+        t.NanoSeconds = microsecond * 1000
+    if hasattr(t, 'IsUTC'):
+        t.IsUTC = utc
+    return t
 
 def _createDataSource(ctx, scheme, path, url):
     dbcontext = ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
