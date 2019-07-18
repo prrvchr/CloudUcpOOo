@@ -18,8 +18,10 @@ from com.sun.star.ucb import XRestContentProvider
 
 from clouducp import g_identifier
 from clouducp import DataSource
-from clouducp import InteractionRequestParameters
 from clouducp import getInteractionHandler
+from clouducp import InteractionRequest
+from clouducp import getOAuth2Request
+from clouducp import getLogger
 from clouducp import isLoggerEnabled
 from clouducp import getUcb
 from clouducp import getUri
@@ -43,8 +45,8 @@ class ContentProvider(unohelper.Base,
         self.Scheme = ''
         self.Plugin = ''
         self.DataSource = None
-        self._defaultUser = None
-        self.Logger = self._getLogger()
+        self._defaultUser = ''
+        self.Logger = getLogger(self.ctx)
         msg = "ContentProvider: %s loading ... Done" % g_identifier
         self.Logger.logp(INFO, 'ContentProvider', '__init__()', msg)
 
@@ -151,27 +153,23 @@ class ContentProvider(unohelper.Base,
             return ''
         if uri.hasAuthority() and uri.getAuthority() != '':
             name = uri.getAuthority()
-            self._defaultUser = None
-        elif self._defaultUser is not None:
+            self._defaultUser = ''
+        elif self._defaultUser:
             name = self._defaultUser
         else:
             name = self._getUserNameFromHandler()
         return name
 
     def _getUserNameFromHandler(self):
-        result = uno.createUnoStruct('com.sun.star.beans.Optional<string>')
-        message = "Authentication is needed!!!"
+        message = "Authentication"
         handler = getInteractionHandler(self.ctx, message)
-        request = InteractionRequestParameters(self, self.DataSource.Connection, message, result)
-        if handler.handleInteractionRequest(request):
-            if result.IsPresent:
-                self._defaultUser = result.Value
-                return result.Value
-        return ''
-
-    def _getLogger(self, logger='org.openoffice.logging.DefaultLogger'):
-        singleton = '/singletons/com.sun.star.logging.LoggerPool'
-        return self.ctx.getValueByName(singleton).getNamedLogger(logger)
+        response = uno.createUnoStruct('com.sun.star.beans.Optional<string>')
+        request = getOAuth2Request(self, self.Scheme, message)
+        interaction = InteractionRequest(request, response)
+        if handler.handleInteractionRequest(interaction):
+            if response.IsPresent:
+                self._defaultUser = response.Value
+        return self._defaultUser
 
 
     # XServiceInfo

@@ -240,7 +240,7 @@ class Row(unohelper.Base,
     def _getValue(self, index):
         value  = None
         self.isNull = True
-        if index in range(len(self.namedvalues)):
+        if 0 <= index < len(self.namedvalues):
             value = self.namedvalues[index].Value
             self.isNull = value is None
         return value
