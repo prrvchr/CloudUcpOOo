@@ -131,7 +131,7 @@ class User(unohelper.Base,
             id = self._searchId(paths[::-1], basename)
         if not id:
             error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
-        paths.insert(0, self.Name)
+        paths.insert(0, uri.getAuthority())
         identifier = self.DataSource.Provider.Request.getKeyMap()
         identifier.insertValue('Id', id)
         identifier.insertValue('IsRoot', isroot)

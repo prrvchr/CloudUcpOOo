@@ -98,8 +98,7 @@ class ContentProvider(unohelper.Base,
         try:
             msg = "Identifier: %s ... " % url
             url = self._getUrl(url)
-            uri = getUri(self.ctx, url)
-            name = self._getUserName(uri)
+            uri, name = self._getUserName(url)
             user = self.DataSource.getUser(name)
             identifier = user.getIdentifier(uri)
             msg += "Done"
@@ -148,17 +147,18 @@ class ContentProvider(unohelper.Base,
             identifier = transformer.getPresentation(url, True)
         return identifier
 
-    def _getUserName(self, uri):
+    def _getUserName(self, url):
+        uri = getUri(self.ctx, url)
         if not uri.getPathSegmentCount():
             return ''
         if uri.hasAuthority() and uri.getAuthority() != '':
             name = uri.getAuthority()
-            self._defaultUser = ''
+            self._defaultUser = name
         elif self._defaultUser:
             name = self._defaultUser
         else:
             name = self._getUserNameFromHandler()
-        return name
+        return uri, name
 
     def _getUserNameFromHandler(self):
         message = "Authentication"
