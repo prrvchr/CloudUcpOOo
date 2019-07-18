@@ -104,7 +104,6 @@ class OptionsDialog(unohelper.Base,
         service = "com.sun.star.ui.dialogs.FilePicker"
         fp = self.ctx.ServiceManager.createInstanceWithContext(service , self.ctx)
         fp.execute()
-        fd.dispose()
         self._loadSetting(dialog)
 
     def _getProviders(self, loaded=False):
