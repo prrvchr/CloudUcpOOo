@@ -11,6 +11,7 @@ from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb import XRestUser
 
 from .identifier import Identifier
+from .keymap import KeyMap
 
 import traceback
 
@@ -24,7 +25,7 @@ class User(unohelper.Base,
         self.DataSource = datasource
         self.Name = name
         self._Error = ''
-        self.MetaData, self._Error = self.DataSource.initializeUser(name, '')
+        self.MetaData = self.DataSource.initializeUser(name)
         if self.IsValid:
             self.checkNewIdentifier()
             msg += " ... Done"
@@ -99,49 +100,50 @@ class User(unohelper.Base,
     def getIdentifier(self, uri):
         return Identifier(self.ctx, self, uri)
 
-    def initializeIdentifier(self, uri, isnew, error=''):
+    def initializeIdentifier(self, uri, contenttype):
         paths = []
         position = -1
         basename = ''
-        parent = self.RootId
         isroot = False
+        isfolder = False
+        isnew = contenttype != ''
         for i in range(uri.getPathSegmentCount() -1, -1, -1):
             path = uri.getPathSegment(i).strip()
             if path not in ('','.'):
                 if not basename:
                     basename = path
                     position = i
-                else:
-                    parent = path
                     break
         for i in range(position):
             paths.append(uri.getPathSegment(i).strip())
         if isnew:
             id = self.getNewIdentifier()
-            if basename:
-                paths.append(basename)
+            isfolder = self.DataSource.Provider.isFolder(contenttype)
         elif not basename:
             id = self.RootId
             isroot = True
+            isfolder = True
         elif self.isIdentifier(basename):
             id = basename
+            isfolder = True
         else:
-            id = self.selectChildId(parent, basename)
-        if not id:
             id = self._searchId(paths[::-1], basename)
+        identifier = KeyMap()
+        authority = uri.getAuthority() if uri.hasAuthority() else ''
+        paths.insert(0, authority)
+        baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
+        identifier.insertValue('BaseURI', baseuri)
+        uname = id if isfolder else basename
+        baseurl = baseuri if isroot else '%s/%s' % (baseuri, uname)
+        identifier.insertValue('BaseURL', baseurl)
         if not id:
-            error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
-        paths.insert(0, uri.getAuthority())
-        identifier = self.DataSource.Provider.Request.getKeyMap()
+            self._Error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
+            return identifier
         identifier.insertValue('Id', id)
         identifier.insertValue('IsRoot', isroot)
         identifier.insertValue('IsNew', isnew)
         identifier.insertValue('BaseName', basename)
-        baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
-        identifier.insertValue('BaseURI', baseuri)
-        baseurl = baseuri if isroot else '%s/%s' % (baseuri, id)
-        identifier.insertValue('BaseURL', baseurl)
-        return identifier, error
+        return identifier
 
     def synchronize(self, value):
         return self.DataSource.synchronize(self.MetaData, value)

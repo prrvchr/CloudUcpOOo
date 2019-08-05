@@ -15,6 +15,7 @@ from com.sun.star.ucb import XRestProvider
 from .datasourcehelper import parseDateTime
 from .unotools import getResourceLocation
 from .configuration import g_oauth2
+from .keymap import KeyMap
 
 import datetime
 import traceback
@@ -35,6 +36,8 @@ class ProviderBase(ProviderObject,
         return self.Request.Error if self.Request.Error else self._Error
 
     # Private method
+    def _getKeyMap(self):
+        return KeyMap()
     def _getRequest(self):
         request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
         if not request:
@@ -185,7 +188,7 @@ class ProviderBase(ProviderObject,
         parameter = self.getRequestParameter('getNewIdentifier', user)
         return self.Request.getEnumerator(parameter)
     def getUser(self, name):
-        data = self.Request.getKeyMap()
+        data = KeyMap()
         data.insertValue('Id', name)
         parameter = self.getRequestParameter('getUser', data)
         return self.Request.execute(parameter)

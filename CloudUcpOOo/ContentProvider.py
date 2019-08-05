@@ -75,10 +75,10 @@ class ContentProvider(unohelper.Base,
         self.DataSource = datasource
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
         self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
-        provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
-        return provider
+        #provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
+        return self
     def deregisterInstance(self, scheme, argument):
-        getUcb(self.ctx).deregisterContentProvider(self, scheme)
+        #getUcb(self.ctx).deregisterContentProvider(self, scheme)
         msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
         self.Logger.logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
 
@@ -98,7 +98,8 @@ class ContentProvider(unohelper.Base,
         try:
             msg = "Identifier: %s ... " % url
             url = self._getUrl(url)
-            uri, name = self._getUserName(url)
+            uri = getUri(self.ctx, url)
+            name = self._getUserName(uri)
             user = self.DataSource.getUser(name)
             identifier = user.getIdentifier(uri)
             msg += "Done"
@@ -147,18 +148,16 @@ class ContentProvider(unohelper.Base,
             identifier = transformer.getPresentation(url, True)
         return identifier
 
-    def _getUserName(self, url):
-        uri = getUri(self.ctx, url)
-        if not uri.getPathSegmentCount():
-            return ''
-        if uri.hasAuthority() and uri.getAuthority() != '':
+    def _getUserName(self, uri):
+        if not uri.hasAuthority() or uri.getAuthority() == '':
+            if self._defaultUser:
+                name = self._defaultUser
+            else:
+                name = self._getUserNameFromHandler()
+        else:
             name = uri.getAuthority()
             self._defaultUser = name
-        elif self._defaultUser:
-            name = self._defaultUser
-        else:
-            name = self._getUserNameFromHandler()
-        return uri, name
+        return name
 
     def _getUserNameFromHandler(self):
         message = "Authentication"

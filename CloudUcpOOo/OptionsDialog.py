@@ -6,6 +6,7 @@ import unohelper
 
 from com.sun.star.lang import XServiceInfo
 from com.sun.star.awt import XContainerWindowEventHandler
+from com.sun.star.ucb import DuplicateProviderException
 from com.sun.star.logging.LogLevel import INFO
 from com.sun.star.logging.LogLevel import SEVERE
 
@@ -14,6 +15,7 @@ from clouducp import getStringResource
 from clouducp import getUcb
 from clouducp import getUcp
 from clouducp import getLogger
+from clouducp import getConfiguration
 
 import traceback
 
@@ -29,6 +31,7 @@ class OptionsDialog(unohelper.Base,
         msg = "OptionsDialog for Plugin: %s loading ... " % g_identifier
         self.ctx = ctx
         self.stringResource = getStringResource(self.ctx, g_identifier, 'CloudUcpOOo', 'OptionsDialog')
+        self._initContentProviders()
         self.Logger = getLogger(self.ctx)
         msg += "Done"
         self.Logger.logp(INFO, 'OptionsDialog', '__init__()', msg)
@@ -61,6 +64,53 @@ class OptionsDialog(unohelper.Base,
         return handled
     def getSupportedMethodNames(self):
         return ('external_event', 'Changed','LoadUcp', 'UnloadUcp', 'ViewUcp')
+
+    def _initContentProviders(self):
+        ucb = getUcb(self.ctx)
+        path = 'org.openoffice.ucb.Configuration'
+        config = getConfiguration(self.ctx, path, False)
+        paths = ('ContentProviders', 'Local', 'SecondaryKeys', 'Office', 'ProviderData')
+        i = 1
+        for path in paths:
+            config = config.getByName(path)
+        for name in config.getElementNames():
+            provider = config.getByName(name)
+            self._registerProxy(ucb, provider, i)
+            i += 1
+        #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+        #mri.inspect(ucb)
+
+    def _registerProxy(self, ucb, provider, i):
+        proxy = 'com.sun.star.ucb.ContentProviderProxy'
+        service = provider.getByName('ServiceName')
+        scheme = provider.getByName('URLTemplate')
+        arguments = provider.getByName('Arguments')
+        print('_initContentProvider()%s: %s - %s - %s' % (i, service, scheme, arguments))
+        ucp = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        print('_initContentProvider()%s: %s - %s - %s' % (i, service, scheme, arguments))
+        #if scheme in ('file', 'vnd.google-apps'):
+        #    mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+        #    mri.inspect(ucp)
+        #if ucp.supportsService(proxy):
+        #    try:
+        #        provider = False
+        #        print('_initContentProvider()3: %s - %s - %s' % (service, scheme, arguments))
+                #provider = ucp.registerInstance(scheme, arguments, False)
+        #        print('_initContentProvider()4: %s - %s - %s' % (service, scheme, provider))
+        #        if provider:
+        #            try:
+        #                print('_initContentProvider()5: %s - %s - %s' % (service, scheme, arguments))
+                        #ucb.registerContentProvider(provider, scheme, False)
+        #                print('_initContentProvider()6: %s - %s - %s' % (service, scheme, arguments))
+        #            except DuplicateProviderException:
+                        #pass
+        #                print('_initContentProvider()7: %s - %s - %s' % (service, scheme, arguments))
+                        #ucb.deregisterContentProvider(provider, scheme)
+                        #ucb.registerContentProvider(provider, scheme, True)
+        #                print('_initContentProvider()8: %s - %s - %s' % (service, scheme, arguments))
+        #    except Exception as e:
+                #pass
+        #        print('_initContentProvider()9: %s - %s - %s' % (service, scheme, e))
 
     def _loadSetting(self, dialog):
         msg = "OptionsDialog loading setting ... "
@@ -101,17 +151,31 @@ class OptionsDialog(unohelper.Base,
         dialog.getControl(control.Model.Tag).Model.Enabled = enabled
 
     def _doViewUcp(self, dialog):
-        service = "com.sun.star.ui.dialogs.FilePicker"
+        service = "com.sun.star.ui.dialogs.OfficeFilePicker"
+        #service = "com.sun.star.svtools.OfficeFilePicker"
         fp = self.ctx.ServiceManager.createInstanceWithContext(service , self.ctx)
+        mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+        mri.inspect(fp)
         fp.execute()
         self._loadSetting(dialog)
 
     def _getProviders(self, loaded=False):
         schemes = []
         proxy = 'com.sun.star.ucb.ContentProviderProxy'
-        infos = getUcb(self.ctx).queryContentProviders()
+        ucb = getUcb(self.ctx)
+        infos = ucb.queryContentProviders()
         for info in infos:
-            provider = info.ContentProvider
+            self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', '1')
+            scheme = info.Scheme
+            self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', '2 %s' % scheme)
+            url = '%s://' % scheme
+            self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', '3')
+            try:
+                provider = info.ContentProvider
+            except Exception as e:
+                msg = "Error: %s - %s" % (e, traceback.print_exc())
+                logger.logp(SEVERE, "OptionsDialog", "_getProviders()", msg)
+            self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', '4')
             # provider can be None...
             if loaded:
                 if not provider or provider.supportsService(proxy):
@@ -119,7 +183,8 @@ class OptionsDialog(unohelper.Base,
             else:
                 if provider and not provider.supportsService(proxy):
                     continue
-            schemes.append(info.Scheme)
+            self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', scheme)
+            schemes.append(scheme)
         return tuple(schemes)
 
     # XServiceInfo

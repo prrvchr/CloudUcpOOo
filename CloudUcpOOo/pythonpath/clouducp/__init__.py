@@ -62,3 +62,4 @@ from .unotools import getOAuth2Request
 
 from .oauth2lib import InteractionRequest
 
+from .keymap import KeyMap

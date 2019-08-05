@@ -35,7 +35,7 @@ def getDataSourceUrl(ctx, scheme, plugin):
 
 def getDataSourceConnection(ctx, url, logger):
     connection = None
-    msg = "Try to connect to DataSource: 1"
+    msg = "Try to connect to DataSource: %s" % url
     dbcontext = ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
     datasource = dbcontext.getByName(url)
     try:
@@ -48,7 +48,7 @@ def getDataSourceConnection(ctx, url, logger):
         logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     return connection
 
-def getKeyMapFromResult(result, item, provider=None):
+def getKeyMapFromResult(result, keymap, provider=None):
     for i in range(1, result.MetaData.ColumnCount +1):
         name = result.MetaData.getColumnName(i)
         dbtype = result.MetaData.getColumnTypeName(i)
@@ -66,8 +66,8 @@ def getKeyMapFromResult(result, item, provider=None):
             value = None
         if provider:
             value = provider.transform(name, value)
-        item.insertValue(name, value)
-    return item
+        keymap.insertValue(name, value)
+    return keymap
 
 def parseDateTime(timestr='', format='%Y-%m-%dT%H:%M:%S.%fZ'):
     if not timestr:

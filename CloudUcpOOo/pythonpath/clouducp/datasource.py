@@ -27,6 +27,7 @@ from .datasourcehelper import parseDateTime
 from .datasourcequeries import getSqlQuery
 from .unotools import getResourceLocation
 from .unotools import getPropertyValue
+from .keymap import KeyMap
 
 import binascii
 import traceback
@@ -69,11 +70,10 @@ class DataSource(unohelper.Base,
         return not self.Error
     @property
     def Error(self):
-        return self.Provider.Error if self.Provider.Error else self._Error
+        return self.Provider.Error if self.Provider and self.Provider.Error else self._Error
     @property
     def Logger(self):
         return self.Provider.Request.Logger
-
 
     def getUser(self, name):
         # User never change... we can cache it...
@@ -85,23 +85,23 @@ class DataSource(unohelper.Base,
                 self._CahedUser[name] = user
         return user
 
-    def initializeUser(self, name, error):
-        user = self.Provider.Request.getKeyMap()
+    def initializeUser(self, name):
+        user = KeyMap()
         if not name:
-            error = "ERROR: Can't retrieve a UserName from Handler"
-            return user, error
-        if not self.Provider.initializeUser(name):
-            error = "ERROR: No authorization for User: %s" % name
-            return user, error
+            self._Error = "ERROR: Can't retrieve a UserName from Handler"
+            return user
+        elif not self.Provider.initializeUser(name):
+            self._Error = "ERROR: No authorization for User: %s" % name
+            return user
         user = self._selectUser(name)
         if not user.IsPresent:
             if self.Provider.isOnLine():
                 user = self._getUser(name)
                 if not user.IsPresent:
-                    error = "ERROR: Can't retrieve User: %s from provider" % name
+                    self._Error = "ERROR: Can't retrieve User: %s from provider" % name
             else:
-                error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
-        return user.Value, error
+                self._Error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
+        return user.Value
 
     def _getContentType(self):
         call = self._getDataSourceCall('getSetting')
@@ -115,13 +115,13 @@ class DataSource(unohelper.Base,
 
     def _selectUser(self, name):
         user = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.auth.XRestKeyMap>')
-        user.Value = self.Provider.Request.getKeyMap()
+        user.Value = KeyMap()
         select = self._getDataSourceCall('getUser')
         select.setString(1, name)
         result = select.executeQuery()
         if result.next():
             user.IsPresent = True
-            user.Value = getKeyMapFromResult(result, self.Provider.Request.getKeyMap())
+            user.Value = getKeyMapFromResult(result, KeyMap())
         select.close()
         return user
 
@@ -151,7 +151,7 @@ class DataSource(unohelper.Base,
             self._executeRootCall('insert', userid, root, timestamp)
         user = uno.createUnoStruct('com.sun.star.beans.Optional<com.sun.star.auth.XRestKeyMap>')
         user.IsPresent = True
-        user.Value = self.Provider.Request.getKeyMap()
+        user.Value = KeyMap()
         user.Value.insertValue('UserId', userid)
         user.Value.insertValue('RootId', rootid)
         user.Value.insertValue('RootName', self.Provider.getRootTitle(root))
@@ -197,7 +197,7 @@ class DataSource(unohelper.Base,
         select.setString(2, identifier.getValue('Id'))
         result = select.executeQuery()
         if result.next():
-            item = getKeyMapFromResult(result, self.Provider.Request.getKeyMap())
+            item = getKeyMapFromResult(result, KeyMap())
         select.close()
         return item
 
@@ -211,7 +211,7 @@ class DataSource(unohelper.Base,
         c1.close()
         c2.close()
         id = self.Provider.getItemId(item)
-        identifier = self.Provider.Request.getKeyMap()
+        identifier = KeyMap()
         identifier.insertValue('Id', id)
         return self._selectItem(user, identifier)
 

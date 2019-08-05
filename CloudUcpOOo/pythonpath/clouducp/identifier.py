@@ -24,6 +24,7 @@ from .contenttools import getUri
 from .unotools import getProperty
 from .unotools import getResourceLocation
 from .datasourcehelper import parseDateTime
+from .keymap import KeyMap
 
 import traceback
 
@@ -32,22 +33,15 @@ class Identifier(unohelper.Base,
                  XContentIdentifier,
                  XRestIdentifier,
                  XChild):
-    def __init__(self, ctx, user, uri, contenttype=None):
+    def __init__(self, ctx, user, uri, contenttype=''):
         level = INFO
         msg = "Identifier loading"
         self.ctx = ctx
         self.User = user
-        self._Uri = uri.getUriReference()
         self._ContentType = contenttype
-        isnew = contenttype is not None
         self._Error = ''
-        if self.User.IsValid:
-            self.MetaData, self._Error = self.User.initializeIdentifier(uri, isnew, self._Error)
-            msg += " ... Done"
-        else:
-            self.MetaData = self.User.DataSource.Provider.Request.getKeyMap()
-            level = SEVERE
-            msg += " ... ERROR: %s" % self.Error
+        self.MetaData = self.User.initializeIdentifier(uri, contenttype)
+        msg += " ... Done"
         self.Logger.logp(level, "Identifier", "__init__()", msg)
 
     @property
@@ -58,7 +52,7 @@ class Identifier(unohelper.Base,
         return self.MetaData.getDefaultValue('IsRoot', False)
     @property
     def IsValid(self):
-        return all((self.Id, not self.Error))
+        return all((not self.Error, self.Id))
     @property
     def IsNew(self):
         return self.MetaData.getValue('IsNew')
@@ -80,14 +74,13 @@ class Identifier(unohelper.Base,
             timestamp = parseDateTime()
             isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
             isdocument = self.User.DataSource.Provider.isDocument(self._ContentType)
-            data = self.User.DataSource.Provider.Request.getKeyMap()
-            data.insertValue('Id', id)
+            data = KeyMap()
+            data.insertValue('Id', self.Id)
             data.insertValue('ContentType', self._ContentType)
             data.insertValue('DateCreated', timestamp)
             data.insertValue('DateModified', timestamp)
-            if isfolder:
-                folder = self.User.DataSource.Provider.Folder
-                data.insertValue('MediaType', folder)
+            mediatype = self._ContentType if isfolder else ''
+            data.insertValue('MediaType', mediatype)
             data.insertValue('Size', 0)
             data.insertValue('Trashed', False)
             data.insertValue('CanAddChild', True)
@@ -106,9 +99,10 @@ class Identifier(unohelper.Base,
         return content
 
     def setTitle(self, title, isfolder):
-        id = self.Id if isfolder else title
-        self._Uri = '%s/%s' % (self._Uri, id)
-        self.MetaData.insertValue('BaseName', id)
+        basename = self.Id if isfolder else title
+        self.MetaData.insertValue('BaseName', basename)
+        baseurl = '%s/%s' % (self.BaseURI, basename)
+        self.MetaData.insertValue('BaseURL', baseurl)
         return title
 
     def insertNewDocument(self, content):
@@ -175,8 +169,7 @@ class Identifier(unohelper.Base,
 
     # XContentIdentifier
     def getContentIdentifier(self):
-        url = self._Uri
-        return url
+        return self.BaseURL
     def getContentProviderScheme(self):
         return self.User.DataSource.Provider.Scheme
 

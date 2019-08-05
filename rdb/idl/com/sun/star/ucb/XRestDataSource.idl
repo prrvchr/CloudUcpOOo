@@ -15,8 +15,7 @@ interface XRestDataSource: com::sun::star::uno::XInterface
 {
 
     ::com::sun::star::uno::XInterface getUser([in] string Name);
-    ::com::sun::star::auth::XRestKeyMap initializeUser([in] string Name,
-                                                       [out] string Error);
+    ::com::sun::star::auth::XRestKeyMap initializeUser([in] string Name);
     boolean isIdentifier([in] string UserId,
                          [in] string ItemId);
     ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap User,
