@@ -4,3 +4,9 @@
 /CloudUcpOOo/pythonpath/clouducp/oauth2lib.py
 /CloudUcpOOo/pythonpath/clouducp/unolib.py
 /CloudUcpOOo/pythonpath/clouducp/unotools.py
+/rdb/idl/com/sun/star/auth/RestRequestEnumerator.idl
+/rdb/idl/com/sun/star/auth/RestRequestParameter.idl
+/rdb/idl/com/sun/star/auth/RestRequestToken.idl
+/rdb/idl/com/sun/star/auth/RestRequestTokenType.idl
+/rdb/idl/com/sun/star/auth/XOAuth2Service.idl
+/rdb/idl/com/sun/star/auth/RestKeyMap.idl
