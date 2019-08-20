@@ -31,7 +31,6 @@ class OptionsDialog(unohelper.Base,
         msg = "OptionsDialog for Plugin: %s loading ... " % g_identifier
         self.ctx = ctx
         self.stringResource = getStringResource(self.ctx, g_identifier, 'CloudUcpOOo', 'OptionsDialog')
-        self._initContentProviders()
         self.Logger = getLogger(self.ctx)
         msg += "Done"
         self.Logger.logp(INFO, 'OptionsDialog', '__init__()', msg)
@@ -49,8 +48,11 @@ class OptionsDialog(unohelper.Base,
             elif event == 'initialize':
                 self._loadSetting(dialog)
                 handled = True
-        elif method == 'Changed':
-            self._doChanged(dialog, event.Source)
+        elif method == 'Changed1':
+            self._doChanged1(dialog, event.Source)
+            handled = True
+        elif method == 'Changed2':
+            self._doChanged2(dialog, event.Source)
             handled = True
         elif method == 'LoadUcp':
             self._doLoadUcp(dialog)
@@ -63,63 +65,52 @@ class OptionsDialog(unohelper.Base,
             handled = True
         return handled
     def getSupportedMethodNames(self):
-        return ('external_event', 'Changed','LoadUcp', 'UnloadUcp', 'ViewUcp')
+        return ('external_event', 'Changed1', 'Changed2', 'LoadUcp', 'UnloadUcp', 'ViewUcp')
 
-    def _initContentProviders(self):
-        ucb = getUcb(self.ctx)
+    def _initProxy(self):
+        self._Proxy = {}
         path = 'org.openoffice.ucb.Configuration'
         config = getConfiguration(self.ctx, path, False)
         paths = ('ContentProviders', 'Local', 'SecondaryKeys', 'Office', 'ProviderData')
-        i = 1
         for path in paths:
             config = config.getByName(path)
         for name in config.getElementNames():
             provider = config.getByName(name)
-            self._registerProxy(ucb, provider, i)
-            i += 1
+            scheme = provider.getByName('URLTemplate')
+            self._Proxy[scheme] = self._registerProxy(provider, scheme)
         #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
         #mri.inspect(ucb)
 
-    def _registerProxy(self, ucb, provider, i):
-        proxy = 'com.sun.star.ucb.ContentProviderProxy'
-        service = provider.getByName('ServiceName')
-        scheme = provider.getByName('URLTemplate')
-        arguments = provider.getByName('Arguments')
-        print('_initContentProvider()%s: %s - %s - %s' % (i, service, scheme, arguments))
-        ucp = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-        print('_initContentProvider()%s: %s - %s - %s' % (i, service, scheme, arguments))
-        #if scheme in ('file', 'vnd.google-apps'):
-        #    mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
-        #    mri.inspect(ucp)
-        #if ucp.supportsService(proxy):
-        #    try:
-        #        provider = False
-        #        print('_initContentProvider()3: %s - %s - %s' % (service, scheme, arguments))
-                #provider = ucp.registerInstance(scheme, arguments, False)
-        #        print('_initContentProvider()4: %s - %s - %s' % (service, scheme, provider))
-        #        if provider:
-        #            try:
-        #                print('_initContentProvider()5: %s - %s - %s' % (service, scheme, arguments))
-                        #ucb.registerContentProvider(provider, scheme, False)
-        #                print('_initContentProvider()6: %s - %s - %s' % (service, scheme, arguments))
-        #            except DuplicateProviderException:
-                        #pass
-        #                print('_initContentProvider()7: %s - %s - %s' % (service, scheme, arguments))
-                        #ucb.deregisterContentProvider(provider, scheme)
-                        #ucb.registerContentProvider(provider, scheme, True)
-        #                print('_initContentProvider()8: %s - %s - %s' % (service, scheme, arguments))
-        #    except Exception as e:
-                #pass
-        #        print('_initContentProvider()9: %s - %s - %s' % (service, scheme, e))
+    def _registerProxy(self, provider, scheme):
+        try:
+            proxy = {}
+            proxy['IsLoaded'] = False
+            proxy['IsLoadable'] = False
+            proxy['Plugin'] = provider.getByName('Arguments')
+            service = provider.getByName('ServiceName')
+            print('_initContentProvider(): %s - %s ' % (service, scheme))
+            ucp = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+            #if scheme in ('file', 'vnd.google-apps'):
+            #    mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+            #    mri.inspect(ucp)
+            if ucp.supportsService('com.sun.star.ucb.ContentProviderProxy'):
+                proxy['IsLoaded'] = ucp.IsLoaded
+                proxy['IsLoadable'] = True
+            proxy['Service'] = service
+            return proxy
+        except Exception as e:
+            print('_initContentProvider(): %s - %s - %s' % (service, scheme, e))
+
 
     def _loadSetting(self, dialog):
         msg = "OptionsDialog loading setting ... "
+        self._initProxy()
         control = dialog.getControl('ListBox1')
         control.Model.StringItemList = self._getProviders()
-        self._doChanged(dialog, control)
+        self._doChanged1(dialog, control)
         control = dialog.getControl('ListBox2')
         control.Model.StringItemList = self._getProviders(True)
-        self._doChanged(dialog, control)
+        self._doChanged2(dialog, control)
         msg += "Done"
         self.Logger.logp(INFO, 'OptionsDialog', '_loadSetting()', msg)
 
@@ -129,37 +120,55 @@ class OptionsDialog(unohelper.Base,
     def _doLoadUcp(self, dialog):
         control = dialog.getControl('ListBox1')
         scheme = control.SelectedItem
-        identifier = getUcb(self.ctx).createContentIdentifier('%s:///' % scheme)
+        service = self._Proxy[scheme]['Service']
+        ucp = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        provider = ucp.getContentProvider()
+        self._initProxy()
         control.Model.StringItemList = self._getProviders()
-        self._doChanged(dialog, control)
+        self._doChanged1(dialog, control)
         control = dialog.getControl('ListBox2')
         control.Model.StringItemList = self._getProviders(True)
-        self._doChanged(dialog, control)
+        self._doChanged2(dialog, control)
 
     def _doUnloadUcp(self, dialog):
         control = dialog.getControl('ListBox2')
         scheme = control.SelectedItem
-        getUcp(self.ctx, scheme).deregisterInstance(scheme, '')
+        service = self._Proxy[scheme]['Service']
+        ucp = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+        provider = ucp.getContentProvider()
+        provider.deregisterInstance(scheme, '')
+        self._initProxy()
         control.Model.StringItemList = self._getProviders(True)
-        self. _doChanged(dialog, control)
+        self. _doChanged1(dialog, control)
         control = dialog.getControl('ListBox1')
         control.Model.StringItemList = self._getProviders()
-        self._doChanged(dialog, control)
+        self._doChanged2(dialog, control)
 
-    def _doChanged(self, dialog, control):
+    def _doChanged1(self, dialog, control):
         enabled = control.SelectedItemPos != -1
-        dialog.getControl(control.Model.Tag).Model.Enabled = enabled
+        enabled = enabled and self._Proxy[control.SelectedItem]['IsLoadable']
+        enabled = enabled and not self._Proxy[control.SelectedItem]['IsLoaded']
+        dialog.getControl('CommandButton1').Model.Enabled = enabled
+
+    def _doChanged2(self, dialog, control):
+        enabled = control.SelectedItemPos != -1
+        dialog.getControl('CommandButton2').Model.Enabled = enabled
+        dialog.getControl('CommandButton3').Model.Enabled = enabled
 
     def _doViewUcp(self, dialog):
+        control = dialog.getControl('ListBox2')
+        scheme = control.SelectedItem
         service = "com.sun.star.ui.dialogs.OfficeFilePicker"
         #service = "com.sun.star.svtools.OfficeFilePicker"
         fp = self.ctx.ServiceManager.createInstanceWithContext(service , self.ctx)
-        mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
-        mri.inspect(fp)
+        url = '%s:///' % self._Proxy[scheme]
+        fp.setDisplayDirectory(url)
+        #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
+        #mri.inspect(fp)
         fp.execute()
         self._loadSetting(dialog)
 
-    def _getProviders(self, loaded=False):
+    def _getProviders1(self, loaded=False):
         schemes = []
         proxy = 'com.sun.star.ucb.ContentProviderProxy'
         ucb = getUcb(self.ctx)
@@ -184,6 +193,19 @@ class OptionsDialog(unohelper.Base,
                 if provider and not provider.supportsService(proxy):
                     continue
             self.Logger.logp(INFO, 'OptionsDialog', '_getProviders()', scheme)
+            schemes.append(scheme)
+        return tuple(schemes)
+
+    def _getProviders(self, loaded=False):
+        schemes = []
+        for scheme, proxy in self._Proxy.items():
+            if loaded:
+                if not proxy['IsLoaded']:
+                    continue
+            else:
+                if proxy['IsLoaded']:
+                    continue
+            print("OptionsDialog._getProviders() %s" % scheme)
             schemes.append(scheme)
         return tuple(schemes)
 

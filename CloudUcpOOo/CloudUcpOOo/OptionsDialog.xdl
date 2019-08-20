@@ -8,7 +8,7 @@
   <dlg:fixedline dlg:style-id="0" dlg:id="FixedLine1" dlg:tab-index="0" dlg:left="5" dlg:top="0" dlg:width="250" dlg:height="10" dlg:help-text="&amp;OptionsDialog.FixedLine1.HelpText" dlg:value="&amp;OptionsDialog.FixedLine1.Label" dlg:valign="center"/>
   <dlg:text dlg:id="Label1" dlg:tab-index="1" dlg:left="10" dlg:top="12" dlg:width="85" dlg:height="14" dlg:help-text="&amp;OptionsDialog.Label1.HelpText" dlg:value="&amp;OptionsDialog.Label1.Label" dlg:valign="center" dlg:tabstop="false"/>
   <dlg:menulist dlg:id="ListBox1" dlg:tab-index="2" dlg:left="10" dlg:top="30" dlg:width="85" dlg:height="140" dlg:tag="CommandButton1" dlg:help-text="&amp;OptionsDialog.ListBox1.HelpText">
-   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.UNO:Changed" script:language="UNO"/>
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.UNO:Changed1" script:language="UNO"/>
   </dlg:menulist>
   <dlg:button dlg:id="CommandButton1" dlg:tab-index="3" dlg:disabled="true" dlg:left="105" dlg:top="30" dlg:width="45" dlg:height="14" dlg:help-text="&amp;OptionsDialog.CommandButton1.HelpText" dlg:value="&amp;OptionsDialog.CommandButton1.Label">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.UNO:LoadUcp" script:language="UNO"/>
@@ -21,7 +21,7 @@
   </dlg:button>
   <dlg:text dlg:id="Label2" dlg:tab-index="6" dlg:left="160" dlg:top="12" dlg:width="85" dlg:height="14" dlg:help-text="&amp;OptionsDialog.Label2.HelpText" dlg:value="&amp;OptionsDialog.Label2.Label" dlg:valign="center" dlg:tabstop="false"/>
   <dlg:menulist dlg:id="ListBox2" dlg:tab-index="7" dlg:left="160" dlg:top="30" dlg:width="85" dlg:height="140" dlg:tag="CommandButton2" dlg:help-text="&amp;OptionsDialog.ListBox2.HelpText">
-   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.UNO:Changed" script:language="UNO"/>
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.UNO:Changed2" script:language="UNO"/>
   </dlg:menulist>
  </dlg:bulletinboard>
 </dlg:window>

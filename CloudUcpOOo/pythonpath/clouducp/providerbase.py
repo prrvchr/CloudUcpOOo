@@ -38,8 +38,8 @@ class ProviderBase(ProviderObject,
     # Private method
     def _getKeyMap(self):
         return KeyMap()
-    def _getRequest(self):
-        request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
+    def _getRequest(self, ctx):
+        request = ctx.ServiceManager.createInstanceWithContext(g_oauth2, ctx)
         if not request:
             self._Error = "ERROR: service: %s is not available... Check your extensions" % g_oauth2
         return request
