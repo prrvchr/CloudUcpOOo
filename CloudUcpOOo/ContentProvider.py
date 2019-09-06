@@ -18,9 +18,12 @@ from com.sun.star.ucb import XRestContentProvider
 
 from clouducp import g_identifier
 from clouducp import DataSource
+from clouducp import getUserNameFromHandler
+
 from clouducp import getInteractionHandler
 from clouducp import InteractionRequest
 from clouducp import getOAuth2Request
+
 from clouducp import getLogger
 from clouducp import isLoggerEnabled
 from clouducp import getUcb
@@ -153,23 +156,13 @@ class ContentProvider(unohelper.Base,
             if self._defaultUser:
                 name = self._defaultUser
             else:
-                name = self._getUserNameFromHandler()
+                message = "Authentication"
+                name = getUserNameFromHandler(self.ctx, self, self.Scheme, message)
+                self._defaultUser = name
         else:
             name = uri.getAuthority()
             self._defaultUser = name
         return name
-
-    def _getUserNameFromHandler(self):
-        message = "Authentication"
-        handler = getInteractionHandler(self.ctx, message)
-        response = uno.createUnoStruct('com.sun.star.beans.Optional<string>')
-        request = getOAuth2Request(self, self.Scheme, message)
-        interaction = InteractionRequest(request, response)
-        if handler.handleInteractionRequest(interaction):
-            if response.IsPresent:
-                self._defaultUser = response.Value
-        return self._defaultUser
-
 
     # XServiceInfo
     def supportsService(self, service):
