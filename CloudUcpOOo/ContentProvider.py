@@ -152,6 +152,25 @@ class ContentProvider(unohelper.Base,
         return identifier
 
     def _getUserName(self, uri):
+        name = ''
+        if uri.getPathSegmentCount():
+            if uri.hasAuthority():
+                if uri.getAuthority() != '':
+                    name = uri.getAuthority()
+                    print("ContentProvider._getUserName(): uri.getAuthority() = %s" % name)
+                    self._defaultUser = name
+                elif self._defaultUser != '':
+                    print("ContentProvider._getUserName(): self._defaultUser = %s" % self._defaultUser)
+                    name = self._defaultUser
+                else:
+                    message = "Authentication"
+                    name = getUserNameFromHandler(self.ctx, self, self.Scheme, message)
+                    print("ContentProvider._getUserName(): getUserNameFromHandler() = %s" % name)
+                    self._defaultUser = name
+        print("ContentProvider._getUserName(): %s" % name)
+        return name
+
+    def _getUserName1(self, uri):
         if not uri.hasAuthority() or uri.getAuthority() == '':
             if self._defaultUser:
                 name = self._defaultUser
