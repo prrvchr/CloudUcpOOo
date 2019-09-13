@@ -18,7 +18,6 @@ from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RENAMED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_REWRITED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 
-from .user import User
 
 from .datasourcehelper import getDataSourceUrl
 from .datasourcehelper import getDataSourceConnection
@@ -77,31 +76,33 @@ class DataSource(unohelper.Base,
 
     def getUser(self, name):
         # User never change... we can cache it...
-        if name and name in self._CahedUser:
-            user = self._CahedUser[name]
-        else:
-            user = User(self.ctx, self, name)
-            if user.IsValid:
-                self._CahedUser[name] = user
-        return user
+        return self._CahedUser[name]
 
     def initializeUser(self, name):
-        user = KeyMap()
-        if not name:
-            self._Error = "ERROR: Can't retrieve a UserName from Handler"
-            return user
-        elif not self.Provider.initializeUser(name):
+        print("DataSource.initializeUser() 1")
+        if name in self._CahedUser:
+            print("DataSource.initializeUser() 2")
+            return True
+        if not self.Provider.initializeUser(name):
             self._Error = "ERROR: No authorization for User: %s" % name
-            return user
+            print("DataSource.initializeUser() 3")
+            return False
         user = self._selectUser(name)
         if not user.IsPresent:
             if self.Provider.isOnLine():
                 user = self._getUser(name)
                 if not user.IsPresent:
                     self._Error = "ERROR: Can't retrieve User: %s from provider" % name
+                    return False
             else:
                 self._Error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
-        return user.Value
+                return False
+        print("DataSource.initializeUser() 4")
+        user.Value.insertValue('Name', name)
+        self._CahedUser[name] = user.Value
+        self.checkNewIdentifier(user.Value)
+        print("DataSource.initializeUser() 5")
+        return True
 
     def _getContentType(self):
         call = self._getDataSourceCall('getSetting')

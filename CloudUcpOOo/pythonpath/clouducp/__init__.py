@@ -7,6 +7,8 @@ try:
     from .configuration import g_identifier
 
     from .datasource import DataSource
+    from .user import User
+    from .identifier import Identifier
     from .providerbase import ProviderBase
 
     from .contentcore import executeContentCommand
@@ -63,8 +65,6 @@ try:
     from .unotools import getOAuth2Request
 
     from .oauth2lib import InteractionRequest
-
-    from .oauth2core import getUserNameFromHandler
 
     from .keymap import KeyMap
 except Exception as e:

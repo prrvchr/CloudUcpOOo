@@ -18,25 +18,22 @@ import traceback
 
 class User(unohelper.Base,
            XRestUser):
-    def __init__(self, ctx, datasource, name):
+    def __init__(self, ctx, datasource):
         level = INFO
         msg = "User loading"
         self.ctx = ctx
         self.DataSource = datasource
-        self.Name = name
+        self.MetaData = KeyMap()
         self._Error = ''
-        self.MetaData = self.DataSource.initializeUser(name)
-        if self.IsValid:
-            self.checkNewIdentifier()
-            msg += " ... Done"
-        else:
-            level = SEVERE
-            msg += " ... ERROR: %s" % self.Error
+        msg += " ... Done"
         self.Logger.logp(level, "User", "__init__()", msg)
 
     @property
     def Id(self):
         return self.MetaData.getDefaultValue('UserId', None)
+    @property
+    def Name(self):
+        return self.MetaData.getDefaultValue('Name', None)
     @property
     def RootId(self):
         return self.MetaData.getDefaultValue('RootId', None)
@@ -52,6 +49,17 @@ class User(unohelper.Base,
     @property
     def Error(self):
         return self.DataSource.Error if self.DataSource.Error else self._Error
+
+    def initialize(self, name):
+        print("User.initialize() 1")
+        if name == '':
+            self._Error = "ERROR: Can't retrieve a UserName from Handler"
+            return False
+        elif not self.DataSource.initializeUser(name):
+            return False
+        self.MetaData = self.DataSource.getUser(name)
+        print("User.initialize() 2")
+        return True
 
     def isChildId(self, itemid, title):
         return self.DataSource.isChildId(self.Id, itemid, title)
@@ -97,66 +105,9 @@ class User(unohelper.Base,
             return sf.getSize(url), sf.openFileRead(url)
         return 0, None
 
-    def getIdentifier(self, uri):
-        return Identifier(self.ctx, self, uri)
-
-    def initializeIdentifier(self, uri, contenttype):
-        paths = []
-        position = -1
-        basename = ''
-        isroot = False
-        isfolder = False
-        isnew = contenttype != ''
-        for i in range(uri.getPathSegmentCount() -1, -1, -1):
-            path = uri.getPathSegment(i).strip()
-            if path not in ('','.'):
-                if not basename:
-                    basename = path
-                    position = i
-                    break
-        for i in range(position):
-            paths.append(uri.getPathSegment(i).strip())
-        if isnew:
-            id = self.getNewIdentifier()
-            isfolder = self.DataSource.Provider.isFolder(contenttype)
-        elif not basename:
-            id = self.RootId
-            isroot = True
-            isfolder = True
-        elif self.isIdentifier(basename):
-            id = basename
-            isfolder = True
-        else:
-            id = self._searchId(paths[::-1], basename)
-        identifier = KeyMap()
-        authority = uri.getAuthority() if uri.hasAuthority() else ''
-        paths.insert(0, authority)
-        baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
-        identifier.insertValue('BaseURI', baseuri)
-        uname = id if isfolder else basename
-        baseurl = baseuri if isroot else '%s/%s' % (baseuri, uname)
-        identifier.insertValue('BaseURL', baseurl)
-        if not id:
-            self._Error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
-            return identifier
-        identifier.insertValue('Id', id)
-        identifier.insertValue('IsRoot', isroot)
-        identifier.insertValue('IsNew', isnew)
-        identifier.insertValue('BaseName', basename)
-        return identifier
+    def getIdentifier(self, url):
+        print("User.getIdentifier() *****************************************************")
+        return Identifier(self.ctx, self, url)
 
     def synchronize(self, value):
         return self.DataSource.synchronize(self.MetaData, value)
-
-    def _searchId(self, paths, basename):
-        # Needed for be able to create a folder in a just created folder...
-        id = ''
-        paths.append(self.RootId)
-        for i, path in enumerate(paths):
-            if self.isIdentifier(path):
-                id = path
-                break
-        for j in range(i -1, -1, -1):
-            id = self.selectChildId(id, paths[j])
-        id = self.selectChildId(id, basename)
-        return id

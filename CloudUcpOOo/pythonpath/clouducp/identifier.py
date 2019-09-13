@@ -21,6 +21,7 @@ from .configuration import g_identifier
 #from .content import Content
 
 from .contenttools import getUri
+from .oauth2core import getUserNameFromHandler
 from .unotools import getProperty
 from .unotools import getResourceLocation
 from .datasourcehelper import parseDateTime
@@ -33,14 +34,15 @@ class Identifier(unohelper.Base,
                  XContentIdentifier,
                  XRestIdentifier,
                  XChild):
-    def __init__(self, ctx, user, uri, contenttype=''):
+    def __init__(self, ctx, user, url, contenttype=''):
         level = INFO
         msg = "Identifier loading"
         self.ctx = ctx
         self.User = user
+        self._Url = self._getUrl(url)
         self._ContentType = contenttype
         self._Error = ''
-        self.MetaData = self.User.initializeIdentifier(uri, contenttype)
+        self.MetaData = KeyMap()
         msg += " ... Done"
         self.Logger.logp(level, "Identifier", "__init__()", msg)
 
@@ -68,6 +70,66 @@ class Identifier(unohelper.Base,
     @property
     def Error(self):
         return self.User.Error if self.User.Error else self._Error
+
+    def initialize(self, name):
+        try:
+            print("Identifier.initialize() 1")
+            url = self.getContentIdentifier()
+            uri = getUri(self.ctx, url)
+            if not uri:
+                self._Error = "Can't parse Uri from Url: %s" % url
+                return False
+            print("Identifier.initialize() 2 %s - %s" % (uri.hasAuthority(),uri.getPathSegmentCount()))
+            if not uri.hasAuthority() or not uri.getPathSegmentCount():
+                self._Error = "Can't retrieve User from Url: %s" % url
+                return False
+            name = self._getUserName(uri, name)
+            if not self.User.initialize(name):
+                return False
+            paths = []
+            position = -1
+            basename = ''
+            isroot = False
+            isfolder = False
+            isnew = self._ContentType != ''
+            for i in range(uri.getPathSegmentCount() -1, -1, -1):
+                path = uri.getPathSegment(i).strip()
+                if path not in ('','.'):
+                    if not basename:
+                        basename = path
+                        position = i
+                        break
+            for i in range(position):
+                paths.append(uri.getPathSegment(i).strip())
+            if isnew:
+                id = self.User.getNewIdentifier()
+                isfolder = self.DataSource.Provider.isFolder(self._ContentType)
+            elif not basename:
+                id = self.User.RootId
+                isroot = True
+                isfolder = True
+            elif self.User.isIdentifier(basename):
+                id = basename
+                isfolder = True
+            else:
+                id = self._searchId(paths[::-1], basename)
+            paths.insert(0, uri.getAuthority())
+            baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
+            self.MetaData.insertValue('BaseURI', baseuri)
+            if not id:
+                self._Error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
+                return False
+            uname = id if isfolder else basename
+            baseurl = baseuri if isroot else '%s/%s' % (baseuri, uname)
+            self.MetaData.insertValue('BaseURL', baseurl)
+            self.MetaData.insertValue('Id', id)
+            self.MetaData.insertValue('IsRoot', isroot)
+            self.MetaData.insertValue('IsNew', isnew)
+            self.MetaData.insertValue('BaseName', basename)
+            print("Identifier.initialize() 2")
+            return True
+        except Exception as e:
+            print("Identifier.initialize() ERROR: %s - %s" % (e, traceback.print_exc()))
 
     def getContent(self):
         if self.IsNew:
@@ -135,9 +197,7 @@ class Identifier(unohelper.Base,
 
     # XRestIdentifier
     def createNewIdentifier(self, contenttype):
-        url = self.BaseURL
-        uri = getUri(self.ctx, url)
-        return Identifier(self.ctx, self.User, uri, contenttype)
+        return Identifier(self.ctx, self.User, self.BaseURL, contenttype)
 
     def getDocumentContent(self, sf, content, size):
         size = 0
@@ -169,14 +229,54 @@ class Identifier(unohelper.Base,
 
     # XContentIdentifier
     def getContentIdentifier(self):
-        return self.BaseURL
+        return self._Url
     def getContentProviderScheme(self):
         return self.User.DataSource.Provider.Scheme
 
     # XChild
     def getParent(self):
         url = '%s/' % self.BaseURI
-        uri = getUri(self.ctx, url)
-        return self.User.getIdentifier(uri)
+        print("Identifier.getParent() 1 %s" % url)
+        parent = Identifier(self.ctx, self.User, url)
+        if parent.initialize(self.User.Name):
+            print("Identifier.getParent() 2 %s" % parent.Id)
+            return parent
+        print("Identifier.getParent() 3 ************")
+        return None
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)
+
+    def _getUrl(self, identifier):
+        url = uno.createUnoStruct('com.sun.star.util.URL')
+        url.Complete = identifier
+        transformer = self.ctx.ServiceManager.createInstance('com.sun.star.util.URLTransformer')
+        success, url = transformer.parseStrict(url)
+        if success:
+            identifier = transformer.getPresentation(url, True)
+        return identifier
+
+    def _getUserName(self, uri, name):
+        if uri.hasAuthority() and uri.getAuthority() != '':
+            name = uri.getAuthority()
+            print("Identifier._getUserName(): uri.getAuthority() = %s" % name)
+        elif name == '':
+            message = "Authentication"
+            scheme = self.getContentProviderScheme()
+            name = getUserNameFromHandler(self.ctx, self, scheme, message)
+            print("Identifier._getUserName(): getUserNameFromHandler() = %s" % name)
+        print("Identifier._getUserName(): %s" % name)
+        return name
+
+    def _searchId(self, paths, basename):
+        # Needed for be able to create a folder in a just created folder...
+        id = ''
+        paths.append(self.User.RootId)
+        for i, path in enumerate(paths):
+            if self.User.isIdentifier(path):
+                id = path
+                break
+        for j in range(i -1, -1, -1):
+            id = self.User.selectChildId(id, paths[j])
+        id = self.User.selectChildId(id, basename)
+        return id
+

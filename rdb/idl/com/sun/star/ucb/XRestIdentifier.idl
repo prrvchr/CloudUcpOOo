@@ -16,6 +16,7 @@ module com { module sun { module star { module ucb {
 interface XRestIdentifier: com::sun::star::uno::XInterface
 {
 
+    boolean initialize([in] string Name);
     ::com::sun::star::uno::XInterface getContent();
     ::com::sun::star::ucb::XRestIdentifier createNewIdentifier([in] string ContentType);
     ::com::sun::star::sdbc::XPreparedStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap Content);

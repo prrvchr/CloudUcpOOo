@@ -14,8 +14,8 @@ module com { module sun { module star { module ucb {
 interface XRestDataSource: com::sun::star::uno::XInterface
 {
 
-    ::com::sun::star::uno::XInterface getUser([in] string Name);
-    ::com::sun::star::auth::XRestKeyMap initializeUser([in] string Name);
+    boolean initializeUser([in] string Name);
+    ::com::sun::star::auth::XRestKeyMap getUser([in] string Name);
     boolean isIdentifier([in] string UserId,
                          [in] string ItemId);
     ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap User,

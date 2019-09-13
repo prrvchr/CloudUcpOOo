@@ -1,35 +1,35 @@
 #!
 # -*- coding: utf_8 -*-
-
-import uno
-import unohelper
-
-from com.sun.star.util import XCloseListener
-from com.sun.star.lang import XServiceInfo
-from com.sun.star.logging.LogLevel import INFO
-from com.sun.star.logging.LogLevel import SEVERE
-from com.sun.star.ucb import XContentIdentifierFactory
-from com.sun.star.ucb import XContentProvider
-from com.sun.star.ucb import XParameterizedContentProvider
-from com.sun.star.ucb import XContentProvider
-from com.sun.star.ucb import IllegalIdentifierException
-
-from com.sun.star.ucb import XRestContentProvider
-
-from clouducp import g_identifier
-from clouducp import DataSource
-from clouducp import getUserNameFromHandler
-
-from clouducp import getInteractionHandler
-from clouducp import InteractionRequest
-from clouducp import getOAuth2Request
-
-from clouducp import getLogger
-from clouducp import isLoggerEnabled
-from clouducp import getUcb
-from clouducp import getUri
-
 import traceback
+
+try:
+    import uno
+    import unohelper
+
+    from com.sun.star.util import XCloseListener
+    from com.sun.star.lang import XServiceInfo
+    from com.sun.star.logging.LogLevel import INFO
+    from com.sun.star.logging.LogLevel import SEVERE
+    from com.sun.star.ucb import XContentIdentifierFactory
+    from com.sun.star.ucb import XContentProvider
+    from com.sun.star.ucb import XParameterizedContentProvider
+    from com.sun.star.ucb import XContentProvider
+    from com.sun.star.ucb import IllegalIdentifierException
+
+    from com.sun.star.ucb import XRestContentProvider
+
+    from clouducp import g_identifier
+
+    from clouducp import getLogger
+    from clouducp import isLoggerEnabled
+
+    from clouducp import DataSource
+    from clouducp import User
+    from clouducp import Identifier
+
+except Exception as e:
+    print("clouducp.__init__() ERROR: %s - %s" % (e, traceback.print_exc()))
+
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
@@ -78,10 +78,8 @@ class ContentProvider(unohelper.Base,
         self.DataSource = datasource
         msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
         self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
-        #provider = getUcb(self.ctx).registerContentProvider(self, scheme, replace)
         return self
     def deregisterInstance(self, scheme, argument):
-        #getUcb(self.ctx).deregisterContentProvider(self, scheme)
         msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
         self.Logger.logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
 
@@ -100,11 +98,8 @@ class ContentProvider(unohelper.Base,
     def createContentIdentifier(self, url):
         try:
             msg = "Identifier: %s ... " % url
-            url = self._getUrl(url)
-            uri = getUri(self.ctx, url)
-            name = self._getUserName(uri)
-            user = self.DataSource.getUser(name)
-            identifier = user.getIdentifier(uri)
+            user = User(self.ctx, self.DataSource)
+            identifier = Identifier(self.ctx, user, url)
             msg += "Done"
             self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
             return identifier
@@ -115,10 +110,13 @@ class ContentProvider(unohelper.Base,
     # XContentProvider
     def queryContent(self, identifier):
         url = identifier.getContentIdentifier()
-        if not identifier.IsValid:
+        print("ContentProvider.queryContent() %s" % url)
+        if not identifier.initialize(self._defaultUser):
             msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
+            print("ContentProvider.queryContent() %s" % msg)
             self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
             raise IllegalIdentifierException(identifier.Error, self)
+        self._defaultUser = identifier.User.Name
         content = identifier.getContent()
         msg = "Identitifer: %s ... Done" % url
         self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
@@ -141,47 +139,6 @@ class ContentProvider(unohelper.Base,
         msg += " ... Done"
         self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
         return compare
-
-    def _getUrl(self, identifier):
-        url = uno.createUnoStruct('com.sun.star.util.URL')
-        url.Complete = identifier
-        transformer = self.ctx.ServiceManager.createInstance('com.sun.star.util.URLTransformer')
-        success, url = transformer.parseStrict(url)
-        if success:
-            identifier = transformer.getPresentation(url, True)
-        return identifier
-
-    def _getUserName(self, uri):
-        name = ''
-        if uri.getPathSegmentCount():
-            if uri.hasAuthority():
-                if uri.getAuthority() != '':
-                    name = uri.getAuthority()
-                    print("ContentProvider._getUserName(): uri.getAuthority() = %s" % name)
-                    self._defaultUser = name
-                elif self._defaultUser != '':
-                    print("ContentProvider._getUserName(): self._defaultUser = %s" % self._defaultUser)
-                    name = self._defaultUser
-                else:
-                    message = "Authentication"
-                    name = getUserNameFromHandler(self.ctx, self, self.Scheme, message)
-                    print("ContentProvider._getUserName(): getUserNameFromHandler() = %s" % name)
-                    self._defaultUser = name
-        print("ContentProvider._getUserName(): %s" % name)
-        return name
-
-    def _getUserName1(self, uri):
-        if not uri.hasAuthority() or uri.getAuthority() == '':
-            if self._defaultUser:
-                name = self._defaultUser
-            else:
-                message = "Authentication"
-                name = getUserNameFromHandler(self.ctx, self, self.Scheme, message)
-                self._defaultUser = name
-        else:
-            name = uri.getAuthority()
-            self._defaultUser = name
-        return name
 
     # XServiceInfo
     def supportsService(self, service):
