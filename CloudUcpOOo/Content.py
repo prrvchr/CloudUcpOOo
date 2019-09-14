@@ -128,10 +128,11 @@ class Content(unohelper.Base,
 
     # XChild
     def getParent(self):
-        if self.Identifier.IsRoot:
-            return XInterface()
+        content = None
         identifier = self.Identifier.getParent()
-        return identifier.getContent()
+        if identifier:
+            content = identifier.getContent()
+        return content
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)
 

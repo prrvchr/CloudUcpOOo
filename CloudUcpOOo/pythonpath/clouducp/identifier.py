@@ -113,12 +113,12 @@ class Identifier(unohelper.Base,
                 isfolder = True
             else:
                 id = self._searchId(paths[::-1], basename)
-            paths.insert(0, uri.getAuthority())
-            baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
-            self.MetaData.insertValue('BaseURI', baseuri)
             if not id:
                 self._Error = "ERROR: Can't retrieve Uri: %s" % uri.getUriReference()
                 return False
+            paths.insert(0, uri.getAuthority())
+            baseuri = '%s://%s' % (uri.getScheme(), '/'.join(paths))
+            self.MetaData.insertValue('BaseURI', baseuri)
             uname = id if isfolder else basename
             baseurl = baseuri if isroot else '%s/%s' % (baseuri, uname)
             self.MetaData.insertValue('BaseURL', baseurl)
@@ -235,14 +235,17 @@ class Identifier(unohelper.Base,
 
     # XChild
     def getParent(self):
-        url = '%s/' % self.BaseURI
-        print("Identifier.getParent() 1 %s" % url)
-        parent = Identifier(self.ctx, self.User, url)
-        if parent.initialize(self.User.Name):
-            print("Identifier.getParent() 2 %s" % parent.Id)
-            return parent
-        print("Identifier.getParent() 3 ************")
-        return None
+        print("Identifier.getParent() 1")
+        parent = None
+        if not self.IsRoot:
+            url = '%s/' % self.BaseURI
+            print("Identifier.getParent() 2 %s" % url)
+            identifier = Identifier(self.ctx, self.User, url)
+            if identifier.initialize(self.User.Name):
+                parent = identifier
+                print("Identifier.getParent() 3 %s" % parent.Id)
+        print("Identifier.getParent() 4 ************")
+        return parent
     def setParent(self, parent):
         raise NoSupportException('Parent can not be set', self)
 
