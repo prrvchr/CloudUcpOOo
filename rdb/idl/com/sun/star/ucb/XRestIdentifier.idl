@@ -37,6 +37,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
 
     [attribute, readonly] ::com::sun::star::ucb::XRestUser User;
     [attribute, readonly] ::com::sun::star::auth::XRestKeyMap MetaData;
+    [attribute, readonly] boolean IsInitialized;
     [attribute, readonly] string Id;
     [attribute, readonly] boolean IsRoot;
     [attribute, readonly] boolean IsValid;

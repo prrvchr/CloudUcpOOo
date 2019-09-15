@@ -111,11 +111,12 @@ class ContentProvider(unohelper.Base,
     def queryContent(self, identifier):
         url = identifier.getContentIdentifier()
         print("ContentProvider.queryContent() %s" % url)
-        if not identifier.initialize(self._defaultUser):
-            msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
-            print("ContentProvider.queryContent() %s" % msg)
-            self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
-            raise IllegalIdentifierException(identifier.Error, self)
+        if not identifier.IsInitialized:
+            if not identifier.initialize(self._defaultUser):
+                msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
+                print("ContentProvider.queryContent() %s" % msg)
+                self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+                raise IllegalIdentifierException(identifier.Error, self)
         self._defaultUser = identifier.User.Name
         content = identifier.getContent()
         msg = "Identitifer: %s ... Done" % url
@@ -124,22 +125,32 @@ class ContentProvider(unohelper.Base,
 
     def compareContentIds(self, id1, id2):
         print("ContentProvider.compareContentIds() 1")
-        compare = -1
-        identifier1 = id1.getContentIdentifier()
-        identifier2 = id2.getContentIdentifier()
-        msg = "Identifiers: %s - %s ..." % (identifier1, identifier2)
-        if identifier1 == identifier2 and id1.User.Name == id2.User.Name:
-            msg += " seem to be the same..."
-            compare = 0
-        elif not id1.IsValid and id2.IsValid:
-            msg += " are not the same..."
-            compare = -10
-        elif id1.IsValid and not id2.IsValid:
-            msg += " are not the same..."
-            compare = 10
-        msg += " ... Done"
-        self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
-        return compare
+        try:
+
+            compare = -1
+            if not id1.IsInitialized:
+                init1 = id1.initialize(self._defaultUser)
+            if not id2.IsInitialized:
+                init2 = id2.initialize(self._defaultUser)
+            if not init1 or not init2:
+                return compare
+            identifier1 = id1.getContentIdentifier()
+            identifier2 = id2.getContentIdentifier()
+            msg = "Identifiers: %s - %s ..." % (identifier1, identifier2)
+            if identifier1 == identifier2 and id1.User.Name == id2.User.Name:
+                msg += " seem to be the same..."
+                compare = 0
+            elif not id1.IsValid and id2.IsValid:
+                msg += " are not the same..."
+                compare = -10
+            elif id1.IsValid and not id2.IsValid:
+                msg += " are not the same..."
+                compare = 10
+            msg += " ... Done"
+            self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
+            return compare
+        except Exception as e:
+            print("ContentProvider.compareContentIds() Error: %s - %s" % (e, traceback.print_exc()))
 
     # XServiceInfo
     def supportsService(self, service):

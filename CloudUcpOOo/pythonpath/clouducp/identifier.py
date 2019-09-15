@@ -47,6 +47,9 @@ class Identifier(unohelper.Base,
         self.Logger.logp(level, "Identifier", "__init__()", msg)
 
     @property
+    def IsInitialized(self):
+        return self.Id is not None and not self.Error
+    @property
     def Id(self):
         return self.MetaData.getDefaultValue('Id', None)
     @property
