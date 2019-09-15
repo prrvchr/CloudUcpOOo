@@ -123,6 +123,7 @@ class ContentProvider(unohelper.Base,
         return content
 
     def compareContentIds(self, id1, id2):
+        print("ContentProvider.compareContentIds() 1")
         compare = -1
         identifier1 = id1.getContentIdentifier()
         identifier2 = id2.getContentIdentifier()
