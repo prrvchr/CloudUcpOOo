@@ -1,12 +1,12 @@
-## Conditions d'utilisation pour [CloudUcpOOo] (https://github.com/prrvchr/CloudUcpOOo)
+## Conditions d'utilisation pour [CloudUcpOOo](https://github.com/prrvchr/CloudUcpOOo)
 
 
 ### Introduction:
 
 La bibliothèque CloudUcpOOo fait partie d'un projet personnel.
-La documentation complète est disponible [sur cette page] (https://prrvchr.github.io/CloudUcpOOo).
+La documentation complète est disponible [sur cette page](https://prrvchr.github.io/CloudUcpOOo).
 
-L'utilisation de ce logiciel vous soumet à nos **Règles de Confidentialité** comme décrites dans [ce document] (https://prrvchr.github.io/CloudUcpOOo/CloudUcpOOo/registration/PrivacyPolicy_fr).
+L'utilisation de ce logiciel vous soumet à nos **Règles de Confidentialité** comme décrites dans [ce document](https://prrvchr.github.io/CloudUcpOOo/CloudUcpOOo/registration/PrivacyPolicy_fr).
 
 
 ### Responsabilités:
