@@ -129,7 +129,7 @@ class Identifier(unohelper.Base,
             self.MetaData.insertValue('IsRoot', isroot)
             self.MetaData.insertValue('IsNew', isnew)
             self.MetaData.insertValue('BaseName', basename)
-            print("Identifier.initialize() 2")
+            print("Identifier.initialize() 3")
             return True
         except Exception as e:
             print("Identifier.initialize() ERROR: %s - %s" % (e, traceback.print_exc()))

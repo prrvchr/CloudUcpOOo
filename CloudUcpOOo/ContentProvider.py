@@ -126,26 +126,23 @@ class ContentProvider(unohelper.Base,
     def compareContentIds(self, id1, id2):
         print("ContentProvider.compareContentIds() 1")
         try:
-
+            init1 = True
+            init2 = True
             compare = -1
+            identifier1 = id1.getContentIdentifier()
+            identifier2 = id2.getContentIdentifier()
+            msg = "Identifiers: %s - %s ..." % (identifier1, identifier2)
             if not id1.IsInitialized:
                 init1 = id1.initialize(self._defaultUser)
             if not id2.IsInitialized:
                 init2 = id2.initialize(self._defaultUser)
-            if not init1 or not init2:
-                return compare
-            identifier1 = id1.getContentIdentifier()
-            identifier2 = id2.getContentIdentifier()
-            msg = "Identifiers: %s - %s ..." % (identifier1, identifier2)
-            if identifier1 == identifier2 and id1.User.Name == id2.User.Name:
+            if not init1:
+                compare = -10
+            elif not init2:
+                compare = 10
+            elif identifier1 == identifier2 and id1.User.Name == id2.User.Name:
                 msg += " seem to be the same..."
                 compare = 0
-            elif not id1.IsValid and id2.IsValid:
-                msg += " are not the same..."
-                compare = -10
-            elif id1.IsValid and not id2.IsValid:
-                msg += " are not the same..."
-                compare = 10
             msg += " ... Done"
             self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
             return compare
