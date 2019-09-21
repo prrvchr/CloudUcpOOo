@@ -124,13 +124,15 @@ class ProviderBase(ProviderObject,
         return self.SessionMode != ONLINE
 
     def initialize(self, scheme, plugin, folder, link):
-        self.Request.initializeSession(scheme)
+        if not self.Request.initializeSession(scheme):
+            return False
         self.Scheme = scheme
         self.Plugin = plugin
         self.Folder = folder
         self.Link = link
         self.SourceURL = getResourceLocation(self.ctx, plugin, scheme)
         self.SessionMode = self.Request.getSessionMode(self.Host)
+        return True
 
     def initializeUser(self, name):
         self.SessionMode = self.Request.getSessionMode(self.Host)

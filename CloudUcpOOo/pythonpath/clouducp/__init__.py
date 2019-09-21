@@ -62,7 +62,6 @@ try:
     from .unotools import getPropertyValueSet
     from .unotools import getNamedValueSet
     from .unotools import getConfiguration
-    from .unotools import getOAuth2Request
 
     from .oauth2lib import InteractionRequest
 

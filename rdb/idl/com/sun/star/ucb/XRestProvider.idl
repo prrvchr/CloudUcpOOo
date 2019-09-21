@@ -17,10 +17,10 @@ module com { module sun { module star { module ucb {
 interface XRestProvider: com::sun::star::uno::XInterface
 {
 
-    void initialize([in] string Scheme,
-                    [in] string Plugin,
-                    [in] string Link,
-                    [in] string Folder);
+    boolean initialize([in] string Scheme,
+                       [in] string Plugin,
+                       [in] string Link,
+                       [in] string Folder);
     boolean initializeUser([in] string Name);
     boolean isOnLine();
     boolean isOffLine();

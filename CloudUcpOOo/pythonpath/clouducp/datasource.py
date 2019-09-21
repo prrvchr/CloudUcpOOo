@@ -54,9 +54,11 @@ class DataSource(unohelper.Base,
                 # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
                 self._Statement = connection.createStatement()
                 folder, link = self._getContentType()
-                self.Provider.initialize(scheme, plugin, folder, link)
-                level = INFO
-                msg += "Done"
+                if not self.Provider.initialize(scheme, plugin, folder, link):
+                    msg += "ERROR: %s" % self.Error
+                else:
+                    level = INFO
+                    msg += "Done"
         else:
             msg += "ERROR: %s" % self.Error
         self.Logger.logp(level, 'DataSource', '__init__()', msg)
