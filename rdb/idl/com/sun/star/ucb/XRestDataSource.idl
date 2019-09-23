@@ -15,12 +15,18 @@ interface XRestDataSource: com::sun::star::uno::XInterface
 {
 
     boolean initializeUser([in] string Name);
-    ::com::sun::star::auth::XRestKeyMap getUser([in] string Name);
+    ::com::sun::star::uno::XInterface getUser([in] string Name);
+    ::com::sun::star::auth::XRestKeyMap selectUser([in] string Name);
+    ::com::sun::star::auth::XRestKeyMap inserUser([in] ::com::sun::star::auth::XRestKeyMap User,
+                                                  [in] ::com::sun::star::auth::XRestKeyMap Root);
+    ::com::sun::star::auth::XRestKeyMap selectItem([in] ::com::sun::star::auth::XRestKeyMap User,
+                                                   [in] ::com::sun::star::auth::XRestKeyMap Item);
+    ::com::sun::star::auth::XRestKeyMap inserItem([in] ::com::sun::star::auth::XRestKeyMap User,
+                                                  [in] ::com::sun::star::auth::XRestKeyMap Item);
     boolean isIdentifier([in] string UserId,
                          [in] string ItemId);
-    ::com::sun::star::auth::XRestKeyMap getItem([in] ::com::sun::star::auth::XRestKeyMap User,
-                                             [in] ::com::sun::star::auth::XRestKeyMap Identifier);
-    ::com::sun::star::sdbc::XPreparedStatement getFolderContent([in] ::com::sun::star::auth::XRestKeyMap User,
+    ::com::sun::star::sdbc::XPreparedStatement getFolderContent([in] ::com::sun::star::uno::XInterface Request,
+                                                                [in] ::com::sun::star::auth::XRestKeyMap User,
                                                                 [in] ::com::sun::star::auth::XRestKeyMap Identifier,
                                                                 [in] ::com::sun::star::auth::XRestKeyMap Content,
                                                                 [out] boolean Updated);
@@ -32,9 +38,6 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                             [in] string ItemId,
                             [in] string ParentId,
                             [in] ::com::sun::star::auth::XRestKeyMap Content);
-    string updateSync([in] string UserId,
-                      [in] string ItemId,
-                      [in] short Mode);
     short updateLoaded([in] string UserId,
                        [in] string ItemId,
                        [in] short Value,
@@ -53,8 +56,14 @@ interface XRestDataSource: com::sun::star::uno::XInterface
                           [in] string ParentId,
                           [in] boolean Value,
                           [in] boolean Default);
-    any synchronize([in] ::com::sun::star::auth::XRestKeyMap User,
-                    [in] any Value);
+
+    sequence < ::com::sun::star::auth::XRestKeyMap > getItemToSync([in] ::com::sun::star::auth::XRestKeyMap User);
+
+    ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> syncItem([in] ::com::sun::star::uno::XInterface Request,
+                                                                                    [in] ::com::sun::star::uno::XInterface Uploader,
+                                                                                    [in] ::com::sun::star::auth::XRestKeyMap Item);
+    string updateSync([in] ::com::sun::star::auth::XRestKeyMap Item,
+                      [in] ::com::sun::star::auth::XRestKeyMap Response);
     void callBack([in] ::com::sun::star::auth::XRestKeyMap Item,
                   [in] ::com::sun::star::beans::Optional<::com::sun::star::auth::XRestKeyMap> Response);
     boolean isChildId([in] string UserId,

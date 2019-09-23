@@ -8,6 +8,8 @@ from com.sun.star.sdbc import SQLException
 from com.sun.star.logging.LogLevel import INFO
 from com.sun.star.logging.LogLevel import SEVERE
 
+from .keymap import KeyMap
+
 from .unotools import getPropertyValue
 from .unotools import getResourceLocation
 from .unotools import getSimpleFile
@@ -48,7 +50,7 @@ def getDataSourceConnection(ctx, url, logger):
         logger.logp(INFO, "DataSource", "getDataSourceConnection()", msg)
     return connection
 
-def getKeyMapFromResult(result, keymap, provider=None):
+def getKeyMapFromResult(result, keymap=KeyMap(), provider=None):
     for i in range(1, result.MetaData.ColumnCount +1):
         name = result.MetaData.getColumnName(i)
         dbtype = result.MetaData.getColumnTypeName(i)

@@ -10,7 +10,9 @@ from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 from com.sun.star.ucb import XRestUser
 
+from .configuration import g_oauth2
 from .identifier import Identifier
+from .datasourcehelper import getKeyMapFromResult
 from .keymap import KeyMap
 
 import traceback
@@ -18,13 +20,13 @@ import traceback
 
 class User(unohelper.Base,
            XRestUser):
-    def __init__(self, ctx, datasource):
+    def __init__(self, ctx):
         level = INFO
         msg = "User loading"
         self.ctx = ctx
-        self.DataSource = datasource
         self.MetaData = KeyMap()
         self._Error = ''
+        self.Request = self._getRequest()
         msg += " ... Done"
         self.Logger.logp(level, "User", "__init__()", msg)
 
@@ -33,7 +35,7 @@ class User(unohelper.Base,
         return self.MetaData.getDefaultValue('UserId', None)
     @property
     def Name(self):
-        return self.MetaData.getDefaultValue('Name', None)
+        return self.MetaData.getDefaultValue('UserName', None)
     @property
     def RootId(self):
         return self.MetaData.getDefaultValue('RootId', None)
@@ -45,59 +47,67 @@ class User(unohelper.Base,
         return all((self.Id, self.Name, self.RootId, self.RootName, not self.Error))
     @property
     def Logger(self):
-        return self.DataSource.Logger
+        return self.Request.Logger
     @property
     def Error(self):
-        return self.DataSource.Error if self.DataSource.Error else self._Error
+        return self.Request.Error if self.Request and self.Request.Error else self._Error
 
-    def initialize(self, name):
+    def _getRequest(self):
+        request = self.ctx.ServiceManager.createInstanceWithContext(g_oauth2, self.ctx)
+        if not request:
+            error = "ERROR: service: %s is not available... Check your installed extensions"
+            self._Error = error % g_oauth2
+        return request
+
+    def initialize(self, datasource, name):
         print("User.initialize() 1")
-        if name == '':
-            self._Error = "ERROR: Can't retrieve a UserName from Handler"
-            return False
-        elif not self.DataSource.initializeUser(name):
-            return False
-        self.MetaData = self.DataSource.getUser(name)
-        print("User.initialize() 2")
-        return True
+        init = False
+        provider = datasource.Provider
+        provider.SessionMode = self.Request.getSessionMode(provider.Host)
+        user = datasource.selectUser(name)
+        if user is not None:
+            self.MetaData = user
+            init = True
+        elif provider.isOnLine():
+            if self.Request.initializeSession(provider.Scheme, name):
+                user = provider.getUser(self.Request, name)
+                if user.IsPresent:
+                    root = provider.getRoot(self.Request, user.Value)
+                    if root.IsPresent:
+                        self.MetaData = datasource.insertUser(user.Value, root.Value)
+                        init = True
+        else:
+            self._Error = "ERROR: Can't retrieve User: %s from provider network is OffLine" % name
+        print("User.initialize() 2 %s" % self.MetaData)
+        return init
 
-    def isChildId(self, itemid, title):
-        return self.DataSource.isChildId(self.Id, itemid, title)
-    def selectChildId(self, parent, title):
-        return self.DataSource.selectChildId(self.Id, parent, title)
-    def countChildTitle(self, parent, title):
-        return self.DataSource.countChildTitle(self.Id, parent, title)
+    def getItem(self, datasource, identifier):
+        item = datasource.selectItem(self.MetaData, identifier)
+        provider = datasource.Provider
+        if not item and provider.isOnLine():
+            data = provider.getItem(self.Request, identifier)
+            if data.IsPresent:
+                item = datasource.insertItem(self.MetaData, data.Value)
+        return item
 
-    def isIdentifier(self, id):
-        return self.DataSource.isIdentifier(self.Id, id)
-
-    def getItem(self, identifier):
-        return self.DataSource.getItem(self.MetaData, identifier)
-
-    def insertNewDocument(self, itemid, parentid, content):
-        inserted = self.DataSource.insertNewDocument(self.Id, itemid, parentid, content)
-        return self.synchronize(inserted)
-    def insertNewFolder(self, itemid, parentid, content):
-        inserted = self.DataSource.insertNewFolder(self.Id, itemid, parentid, content)
-        return self.synchronize(inserted)
+    def insertNewDocument(self, datasource, itemid, parentid, content):
+        inserted = datasource.insertNewDocument(self.Id, itemid, parentid, content)
+        return self.synchronize(datasource, inserted)
+    def insertNewFolder(self, datasource, itemid, parentid, content):
+        inserted = datasource.insertNewFolder(self.Id, itemid, parentid, content)
+        return self.synchronize(datasource, inserted)
 
     # XRestUser
-    def getFolderContent(self, identifier, content, updated):
-        return self.DataSource.getFolderContent(self.MetaData, identifier, content, updated)
 
-    def updateLoaded(self, itemid, value, default):
-        return self.DataSource.updateLoaded(self.Id, itemid, value, default)
-    def updateTitle(self, itemid, parentid, value, default):
-        return self.synchronize(self.DataSource.updateTitle(self.Id, itemid, parentid, value, default))
-    def updateSize(self, itemid, parentid, size):
-        return self.synchronize(self.DataSource.updateSize(self.Id, itemid, parentid, size))
-    def updateTrashed(self, itemid, parentid, value, default):
-        return self.synchronize(self.DataSource.updateTrashed(self.Id, itemid, parentid, value, default))
-
-    def checkNewIdentifier(self):
-        self.DataSource.checkNewIdentifier(self.MetaData)
-    def getNewIdentifier(self):
-        return self.DataSource.getNewIdentifier(self.MetaData)
+    def updateTitle(self, datasource, itemid, parentid, value, default):
+        result = datasource.updateTitle(self.Id, itemid, parentid, value, default)
+        return self.synchronize(datasource, result)
+    def updateSize(self, datasource, itemid, parentid, size):
+        result = datasource.updateSize(self.Id, itemid, parentid, size)
+        return self.synchronize(datasource, result)
+    def updateTrashed(self, datasource, itemid, parentid, value, default):
+        result = datasource.updateTrashed(self.Id, itemid, parentid, value, default)
+        return self.synchronize(datasource, result)
 
     def getInputStream(self, url):
         sf = self.ctx.ServiceManager.createInstance('com.sun.star.ucb.SimpleFileAccess')
@@ -105,9 +115,19 @@ class User(unohelper.Base,
             return sf.getSize(url), sf.openFileRead(url)
         return 0, None
 
-    def getIdentifier(self, url):
-        print("User.getIdentifier() *****************************************************")
-        return Identifier(self.ctx, self, url)
-
-    def synchronize(self, value):
-        return self.DataSource.synchronize(self.MetaData, value)
+    def synchronize(self, datasource, value):
+        if datasource.Provider.isOffLine() or value is None:
+            return value
+        results = []
+        uploader = self.Request.getUploader(datasource)
+        for item in datasource.getItemToSync(self.MetaData):
+            response = datasource.syncItem(self.Request, uploader, item)
+            if response is None:
+                continue
+            elif response and response.IsPresent:
+                results.append(datasource.updateSync(item, response.Value))
+            else:
+                msg = "ERROR: ItemId: %s" % item.getDefaultValue('Id')
+                self.Logger.logp(SEVERE, "DataSource", "synchronize()", msg)
+                continue
+        return value if all(results) else None

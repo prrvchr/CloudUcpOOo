@@ -82,7 +82,7 @@ class Content(unohelper.Base,
         return self.MetaData.getValue('CanAddChild')
     @property
     def Logger(self):
-        return self.Identifier.User.DataSource.Logger
+        return self.Identifier.DataSource.Logger
 
     def initialize(self, identifier, data):
         self.Identifier = identifier
@@ -161,6 +161,7 @@ class Content(unohelper.Base,
     def execute(self, command, id, environment):
         try:
             msg = "command.Name: %s" % command.Name
+            print("Content.execute() %s" % msg)
             self.Logger.logp(INFO, "Content", "execute()", msg)
             if command.Name == 'getCommandInfo':
                 msg = "command.Name: %s ******************************************" % command.Name
@@ -199,7 +200,7 @@ class Content(unohelper.Base,
                         s.setStream(sf.openFileReadWrite(url))
             elif command.Name == 'insert':
                 if self.IsFolder:
-                    mediatype = self.Identifier.User.DataSource.Provider.Folder
+                    mediatype = self.Identifier.DataSource.Provider.Folder
                     self.MetaData.insertValue('MediaType', mediatype)
                     if self.Identifier.insertNewFolder(self.MetaData):
                         pass
@@ -216,7 +217,7 @@ class Content(unohelper.Base,
                     stream = command.Argument.Data
                     replace = command.Argument.ReplaceExisting
                     sf = getSimpleFile(self.ctx)
-                    url = self.Identifier.User.DataSource.Provider.SourceURL
+                    url = self.Identifier.DataSource.Provider.SourceURL
                     target = '%s/%s' % (url, self.Identifier.Id)
                     if sf.exists(target) and not replace:
                         pass
@@ -264,11 +265,11 @@ class Content(unohelper.Base,
                 if not sf.exists(source):
                     raise CommandAbortedException("Error while saving file: %s" % source, self)
                 inputstream = sf.openFileRead(source)
-                target = '%s/%s' % (self.Identifier.User.DataSource.Provider.SourceURL, id)
+                target = '%s/%s' % (self.Identifier.DataSource.Provider.SourceURL, id)
                 sf.writeFile(target, inputstream)
                 inputstream.closeInput()
                 # We need to commit change: Size is the property chainning all DataSource change
-                if not self.Identifier.User.updateSize(id, self.Identifier.Id, sf.getSize(target)):
+                if not self.Identifier.updateSize(id, self.Identifier.Id, sf.getSize(target)):
                     raise CommandAbortedException("Error while saving file: %s" % source, self)
                 #ucb = getUcb(self.ctx)
                 #identifier = ucb.createContentIdentifier('%s/%s' % (self.Identifier.BaseURL, title))
@@ -294,7 +295,7 @@ class Content(unohelper.Base,
     def _getCreatableContentsInfo(self):
         content = []
         if self.IsFolder and self.CanAddChild:
-            provider = self.Identifier.User.DataSource.Provider
+            provider = self.Identifier.DataSource.Provider
             properties = (getProperty('Title', 'string', BOUND), )
             content.append(getContentInfo(provider.Folder, KIND_FOLDER, properties))
             content.append(getContentInfo(provider.Office, KIND_DOCUMENT, properties))

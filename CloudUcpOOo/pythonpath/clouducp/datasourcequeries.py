@@ -217,9 +217,10 @@ def getSqlQuery(name):
         query = 'SELECT "Set2", "Set3" FROM "Settings" WHERE "Setting" = ?'
     elif name == 'getUser':
         c1 = '"U"."UserId"'
-        c2 = '"U"."RootId"'
-        c3 = '"I"."Title" "RootName"'
-        c = (c1, c2, c3)
+        c2 = '"U"."UserName"'
+        c3 = '"U"."RootId"'
+        c4 = '"I"."Title" "RootName"'
+        c = (c1, c2, c3, c4)
         f = '"Users" "U" JOIN "Items" "I" ON "U"."RootId" = "I"."ItemId"'
         p = (','.join(c), f)
         query = 'SELECT %s FROM %s WHERE "U"."UserName" = ?' % p

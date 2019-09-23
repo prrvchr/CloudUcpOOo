@@ -33,16 +33,11 @@ class ProviderBase(ProviderObject,
     # Base properties
     @property
     def Error(self):
-        return self.Request.Error if self.Request.Error else self._Error
+        return self._Error
 
     # Private method
     def _getKeyMap(self):
         return KeyMap()
-    def _getRequest(self, ctx):
-        request = ctx.ServiceManager.createInstanceWithContext(g_oauth2, ctx)
-        if not request:
-            self._Error = "ERROR: service: %s is not available... Check your extensions" % g_oauth2
-        return request
 
     # Must be implemented properties
     @property
@@ -124,20 +119,20 @@ class ProviderBase(ProviderObject,
         return self.SessionMode != ONLINE
 
     def initialize(self, scheme, plugin, folder, link):
-        if not self.Request.initializeSession(scheme):
-            return False
+        #if not user.Request.initializeSession(scheme):
+        #    return False
         self.Scheme = scheme
         self.Plugin = plugin
         self.Folder = folder
         self.Link = link
         self.SourceURL = getResourceLocation(self.ctx, plugin, scheme)
-        self.SessionMode = self.Request.getSessionMode(self.Host)
-        return True
+        #self.SessionMode = user.Request.getSessionMode(self.Host)
+        #return True
 
-    def initializeUser(self, name):
-        self.SessionMode = self.Request.getSessionMode(self.Host)
+    def initializeUser(self, user, name):
+        self.SessionMode = user.Request.getSessionMode(self.Host)
         if self.isOnLine():
-            return self.Request.initializeUser(name)
+            return user.Request.initializeUser(name)
         return True
 
     # Can be rewrited method
@@ -186,51 +181,49 @@ class ProviderBase(ProviderObject,
     def transform(self, name, value):
         return value
 
-    def getIdentifier(self, user):
+    def getIdentifier(self, request, user):
         parameter = self.getRequestParameter('getNewIdentifier', user)
-        return self.Request.getEnumerator(parameter)
-    def getUser(self, name):
+        return request.getEnumerator(parameter)
+    def getUser(self, request, name):
         data = KeyMap()
         data.insertValue('Id', name)
         parameter = self.getRequestParameter('getUser', data)
-        return self.Request.execute(parameter)
-    def getRoot(self, user):
+        return request.execute(parameter)
+    def getRoot(self, request, user):
         parameter = self.getRequestParameter('getRoot', user)
-        return self.Request.execute(parameter)
-    def getItem(self, user, identifier):
+        return request.execute(parameter)
+    def getItem(self, request, identifier):
         parameter = self.getRequestParameter('getItem', identifier)
-        return self.Request.execute(parameter)
+        return request.execute(parameter)
 
-    def getDocumentContent(self, content):
+    def getDocumentContent(self, request, content):
         parameter = self.getRequestParameter('getDocumentContent', content)
-        return self.Request.getInputStream(parameter, self.Chunk, self.Buffer)
-    def getFolderContent(self, content):
+        return request.getInputStream(parameter, self.Chunk, self.Buffer)
+    def getFolderContent(self, request, content):
         parameter = self.getRequestParameter('getFolderContent', content)
-        return self.Request.getEnumerator(parameter)
+        return request.getEnumerator(parameter)
 
-    def getUploader(self, datasource):
-        return self.Request.getUploader(datasource)
 
-    def createFile(self, item):
+    def createFolder(self, request, item):
+        parameter = self.getRequestParameter('createNewFolder', item)
+        return request.execute(parameter)
+
+    def createFile(self, request, uploader, item):
         return None
 
-    def createFolder(self, item):
-        parameter = self.getRequestParameter('createNewFolder', item)
-        return self.Request.execute(parameter)
-
-    def uploadFile(self, uploader, item, new=False):
+    def uploadFile(self, request, uploader, item, new=False):
         method = 'getNewUploadLocation' if new else 'getUploadLocation'
         parameter = self.getRequestParameter(method, item)
-        response = self.Request.execute(parameter)
+        response = request.execute(parameter)
         if response.IsPresent:
             parameter = self.getRequestParameter('getUploadStream', response.Value)
             return None if uploader.start(item, parameter) else False
         return False
 
-    def updateTitle(self, item):
+    def updateTitle(self, request, item):
         parameter = self.getRequestParameter('updateTitle', item)
-        return self.Request.execute(parameter)
+        return request.execute(parameter)
 
-    def updateTrashed(self, item):
+    def updateTrashed(self, request, item):
         parameter = self.getRequestParameter('updateTrashed', item)
-        return self.Request.execute(parameter)
+        return request.execute(parameter)

@@ -34,11 +34,12 @@ class Identifier(unohelper.Base,
                  XContentIdentifier,
                  XRestIdentifier,
                  XChild):
-    def __init__(self, ctx, user, url, contenttype=''):
+    def __init__(self, ctx, datasource, url, contenttype=''):
         level = INFO
         msg = "Identifier loading"
         self.ctx = ctx
-        self.User = user
+        self.DataSource = datasource
+        self.User = None
         self._Url = self._getUrl(url)
         self._ContentType = contenttype
         self._Error = ''
@@ -69,10 +70,10 @@ class Identifier(unohelper.Base,
         return self.MetaData.getValue('BaseURL')
     @property
     def Logger(self):
-        return self.User.DataSource.Logger
+        return self.DataSource.Logger
     @property
     def Error(self):
-        return self.User.Error if self.User.Error else self._Error
+        return self.User.Error if self.User and self.User.Error else self._Error
 
     def initialize(self, name):
         try:
@@ -84,10 +85,14 @@ class Identifier(unohelper.Base,
                 return False
             print("Identifier.initialize() 2 %s - %s" % (uri.hasAuthority(),uri.getPathSegmentCount()))
             if not uri.hasAuthority() or not uri.getPathSegmentCount():
-                self._Error = "Can't retrieve User from Url: %s" % url
+                self._Error = "Can't retrieve a UserName from Url: %s" % url
                 return False
             name = self._getUserName(uri, name)
-            if not self.User.initialize(name):
+            if not name:
+                self._Error = "Can't retrieve a UserName from Handler for Url: %s" % url
+                return False
+            self.User = self.DataSource.getUser(name)
+            if self.Error:
                 return False
             paths = []
             position = -1
@@ -105,13 +110,13 @@ class Identifier(unohelper.Base,
             for i in range(position):
                 paths.append(uri.getPathSegment(i).strip())
             if isnew:
-                id = self.User.getNewIdentifier()
+                id = self.DataSource.getNewIdentifier(self.User.MetaData)
                 isfolder = self.DataSource.Provider.isFolder(self._ContentType)
             elif not basename:
                 id = self.User.RootId
                 isroot = True
                 isfolder = True
-            elif self.User.isIdentifier(basename):
+            elif self._isIdentifier(basename):
                 id = basename
                 isfolder = True
             else:
@@ -129,39 +134,42 @@ class Identifier(unohelper.Base,
             self.MetaData.insertValue('IsRoot', isroot)
             self.MetaData.insertValue('IsNew', isnew)
             self.MetaData.insertValue('BaseName', basename)
-            print("Identifier.initialize() 3")
+            print("Identifier.initialize() 3 ")
             return True
         except Exception as e:
             print("Identifier.initialize() ERROR: %s - %s" % (e, traceback.print_exc()))
 
     def getContent(self):
-        if self.IsNew:
-            timestamp = parseDateTime()
-            isfolder = self.User.DataSource.Provider.isFolder(self._ContentType)
-            isdocument = self.User.DataSource.Provider.isDocument(self._ContentType)
-            data = KeyMap()
-            data.insertValue('Id', self.Id)
-            data.insertValue('ContentType', self._ContentType)
-            data.insertValue('DateCreated', timestamp)
-            data.insertValue('DateModified', timestamp)
-            mediatype = self._ContentType if isfolder else ''
-            data.insertValue('MediaType', mediatype)
-            data.insertValue('Size', 0)
-            data.insertValue('Trashed', False)
-            data.insertValue('CanAddChild', True)
-            data.insertValue('CanRename', True)
-            data.insertValue('IsReadOnly', False)
-            data.insertValue('IsVersionable', False)
-            data.insertValue('Loaded', True)
-            data.insertValue('IsFolder', isfolder)
-            data.insertValue('IsDocument', isdocument)
-        else:
-            data = self.User.getItem(self.MetaData)
-        data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
-        service = '%s.Content' % g_identifier
-        content = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-        content.initialize(self, data)
-        return content
+        try:
+            if self.IsNew:
+                timestamp = parseDateTime()
+                isfolder = self.DataSource.Provider.isFolder(self._ContentType)
+                isdocument = self.DataSource.Provider.isDocument(self._ContentType)
+                data = KeyMap()
+                data.insertValue('Id', self.Id)
+                data.insertValue('ContentType', self._ContentType)
+                data.insertValue('DateCreated', timestamp)
+                data.insertValue('DateModified', timestamp)
+                mediatype = self._ContentType if isfolder else ''
+                data.insertValue('MediaType', mediatype)
+                data.insertValue('Size', 0)
+                data.insertValue('Trashed', False)
+                data.insertValue('CanAddChild', True)
+                data.insertValue('CanRename', True)
+                data.insertValue('IsReadOnly', False)
+                data.insertValue('IsVersionable', False)
+                data.insertValue('Loaded', True)
+                data.insertValue('IsFolder', isfolder)
+                data.insertValue('IsDocument', isdocument)
+            else:
+                data = self.User.getItem(self.DataSource, self.MetaData)
+            data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
+            service = '%s.Content' % g_identifier
+            content = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
+            content.initialize(self, data)
+            return content
+        except Exception as e:
+            print("Identifier.getContent() ERROR: %s - %s" % (e, traceback.print_exc()))
 
     def setTitle(self, title, isfolder):
         basename = self.Id if isfolder else title
@@ -172,24 +180,26 @@ class Identifier(unohelper.Base,
 
     def insertNewDocument(self, content):
         parentid = self.getParent().Id
-        return self.User.insertNewDocument(self.Id, parentid, content)
+        return self.User.insertNewDocument(self.DataSource, self.Id, parentid, content)
     def insertNewFolder(self, content):
         parentid = self.getParent().Id
-        return self.User.insertNewFolder(self.Id, parentid, content)
+        return self.User.insertNewFolder(self.DataSource, self.Id, parentid, content)
 
     def isChildId(self, title):
-        return self.User.isChildId(self.Id, title)
+        return self.DataSource.isChildId(self.User.Id, self.Id, title)
     def selectChildId(self, title):
-        return self.User.selectChildId(self.Id, title)
+        return self._selectChildId(self.Id, title)
     def countChildTitle(self, title):
-        return self.User.countChildTitle(self.Id, title)
+        return self.DataSource.countChildTitle(self.User.Id, self.Id, title)
 
+    def updateSize(self, itemid, parentid, size):
+        return self.User.updateSize(self.DataSource, itemid, parentid, size)
     def updateTrashed(self, value, default):
         parentid = self.getParent().Id
-        return self.User.updateTrashed(self.Id, parentid, value, default)
+        return self.User.updateTrashed(self.DataSource, self.Id, parentid, value, default)
     def updateTitle(self, value, default):
         parentid = self.getParent().Id
-        return self.User.updateTitle(self.Id, parentid, value, default)
+        return self.User.updateTitle(self.DataSource, self.Id, parentid, value, default)
 
     def getInputStream(self, path, id):
         url = '%s/%s' % (path, id)
@@ -200,15 +210,15 @@ class Identifier(unohelper.Base,
 
     # XRestIdentifier
     def createNewIdentifier(self, contenttype):
-        return Identifier(self.ctx, self.User, self.BaseURL, contenttype)
+        return Identifier(self.ctx, self.DataSource, self.BaseURL, contenttype)
 
     def getDocumentContent(self, sf, content, size):
         size = 0
-        url = '%s/%s' % (self.User.DataSource.Provider.SourceURL, self.Id)
+        url = '%s/%s' % (self.DataSource.Provider.SourceURL, self.Id)
         if content.getValue('Loaded') == OFFLINE and sf.exists(url):
             size = sf.getSize(url)
             return url, size
-        stream = self.User.DataSource.Provider.getDocumentContent(content)
+        stream = self.DataSource.Provider.getDocumentContent(self.User.Request, content)
         if stream:
             try:
                 sf.writeFile(url, stream)
@@ -217,16 +227,17 @@ class Identifier(unohelper.Base,
                 self.Logger.logp(SEVERE, "Identifier", "getDocumentContent()", msg)
             else:
                 size = sf.getSize(url)
-                loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
+                loaded = self.DataSource.updateLoaded(self.User.Id, self.Id, OFFLINE, ONLINE)
                 content.insertValue('Loaded', loaded)
             finally:
                 stream.closeInput()
         return url, size
 
     def getFolderContent(self, content):
-        select, updated = self.User.getFolderContent(self.MetaData, content, False)
+        select, updated = self.DataSource.getFolderContent(self.User.Request, self.User.MetaData,
+                                                           self.MetaData, content, False)
         if updated:
-            loaded = self.User.updateLoaded(self.Id, OFFLINE, ONLINE)
+            loaded = self.DataSource.updateLoaded(self.User.Id, self.Id, OFFLINE, ONLINE)
             content.insertValue('Loaded', loaded)
         return select
 
@@ -234,7 +245,7 @@ class Identifier(unohelper.Base,
     def getContentIdentifier(self):
         return self._Url
     def getContentProviderScheme(self):
-        return self.User.DataSource.Provider.Scheme
+        return self.DataSource.Provider.Scheme
 
     # XChild
     def getParent(self):
@@ -243,7 +254,7 @@ class Identifier(unohelper.Base,
         if not self.IsRoot:
             url = '%s/' % self.BaseURI
             print("Identifier.getParent() 2 %s" % url)
-            identifier = Identifier(self.ctx, self.User, url)
+            identifier = Identifier(self.ctx, self.DataSource, url)
             if identifier.initialize(self.User.Name):
                 parent = identifier
                 print("Identifier.getParent() 3 %s" % parent.Id)
@@ -272,16 +283,22 @@ class Identifier(unohelper.Base,
         print("Identifier._getUserName(): %s" % name)
         return name
 
+    def _isIdentifier(self, id):
+        return self.DataSource.isIdentifier(self.User.Id, id)
+
+    def _selectChildId(self, id, title):
+        return self.DataSource.selectChildId(self.User.Id, id, title)
+
     def _searchId(self, paths, basename):
         # Needed for be able to create a folder in a just created folder...
         id = ''
         paths.append(self.User.RootId)
         for i, path in enumerate(paths):
-            if self.User.isIdentifier(path):
+            if self._isIdentifier(path):
                 id = path
                 break
         for j in range(i -1, -1, -1):
-            id = self.User.selectChildId(id, paths[j])
-        id = self.User.selectChildId(id, basename)
+            id = self._selectChildId(id, paths[j])
+        id = self._selectChildId(id, basename)
         return id
 

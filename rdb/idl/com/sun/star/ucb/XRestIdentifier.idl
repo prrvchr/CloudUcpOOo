@@ -23,11 +23,16 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
     string getDocumentContent([in] XSimpleFileAccess Sf,
                               [in] ::com::sun::star::auth::XRestKeyMap Content,
                               [out] long Size);
-    boolean insertNewDocument([in] ::com::sun::star::auth::XRestKeyMap Content);
-    boolean insertNewFolder([in] ::com::sun::star::auth::XRestKeyMap Content);
+    boolean insertNewDocument([in] ::com::sun::star::uno::XInterface Request,
+                              [in] ::com::sun::star::auth::XRestKeyMap Content);
+    boolean insertNewFolder([in] ::com::sun::star::uno::XInterface Request,
+                           [in] ::com::sun::star::auth::XRestKeyMap Content);
     boolean isChildId([in] string ItemId);
     string selectChildId([in] string Title);
     long countChildTitle([in] string Title);
+    long updateSize([in] string ItemId,
+                    [in] string ParentId,
+                    [in] long Size);
     boolean updateTrashed([in] boolean Value,
                           [in] boolean Default);
     string updateTitle([in] string Value,
@@ -35,6 +40,7 @@ interface XRestIdentifier: com::sun::star::uno::XInterface
     string setTitle([in] string Value,
                     [in] boolean IsFolder);
 
+    [attribute, readonly] ::com::sun::star::ucb::XRestDataSource DataSource;
     [attribute, readonly] ::com::sun::star::ucb::XRestUser User;
     [attribute, readonly] ::com::sun::star::auth::XRestKeyMap MetaData;
     [attribute, readonly] boolean IsInitialized;
