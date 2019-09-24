@@ -59,11 +59,14 @@ class User(unohelper.Base,
             self._Error = error % g_oauth2
         return request
 
+    def _setSessionMode(self, provider):
+        provider.SessionMode = self.Request.getSessionMode(provider.Host)
+
     def initialize(self, datasource, name):
         print("User.initialize() 1")
         init = False
         provider = datasource.Provider
-        provider.SessionMode = self.Request.getSessionMode(provider.Host)
+        self._setSessionMode(provider)
         user = datasource.selectUser(name)
         if user is not None:
             self.MetaData = user
@@ -103,6 +106,7 @@ class User(unohelper.Base,
         result = datasource.updateTitle(self.Id, itemid, parentid, value, default)
         return self.synchronize(datasource, result)
     def updateSize(self, datasource, itemid, parentid, size):
+        print("User.updateSize() ***********************")
         result = datasource.updateSize(self.Id, itemid, parentid, size)
         return self.synchronize(datasource, result)
     def updateTrashed(self, datasource, itemid, parentid, value, default):
@@ -115,19 +119,10 @@ class User(unohelper.Base,
             return sf.getSize(url), sf.openFileRead(url)
         return 0, None
 
-    def synchronize(self, datasource, value):
-        if datasource.Provider.isOffLine() or value is None:
-            return value
-        results = []
-        uploader = self.Request.getUploader(datasource)
-        for item in datasource.getItemToSync(self.MetaData):
-            response = datasource.syncItem(self.Request, uploader, item)
-            if response is None:
-                continue
-            elif response and response.IsPresent:
-                results.append(datasource.updateSync(item, response.Value))
-            else:
-                msg = "ERROR: ItemId: %s" % item.getDefaultValue('Id')
-                self.Logger.logp(SEVERE, "DataSource", "synchronize()", msg)
-                continue
-        return value if all(results) else None
+    def synchronize(self, datasource, result):
+        provider = datasource.Provider
+        if provider.isOffLine():
+            self._setSessionMode(provider)
+        if provider.isOnLine():
+            datasource.synchronize()
+        return result

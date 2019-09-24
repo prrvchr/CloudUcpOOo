@@ -219,6 +219,8 @@ class DataSource(unohelper.Base,
                 c4.executeUpdate()
         return row
 
+    def getDocumentContent(self, request, content):
+        return self.Provider.getDocumentContent(request, content)
     def getFolderContent(self, request, user, identifier, content, updated):
         if ONLINE == content.getValue('Loaded') == self.Provider.SessionMode:
             updated = self._updateFolderContent(request, user, content)
@@ -352,7 +354,7 @@ class DataSource(unohelper.Base,
 
     def callBack(self, item, response):
         if response.IsPresent:
-            self._updateSync(item, response.Value)
+            self.updateSync(item, response.Value)
 
     def updateSync(self, item, response):
         oldid = item.getValue('Id')
@@ -363,7 +365,7 @@ class DataSource(unohelper.Base,
         delete.setLong(1, item.getValue('SyncId'))
         row = delete.executeUpdate()
         msg = "execute deleteSyncMode OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
-        self.Logger.logp(INFO, "DataSource", "_updateSync", msg)
+        self.Logger.logp(INFO, "DataSource", "updateSync", msg)
         delete.close()
         if row and newid != oldid:
             update = self._getDataSourceCall('updateItemId')
@@ -371,18 +373,15 @@ class DataSource(unohelper.Base,
             update.setString(2, oldid)
             row = update.executeUpdate()
             msg = "execute updateItemId OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
-            self.Logger.logp(INFO, "DataSource", "_updateSync", msg)
+            self.Logger.logp(INFO, "DataSource", "updateSync", msg)
             update.close()
         return '' if row != 1 else newid
 
     def insertNewDocument(self, userid, itemid, parentid, content):
-        if self.Provider.TwoStepCreation:
-            modes = (SYNC_CREATED, SYNC_REWRITED)
-        else:
-            modes = (SYNC_FILE, )
+        modes = self.Provider.FileSyncModes
         return self._insertNewContent(userid, itemid, parentid, content, modes)
     def insertNewFolder(self, userid, itemid, parentid, content):
-        modes = (SYNC_FOLDER, )
+        modes = self.Provider.FolderSyncModes
         return self._insertNewContent(userid, itemid, parentid, content, modes)
 
     def _insertNewContent(self, userid, itemid, parentid, content, modes):
@@ -534,3 +533,24 @@ class DataSource(unohelper.Base,
             if cache:
                 self._Calls[name] = call
         return call
+
+    def synchronize(self):
+        try:
+            print("DataSource.synchronize() 1")
+            results = []
+            for user in self._CahedUser.values():
+                uploader = user.Request.getUploader(self)
+                for item in self.getItemToSync(user.MetaData):
+                    response = self.syncItem(user.Request, uploader, item)
+                    if response is None:
+                        results.append(True)
+                    elif response and response.IsPresent:
+                        results.append(self.updateSync(item, response.Value))
+                    else:
+                        msg = "ERROR: ItemId: %s" % item.getDefaultValue('Id')
+                        self.Logger.logp(SEVERE, "DataSource", "synchronize()", msg)
+                        results.append(False)
+            result = all(results)
+            print("DataSource.synchronize() 2 %s" % result)
+        except Exception as e:
+            print("DataSource.synchronize() ERROR: %s - %s" % (e, traceback.print_exc()))

@@ -193,6 +193,7 @@ class Identifier(unohelper.Base,
         return self.DataSource.countChildTitle(self.User.Id, self.Id, title)
 
     def updateSize(self, itemid, parentid, size):
+        print("Identifier.updateSize()*******************")
         return self.User.updateSize(self.DataSource, itemid, parentid, size)
     def updateTrashed(self, value, default):
         parentid = self.getParent().Id
@@ -218,7 +219,7 @@ class Identifier(unohelper.Base,
         if content.getValue('Loaded') == OFFLINE and sf.exists(url):
             size = sf.getSize(url)
             return url, size
-        stream = self.DataSource.Provider.getDocumentContent(self.User.Request, content)
+        stream = self.DataSource.getDocumentContent(self.User.Request, content)
         if stream:
             try:
                 sf.writeFile(url, stream)

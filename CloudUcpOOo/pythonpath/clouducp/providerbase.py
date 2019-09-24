@@ -11,6 +11,13 @@ from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
 from com.sun.star.ucb import XRestProvider
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RETRIEVED
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_CREATED
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_FOLDER
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_FILE
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RENAMED
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_REWRITED
+from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 
 from .datasourcehelper import parseDateTime
 from .unotools import getResourceLocation
@@ -64,14 +71,17 @@ class ProviderBase(ProviderObject,
 
     # Can be rewrited properties
     @property
-    def GenerateIds(self):
-        return False
-    @property
     def IdentifierRange(self):
         return (0, 0)
     @property
-    def TwoStepCreation(self):
-        return False
+    def GenerateIds(self):
+        return all(self.IdentifierRange)
+    @property
+    def FileSyncModes(self):
+        return (SYNC_FILE, )
+    @property
+    def FolderSyncModes(self):
+        return (SYNC_FOLDER, )
 
     # Must be implemented method
     def getRequestParameter(self, method, data):
