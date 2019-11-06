@@ -18,15 +18,20 @@ from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_RENAMED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_REWRITED
 from com.sun.star.ucb.RestDataSourceSyncMode import SYNC_TRASHED
 
+from .dbinit import getDataSourceUrl
 
-from .datasourcehelper import getDataSourceUrl
-from .datasourcehelper import getDataSourceConnection
-from .datasourcehelper import getKeyMapFromResult
-from .datasourcehelper import parseDateTime
-from .datasourcequeries import getSqlQuery
+from .dbtools import getDataSourceConnection
+from .dbtools import getKeyMapFromResult
+from .dbtools import getSequenceFromResult
+
+from .dbqueries import getSqlQuery
+
 from .unotools import getResourceLocation
 from .unotools import getPropertyValue
+from .unotools import parseDateTime
+
 from .keymap import KeyMap
+
 from .user import User
 
 import binascii
@@ -45,11 +50,13 @@ class DataSource(unohelper.Base,
         self._Error = ''
         service = '%s.Provider' % plugin
         self.Provider = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
-        url = getDataSourceUrl(self.ctx, scheme, plugin)
-        connection = getDataSourceConnection(ctx, url, self.Logger)
-        if not connection:
-            self._Error = "Could not connect to DataSource at URL: %s" % url
-            msg += "ERROR: %s" % self.Error
+        dbcontext = self.ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
+        url = getDataSourceUrl(self.ctx, dbcontext, scheme, plugin, True)
+        connection, error = getDataSourceConnection(dbcontext, url)
+        if error is not None:
+            msg += " ... Error: %s - %s" % (error, traceback.print_exc())
+            msg += "Could not connect to DataSource at URL: %s" % url
+            self._Error = msg
         else:
             # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
             self._Statement = connection.createStatement()
@@ -145,14 +152,12 @@ class DataSource(unohelper.Base,
         return self.selectItem(user, identifier)
 
     def _getContentType(self):
-        call = self._getDataSourceCall('getSetting')
-        call.setString(1, 'ContentType')
+        call = self._getDataSourceCall('getContentType')
         result = call.executeQuery()
         if result.next():
-            folder = result.getString(1)
-            link = result.getString(2)
+            item = getKeyMapFromResult(result)
         call.close()
-        return folder, link
+        return item.getValue('Folder'), item.getValue('Link')
 
     def _executeRootCall(self, method, userid, root, timestamp):
         row = 0
@@ -241,6 +246,7 @@ class DataSource(unohelper.Base,
         enumerator = self.Provider.getFolderContent(request, content)
         while enumerator.hasMoreElements():
             item = enumerator.nextElement()
+            print("datasource._updateFolderContent() %s" % (item, ))
             updated.append(self._mergeItem(c1, c2, c3, c4, c5, c6, userid, rootid, item, timestamp))
         c1.close()
         c2.close()
@@ -308,7 +314,9 @@ class DataSource(unohelper.Base,
         insert = self._getDataSourceCall('insertIdentifier')
         insert.setString(1, user.getValue('UserId'))
         while enumerator.hasMoreElements():
-            result.append(self._doInsert(insert, enumerator.nextElement()))
+            item = enumerator.nextElement()
+            print("datasource._insertIdentifier() %s" % (item, ))
+            result.append(self._doInsert(insert, item))
         insert.close()
         return all(result)
     def _doInsert(self, insert, id):

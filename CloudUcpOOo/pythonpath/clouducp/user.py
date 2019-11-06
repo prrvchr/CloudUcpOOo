@@ -12,7 +12,6 @@ from com.sun.star.ucb import XRestUser
 
 from .configuration import g_oauth2
 from .identifier import Identifier
-from .datasourcehelper import getKeyMapFromResult
 from .keymap import KeyMap
 
 import traceback

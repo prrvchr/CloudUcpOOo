@@ -31,12 +31,10 @@ from com.sun.star.logging.LogLevel import SEVERE
 
 from com.sun.star.ucb import XRestContent
 
-from clouducp import g_identifier
 from clouducp import CommandInfo
 from clouducp import Row
 from clouducp import DynamicResultSet
 from clouducp import PropertySetInfo
-
 from clouducp import getPropertiesValues
 from clouducp import setPropertiesValues
 from clouducp import getCommandInfo
@@ -49,13 +47,14 @@ from clouducp import getSimpleFile
 from clouducp import getProperty
 from clouducp import getPropertyValueSet
 from clouducp import getLogger
+from clouducp import g_plugin
 
 import traceback
 
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = '%s.Content' % g_identifier
+g_ImplementationName = '%s.Content' % g_plugin
 
 
 class Content(unohelper.Base,
@@ -353,13 +352,14 @@ class Content(unohelper.Base,
         properties['CreatableContentsInfo'] = info
         properties['CasePreservingURL'] = getProperty('CasePreservingURL', 'string', BOUND | RO)
         properties['BaseURI'] = getProperty('BaseURI', 'string', BOUND | READONLY)
-        properties['TitleOnServer'] = getProperty('TitleOnServer', 'string', BOUND)
+        #properties['TitleOnServer'] = getProperty('TitleOnServer', 'string', BOUND)
         properties['IsHidden'] = getProperty('IsHidden', 'boolean', BOUND | RO)
         properties['IsVolume'] = getProperty('IsVolume', 'boolean', BOUND | RO)
         properties['IsRemote'] = getProperty('IsRemote', 'boolean', BOUND | RO)
         properties['IsRemoveable'] = getProperty('IsRemoveable', 'boolean', BOUND | RO)
         properties['IsFloppy'] = getProperty('IsFloppy', 'boolean', BOUND | RO)
         properties['IsCompactDisc'] = getProperty('IsCompactDisc', 'boolean', BOUND | RO)
+        #properties['IsVersionable'] = getProperty('IsVersionable', 'boolean', BOUND | RO)
         return properties
 
     # XServiceInfo

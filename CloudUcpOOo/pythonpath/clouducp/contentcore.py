@@ -31,6 +31,7 @@ def getPropertiesValues(source, properties, logger=None):
             value = source.MetaData.getValue(property.Name)
             msg = "Name: %s - Value: %s" % (property.Name, value)
             level = uno.getConstantByName('com.sun.star.logging.LogLevel.INFO')
+            print("contentcore.getPropertiesValues(): %s: %s" % (property.Name, value))
         else:
             msg = "ERROR: Requested property: %s is not available" % property.Name
             level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')

@@ -18,14 +18,12 @@ try:
 
     from com.sun.star.ucb import XRestContentProvider
 
-    from clouducp import g_identifier
-
-    from clouducp import getLogger
-    from clouducp import isLoggerEnabled
-
     from clouducp import DataSource
     from clouducp import User
     from clouducp import Identifier
+    from clouducp import getLogger
+    from clouducp import isLoggerEnabled
+    from clouducp import g_plugin
 
 except Exception as e:
     print("clouducp.__init__() ERROR: %s - %s" % (e, traceback.print_exc()))
@@ -33,7 +31,7 @@ except Exception as e:
 
 # pythonloader looks for a static g_ImplementationHelper variable
 g_ImplementationHelper = unohelper.ImplementationHelper()
-g_ImplementationName = '%s.ContentProvider' % g_identifier
+g_ImplementationName = '%s.ContentProvider' % g_plugin
 
 
 class ContentProvider(unohelper.Base,
@@ -50,11 +48,11 @@ class ContentProvider(unohelper.Base,
         self.DataSource = None
         self._defaultUser = ''
         self.Logger = getLogger(self.ctx)
-        msg = "ContentProvider: %s loading ... Done" % g_identifier
+        msg = "ContentProvider: %s loading ... Done" % g_plugin
         self.Logger.logp(INFO, 'ContentProvider', '__init__()', msg)
 
     def __del__(self):
-       msg = "ContentProvider; %s unloading ... Done" % g_identifier
+       msg = "ContentProvider; %s unloading ... Done" % g_plugin
        self.Logger.logp(INFO, "ContentProvider", "__del__()", msg)
 
     # XParameterizedContentProvider

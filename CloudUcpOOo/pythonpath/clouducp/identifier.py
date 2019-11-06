@@ -17,14 +17,14 @@ from com.sun.star.beans.PropertyAttribute import TRANSIENT
 from com.sun.star.ucb.ConnectionMode import OFFLINE
 from com.sun.star.ucb.ConnectionMode import ONLINE
 
-from .configuration import g_identifier
+from .configuration import g_plugin
 #from .content import Content
 
 from .contenttools import getUri
 from .oauth2core import getUserNameFromHandler
 from .unotools import getProperty
 from .unotools import getResourceLocation
-from .datasourcehelper import parseDateTime
+from .unotools import parseDateTime
 from .keymap import KeyMap
 
 import traceback
@@ -147,24 +147,29 @@ class Identifier(unohelper.Base,
                 isdocument = self.DataSource.Provider.isDocument(self._ContentType)
                 data = KeyMap()
                 data.insertValue('Id', self.Id)
-                data.insertValue('ContentType', self._ContentType)
+                data.insertValue('ObjectId', self.Id)
+                data.insertValue('Title', '')
+                data.insertValue('TitleOnServer', '')
                 data.insertValue('DateCreated', timestamp)
                 data.insertValue('DateModified', timestamp)
+                data.insertValue('ContentType', self._ContentType)
                 mediatype = self._ContentType if isfolder else ''
                 data.insertValue('MediaType', mediatype)
                 data.insertValue('Size', 0)
                 data.insertValue('Trashed', False)
+                data.insertValue('IsRoot', self.IsRoot)
+                data.insertValue('IsFolder', isfolder)
+                data.insertValue('IsDocument', isdocument)
                 data.insertValue('CanAddChild', True)
                 data.insertValue('CanRename', True)
                 data.insertValue('IsReadOnly', False)
-                data.insertValue('IsVersionable', False)
+                data.insertValue('IsVersionable', isdocument)
                 data.insertValue('Loaded', True)
-                data.insertValue('IsFolder', isfolder)
-                data.insertValue('IsDocument', isdocument)
+
             else:
                 data = self.User.getItem(self.DataSource, self.MetaData)
             data.insertValue('BaseURI', self.MetaData.getValue('BaseURI'))
-            service = '%s.Content' % g_identifier
+            service = '%s.Content' % g_plugin
             content = self.ctx.ServiceManager.createInstanceWithContext(service, self.ctx)
             content.initialize(self, data)
             return content
