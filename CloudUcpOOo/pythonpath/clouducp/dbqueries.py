@@ -50,41 +50,6 @@ def getSqlQuery(name, format=None):
     elif name == 'setTableReadOnly':
         query = 'SET TABLE "%s" READONLY TRUE' % format
 
-# Create Static View Queries
-    elif name == 'createTableView':
-        c1 = '"TableId"'
-        c2 = '"ColumnId"'
-        c3 = '"Table"'
-        c4 = '"Column"'
-        c5 = '"Type"'
-        c6 = '"Lenght"'
-        c7 = '"Default"'
-        c8 = '"Options"'
-        c9 = '"Primary"'
-        c10 = '"Unique"'
-        c11 = '"ForeignTable"'
-        c12 = '"ForeignColumn"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12)
-        s1 = '"T"."Table"'
-        s2 = '"C"."Column"'
-        s3 = '"T"."Name"'
-        s4 = '"C"."Name"'
-        s5 = '"TC"."TypeName"'
-        s6 = '"TC"."TypeLenght"'
-        s7 = '"TC"."Default"'
-        s8 = '"TC"."Options"'
-        s9 = '"TC"."Primary"'
-        s10 = '"TC"."Unique"'
-        s11 = '"TC"."ForeignTable"'
-        s12 = '"TC"."ForeignColumn"'
-        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12)
-        f1 = '"Tables" AS "T"'
-        f2 = 'JOIN "TableColumn" AS "TC" ON "T"."Table"="TC"."Table"'
-        f3 = 'JOIN "Columns" AS "C" ON "TC"."Column"="C"."Column"'
-        f = (f1, f2, f3)
-        p = (','.join(c), ','.join(s), ' '.join(f))
-        query = 'CREATE VIEW "TableView" (%s) AS SELECT %s FROM %s' % p
-
 # Create Cached Table Options
     elif name == 'getPrimayKey':
         query = 'PRIMARY KEY(%s)' % ','.join(format)
@@ -222,8 +187,28 @@ def getSqlQuery(name, format=None):
 # Select Queries
     elif name == 'getTableName':
         query = 'SELECT "Name" FROM "Tables" ORDER BY "Table"'
-    elif name == 'getTableColumn':
-        query = 'SELECT * FROM "TableView" WHERE "Table"=? ORDER BY "TableId","ColumnId"'
+    elif name == 'getTables':
+        s1 = '"T"."Table" AS "TableId"'
+        s2 = '"C"."Column" AS "ColumnId"'
+        s3 = '"T"."Name" AS "Table"'
+        s4 = '"C"."Name" AS "Column"'
+        s5 = '"TC"."TypeName" AS "Type"'
+        s6 = '"TC"."TypeLenght" AS "Lenght"'
+        s7 = '"TC"."Default"'
+        s8 = '"TC"."Options"'
+        s9 = '"TC"."Primary"'
+        s10 = '"TC"."Unique"'
+        s11 = '"TC"."ForeignTable"'
+        s12 = '"TC"."ForeignColumn"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12)
+        f1 = '"Tables" AS "T"'
+        f2 = 'JOIN "TableColumn" AS "TC" ON "T"."Table"="TC"."Table"'
+        f3 = 'JOIN "Columns" AS "C" ON "TC"."Column"="C"."Column"'
+        f = (f1, f2, f3)
+        w = '"T"."Name"=?'
+        p = (','.join(s), ' '.join(f), w)
+        query = 'SELECT %s FROM %s WHERE %s' % p
+
     elif name == 'getContentType':
         query = 'SELECT "Value2" "Folder","Value3" "Link" FROM "Settings" WHERE "Name"=\'ContentType\''
     elif name == 'getUser':

@@ -38,9 +38,8 @@ def _createDataSource(ctx, dbcontext, url, location, dbname):
 def _createDataBase(datasource):
     connection = datasource.getConnection('', '')
     statement = connection.createStatement()
-    tables, views = _getTablesAndViews()
+    tables = _getStaticTables()
     _createStaticTable(statement, tables)
-    executeQueries(statement, views)
     _createDynamicTable(statement)
     executeQueries(statement, _getViews())
     connection.close()
@@ -63,13 +62,12 @@ def _executeQueries(statement, queries):
     for query in queries:
         statement.executeQuery(query)
 
-def _getTablesAndViews():
+def _getStaticTables():
     tables = ('Tables',
               'Columns',
               'TableColumn',
               'Settings')
-    views = ('createTableView', )
-    return tables, views
+    return tables
 
 def _getViews():
     return ('createItemView',
