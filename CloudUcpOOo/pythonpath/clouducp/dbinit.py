@@ -5,7 +5,7 @@
 from .unotools import getResourceLocation
 from .unotools import getSimpleFile
 
-from .dbtools import getCreateTableQueries
+from .dbtools import getTablesAndStatements
 from .dbtools import registerDataSource
 from .dbtools import executeQueries
 from .dbtools import getDataSourceLocation
@@ -38,9 +38,9 @@ def _createDataSource(ctx, dbcontext, url, location, dbname):
 def _createDataBase(datasource):
     connection = datasource.getConnection('', '')
     statement = connection.createStatement()
-    tables = _getStaticTables()
-    _createStaticTable(statement, tables)
-    _createDynamicTable(statement)
+    _createStaticTable(statement, _getStaticTables())
+    tables, statements = getTablesAndStatements(statement)
+    _executeQueries(statement, tables)
     executeQueries(statement, _getViews())
     connection.close()
     connection.dispose()
@@ -53,10 +53,6 @@ def _createStaticTable(statement, tables):
     for table in tables:
         statement.executeQuery(getSqlQuery('setTableSource', table))
         statement.executeQuery(getSqlQuery('setTableReadOnly', table))
-
-def _createDynamicTable(statement):
-    queries = getCreateTableQueries(statement)
-    _executeQueries(statement, queries)
 
 def _executeQueries(statement, queries):
     for query in queries:

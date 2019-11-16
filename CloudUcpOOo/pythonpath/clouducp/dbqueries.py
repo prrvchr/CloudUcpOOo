@@ -11,8 +11,9 @@ def getSqlQuery(name, format=None):
         c1 = '"Table" INTEGER NOT NULL PRIMARY KEY'
         c2 = '"Name" VARCHAR(100) NOT NULL'
         c3 = '"Identity" INTEGER DEFAULT NULL'
+        c4 = '"View" BOOLEAN DEFAULT TRUE'
         k1 = 'CONSTRAINT "UniqueTablesName" UNIQUE("Name")'
-        c = (c1, c2, c3, k1)
+        c = (c1, c2, c3, c4, k1)
         query = 'CREATE TEXT TABLE "Tables"(%s)' % ','.join(c)
     elif name == 'createTableColumns':
         c1 = '"Column" INTEGER NOT NULL PRIMARY KEY'
