@@ -26,6 +26,7 @@ from .unotools import getProperty
 from .unotools import getResourceLocation
 from .unotools import parseDateTime
 from .keymap import KeyMap
+from .logger import logMessage
 
 import traceback
 
@@ -45,7 +46,7 @@ class Identifier(unohelper.Base,
         self._Error = ''
         self.MetaData = KeyMap()
         msg += " ... Done"
-        self.Logger.logp(level, "Identifier", "__init__()", msg)
+        logMessage(self.ctx, level, msg, "Identifier", "__init__()")
 
     @property
     def IsInitialized(self):
@@ -68,9 +69,6 @@ class Identifier(unohelper.Base,
     @property
     def BaseURL(self):
         return self.MetaData.getValue('BaseURL')
-    @property
-    def Logger(self):
-        return self.DataSource.Logger
     @property
     def Error(self):
         return self.User.Error if self.User and self.User.Error else self._Error
@@ -230,7 +228,7 @@ class Identifier(unohelper.Base,
                 sf.writeFile(url, stream)
             except Exception as e:
                 msg = "ERROR: %s - %s" % (e, traceback.print_exc())
-                self.Logger.logp(SEVERE, "Identifier", "getDocumentContent()", msg)
+                logMessage(self.ctx, SEVERE, msg, "Identifier", "getDocumentContent()")
             else:
                 size = sf.getSize(url)
                 loaded = self.DataSource.updateLoaded(self.User.Id, self.Id, OFFLINE, ONLINE)

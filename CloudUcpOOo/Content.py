@@ -46,7 +46,7 @@ from clouducp import getMimeType
 from clouducp import getSimpleFile
 from clouducp import getProperty
 from clouducp import getPropertyValueSet
-from clouducp import getLogger
+from clouducp import logMessage
 from clouducp import g_plugin
 
 import traceback
@@ -79,9 +79,6 @@ class Content(unohelper.Base,
     @property
     def CanAddChild(self):
         return self.MetaData.getValue('CanAddChild')
-    @property
-    def Logger(self):
-        return self.Identifier.DataSource.Logger
 
     def initialize(self, identifier, data):
         self.Identifier = identifier
@@ -94,7 +91,7 @@ class Content(unohelper.Base,
         self.contentListeners = []
         self._propertiesListener = {}
         msg += "Done."
-        self.Logger.logp(INFO, "Content", "initialize()", msg)
+        logMessage(self.ctx, INFO, msg, 'Content', 'initialize()')
         #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
         #mri.inspect(self)
 
@@ -160,35 +157,40 @@ class Content(unohelper.Base,
     def execute(self, command, id, environment):
         try:
             msg = "command.Name: %s" % command.Name
-            print("Content.execute() %s" % msg)
-            self.Logger.logp(INFO, "Content", "execute()", msg)
+            print("Content.execute() %s **********************************" % msg)
+            logMessage(self.ctx, INFO, msg, 'Content', 'execute()')
             if command.Name == 'getCommandInfo':
                 msg = "command.Name: %s ******************************************" % command.Name
-                self.Logger.logp(INFO, "Content", "execute()", msg)
+                logMessage(self.ctx, INFO, msg, 'Content', 'execute()')
                 return CommandInfo(self._commandInfo)
             elif command.Name == 'getPropertySetInfo':
                 return PropertySetInfo(self._propertySetInfo)
             elif command.Name == 'getPropertyValues':
-                namedvalues = getPropertiesValues(self, command.Argument, self.Logger)
+                namedvalues = getPropertiesValues(self.ctx, self, command.Argument)
                 return Row(namedvalues)
             elif command.Name == 'setPropertyValues':
-                return setPropertiesValues(self, environment, command.Argument, self.Logger)
+                return setPropertiesValues(self.ctx, self, environment, command.Argument)
             elif command.Name == 'delete':
                 self.MetaData.insertValue('Trashed', self.Identifier.updateTrashed(True, False))
             elif command.Name == 'open':
+                print("Content.execute() open 1")
                 if self.IsFolder:
+                    print("Content.execute() open 2")
                     # Not Used: command.Argument.Properties - Implement me ;-)
                     select = self.Identifier.getFolderContent(self.MetaData)
                     msg += " IsFolder: %s" % self.IsFolder
-                    self.Logger.logp(INFO, "Content", "execute()", msg)
+                    logMessage(self.ctx, INFO, msg, 'Content', 'execute()')
                     return DynamicResultSet(self.ctx, select)
                 elif self.IsDocument:
+                    print("Content.execute() open 3")
                     sf = getSimpleFile(self.ctx)
                     url, size = self.Identifier.getDocumentContent(sf, self.MetaData, 0)
                     if not size:
+                        print("Content.execute() open 4")
                         title = self.MetaData.getValue('Title')
                         msg = "Error while downloading file: %s" % title
                         raise CommandAbortedException(msg, self)
+                    print("Content.execute() open 5")
                     s = command.Argument.Sink
                     sink = uno.getTypeByName('com.sun.star.io.XActiveDataSink')
                     stream = uno.getTypeByName('com.sun.star.io.XActiveDataStreamer')
@@ -197,6 +199,7 @@ class Content(unohelper.Base,
                         s.setInputStream(sf.openFileRead(url))
                     elif not isreadonly and s.queryInterface(stream):
                         s.setStream(sf.openFileReadWrite(url))
+                    print("Content.execute() open 6")
             elif command.Name == 'insert':
                 if self.IsFolder:
                     mediatype = self.Identifier.DataSource.Provider.Folder
@@ -285,7 +288,8 @@ class Content(unohelper.Base,
             raise e
         except Exception as e:
             msg += " ERROR: %s" % e
-            self.Logger.logp(SEVERE, "Content", "execute()", msg)
+            print("Content.execute() ERROR: %s" % msg)
+            logMessage(self.ctx, SEVERE, msg, 'Content', 'execute()')
     def abort(self, id):
         pass
     def releaseCommandIdentifier(self, id):

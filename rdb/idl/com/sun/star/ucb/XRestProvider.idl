@@ -94,7 +94,6 @@ interface XRestProvider: com::sun::star::uno::XInterface
     string getResponseTitle([in] ::com::sun::star::auth::XRestKeyMap Response,
                             [in] string Default);
 
-    [attribute, readonly] ::com::sun::star::uno::XInterface Logger;
     [attribute, readonly] string Scheme;
     [attribute, readonly] string Plugin;
     [attribute] short SessionMode;

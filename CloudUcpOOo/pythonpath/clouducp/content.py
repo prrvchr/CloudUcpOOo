@@ -46,7 +46,7 @@ from .contenttools import getMimeType
 from .unotools import getSimpleFile
 from .unotools import getProperty
 from .unotools import getPropertyValueSet
-from .logger import getLogger
+from .logger import logMessage
 
 import traceback
 
@@ -71,7 +71,7 @@ class Content(unohelper.Base,
         self.contentListeners = []
         self._propertiesListener = {}
         msg += "Done."
-        self.Logger.logp(INFO, "Content", "__init__()", msg)
+        logMessage(self.ctx, INFO, msg, "Content", "__init__()")
 
     @property
     def IsFolder(self):
@@ -82,9 +82,6 @@ class Content(unohelper.Base,
     @property
     def CanAddChild(self):
         return self.MetaData.getValue('CanAddChild')
-    @property
-    def Logger(self):
-        return self.Identifier.User.DataSource.Logger
 
     # XComponent
     def dispose(self):
@@ -141,16 +138,16 @@ class Content(unohelper.Base,
     def execute(self, command, id, environment):
         try:
             msg = "command.Name: %s" % command.Name
-            self.Logger.logp(INFO, "Content", "execute()", msg)
+            logMessage(self.ctx, INFO, msg, "Content", "execute()")
             if command.Name == 'getCommandInfo':
                 return CommandInfo(self._commandInfo)
             elif command.Name == 'getPropertySetInfo':
                 return PropertySetInfo(self._propertySetInfo)
             elif command.Name == 'getPropertyValues':
-                namedvalues = getPropertiesValues(self, command.Argument, self.Logger)
+                namedvalues = getPropertiesValues(self.ctx, self, command.Argument)
                 return Row(namedvalues)
             elif command.Name == 'setPropertyValues':
-                return setPropertiesValues(self, environment, command.Argument, self.Logger)
+                return setPropertiesValues(self.ctx, self, environment, command.Argument)
             elif command.Name == 'delete':
                 self.MetaData.insertValue('Trashed', self.Identifier.updateTrashed(True, False))
             elif command.Name == 'open':
@@ -158,7 +155,7 @@ class Content(unohelper.Base,
                     # Not Used: command.Argument.Properties - Implement me ;-)
                     select = self.Identifier.getFolderContent(self.MetaData)
                     msg += " IsFolder: %s" % self.IsFolder
-                    self.Logger.logp(INFO, "Content", "execute()", msg)
+                    logMessage(self.ctx, INFO, msg, "Content", "execute()")
                     return DynamicResultSet(self.ctx, select)
                 elif self.IsDocument:
                     sf = getSimpleFile(self.ctx)
@@ -263,7 +260,7 @@ class Content(unohelper.Base,
             raise e
         except Exception as e:
             msg += " ERROR: %s" % e
-            self.Logger.logp(SEVERE, "Content", "execute()", msg)
+            logMessage(self.ctx, SEVERE, msg, "Content", "execute()")
 
     def abort(self, id):
         pass

@@ -19,9 +19,10 @@ from .contenttools import getUcp
 from .contenttools import getInteractiveAugmentedIOException
 from .unotools import getNamedValue
 from .unotools import getPropertyValueSet
+from .logger import logMessage
 
 
-def getPropertiesValues(source, properties, logger=None):
+def getPropertiesValues(ctx, source, properties):
     namedvalues = []
     for property in properties:
         value = None
@@ -35,12 +36,11 @@ def getPropertiesValues(source, properties, logger=None):
         else:
             msg = "ERROR: Requested property: %s is not available" % property.Name
             level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
-        if logger:
-            logger.logp(level, source.__class__.__name__, "getPropertiesValues()", msg)
+        logMessage(ctx, level, msg, source.__class__.__name__, 'getPropertiesValues()')
         namedvalues.append(getNamedValue(property.Name, value))
     return tuple(namedvalues)
 
-def setPropertiesValues(source, context, properties, logger=None):
+def setPropertiesValues(ctx, source, context, properties):
     results = []
     for property in properties:
         if all((hasattr(property, 'Name'),
@@ -52,8 +52,7 @@ def setPropertiesValues(source, context, properties, logger=None):
             level = uno.getConstantByName('com.sun.star.logging.LogLevel.SEVERE')
             error = UnknownPropertyException(msg, source)
             result = uno.Any('com.sun.star.beans.UnknownPropertyException', error)
-        if logger:
-            logger.logp(level, source.__class__.__name__, "setPropertiesValues()", msg)
+        logMessage(ctx, level, msg, source.__class__.__name__, 'setPropertiesValues()')
         results.append(result)
     return tuple(results)
 

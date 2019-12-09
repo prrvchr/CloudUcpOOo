@@ -13,6 +13,7 @@ from com.sun.star.ucb import XRestUser
 from .configuration import g_oauth2
 from .identifier import Identifier
 from .keymap import KeyMap
+from .logger import logMessage
 
 import traceback
 
@@ -20,14 +21,13 @@ import traceback
 class User(unohelper.Base,
            XRestUser):
     def __init__(self, ctx):
-        level = INFO
         msg = "User loading"
         self.ctx = ctx
         self.MetaData = KeyMap()
         self._Error = ''
         self.Request = self._getRequest()
         msg += " ... Done"
-        self.Logger.logp(level, "User", "__init__()", msg)
+        logMessage(self.ctx, INFO, msg, "User", "__init__()")
 
     @property
     def Id(self):
@@ -44,9 +44,6 @@ class User(unohelper.Base,
     @property
     def IsValid(self):
         return all((self.Id, self.Name, self.RootId, self.RootName, not self.Error))
-    @property
-    def Logger(self):
-        return self.Request.Logger
     @property
     def Error(self):
         return self.Request.Error if self.Request and self.Request.Error else self._Error

@@ -21,7 +21,7 @@ try:
     from clouducp import DataSource
     from clouducp import User
     from clouducp import Identifier
-    from clouducp import getLogger
+    from clouducp import logMessage
     from clouducp import isLoggerEnabled
     from clouducp import g_plugin
 
@@ -47,39 +47,38 @@ class ContentProvider(unohelper.Base,
         self.Plugin = ''
         self.DataSource = None
         self._defaultUser = ''
-        self.Logger = getLogger(self.ctx)
         msg = "ContentProvider: %s loading ... Done" % g_plugin
-        self.Logger.logp(INFO, 'ContentProvider', '__init__()', msg)
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', '__init__()')
 
     def __del__(self):
        msg = "ContentProvider; %s unloading ... Done" % g_plugin
-       self.Logger.logp(INFO, "ContentProvider", "__del__()", msg)
+       logMessage(self.ctx, INFO, msg, 'ContentProvider', '__del__()')
 
     # XParameterizedContentProvider
     def registerInstance(self, scheme, plugin, replace):
-        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Started"
-        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Started" % (scheme, plugin)
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'registerInstance()')
         try:
             datasource = DataSource(self.ctx, scheme, plugin)
         except Exception as e:
             msg = "ContentProvider registerInstance: Error: %s - %s" % (e, traceback.print_exc())
-            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", msg)
+            logMessage(self.ctx, SEVERE, msg, 'ContentProvider', 'registerInstance()')
             return None
         if not datasource.IsValid:
-            self.Logger.logp(SEVERE, "ContentProvider", "registerInstance()", datasource.Error)
+            logMessage(self.ctx, SEVERE, datasource.Error, 'ContentProvider', 'registerInstance()')
             return None
         self.Scheme = scheme
         self.Plugin = plugin
         msg = "ContentProvider registerInstance: addCloseListener ... Done"
-        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg)
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'registerInstance()')
         datasource.Connection.Parent.DatabaseDocument.addCloseListener(self)
         self.DataSource = datasource
-        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done"
-        self.Logger.logp(INFO, "ContentProvider", "registerInstance()", msg % (scheme, plugin))
+        msg = "ContentProvider registerInstance: Scheme/Plugin: %s/%s ... Done" % (scheme, plugin)
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'registerInstance()')
         return self
     def deregisterInstance(self, scheme, argument):
-        msg = "ContentProvider deregisterInstance: Scheme: %s ... Done"
-        self.Logger.logp(INFO, "ContentProvider", "deregisterInstance()", msg % scheme)
+        msg = "ContentProvider deregisterInstance: Scheme: %s ... Done" % scheme
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'deregisterInstance()')
 
     # XCloseListener
     def queryClosing(self, source, ownership):
@@ -87,8 +86,8 @@ class ContentProvider(unohelper.Base,
         query = 'SHUTDOWN COMPACT;'
         statement = self.DataSource.Connection.createStatement()
         statement.execute(query)
-        msg = "ContentProvider queryClosing: Scheme: %s ... Done"
-        self.Logger.logp(INFO, "ContentProvider", "queryClosing()", msg % self.Scheme)
+        msg = "ContentProvider queryClosing: Scheme: %s ... Done" % self.Scheme
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'queryClosing()')
     def notifyClosing(self, source):
         pass
 
@@ -98,11 +97,11 @@ class ContentProvider(unohelper.Base,
             msg = "Identifier: %s ... " % url
             identifier = Identifier(self.ctx, self.DataSource, url)
             msg += "Done"
-            self.Logger.logp(INFO, "ContentProvider", "createContentIdentifier()", msg)
+            logMessage(self.ctx, INFO, msg, 'ContentProvider', 'createContentIdentifier()')
             return identifier
         except Exception as e:
             msg += "Error: %s - %s" % (e, traceback.print_exc())
-            self.Logger.logp(SEVERE, "ContentProvider", "createContentIdentifier()", msg)
+            logMessage(self.ctx, SEVERE, msg, 'ContentProvider', 'createContentIdentifier()')
 
     # XContentProvider
     def queryContent(self, identifier):
@@ -112,12 +111,12 @@ class ContentProvider(unohelper.Base,
             if not identifier.initialize(self._defaultUser):
                 msg = "Identifier: %s ... Error: %s" % (url, identifier.Error)
                 print("ContentProvider.queryContent() %s" % msg)
-                self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+                logMessage(self.ctx, INFO, msg, 'ContentProvider', 'queryContent()')
                 raise IllegalIdentifierException(identifier.Error, self)
         self._defaultUser = identifier.User.Name
         content = identifier.getContent()
         msg = "Identitifer: %s ... Done" % url
-        self.Logger.logp(INFO, "ContentProvider", "queryContent()", msg)
+        logMessage(self.ctx, INFO, msg, 'ContentProvider', 'queryContent()')
         return content
 
     def compareContentIds(self, id1, id2):
@@ -141,7 +140,7 @@ class ContentProvider(unohelper.Base,
                 msg += " seem to be the same..."
                 compare = 0
             msg += " ... Done"
-            self.Logger.logp(INFO, "ContentProvider", "compareContentIds()", msg)
+            logMessage(self.ctx, INFO, msg, 'ContentProvider', 'compareContentIds()')
             return compare
         except Exception as e:
             print("ContentProvider.compareContentIds() Error: %s - %s" % (e, traceback.print_exc()))

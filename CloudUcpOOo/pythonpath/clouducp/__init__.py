@@ -12,16 +12,9 @@ try:
     from .configuration import g_upload
     from .configuration import g_folder
     from .configuration import g_link
-
     from .configuration import g_doc_map
-
-
-
     from .configuration import g_office
     from .configuration import g_pages
-
-
-
     from .configuration import g_userkeys
     from .configuration import g_userfields
     from .configuration import g_itemkeys
@@ -31,7 +24,6 @@ try:
     from .configuration import g_IdentifierRange
     from .configuration import g_chunk
     from .configuration import g_buffer
-
 
     from .datasource import DataSource
     from .user import User
@@ -58,12 +50,6 @@ try:
     from .contenttools import getContentEvent
     from .contenttools import getContentInfo
     from .contenttools import propertyChange
-
-    from .logger import getLogger
-    from .logger import getLoggerSetting
-    from .logger import setLoggerSetting
-    from .logger import getLoggerUrl
-    from .logger import isLoggerEnabled
 
     from .unocore import PropertyContainer
 

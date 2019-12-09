@@ -34,6 +34,8 @@ from .keymap import KeyMap
 
 from .user import User
 
+from .logger import logMessage
+
 import binascii
 import traceback
 
@@ -64,7 +66,7 @@ class DataSource(unohelper.Base,
             self.Provider.initialize(scheme, plugin, folder, link)
             level = INFO
             msg += "Done"
-        self.Logger.logp(level, 'DataSource', '__init__()', msg)
+        logMessage(self.ctx, level, msg, 'DataSource', '__init__()')
 
     @property
     def Connection(self):
@@ -75,9 +77,6 @@ class DataSource(unohelper.Base,
     @property
     def Error(self):
         return self.Provider.Error if self.Provider and self.Provider.Error else self._Error
-    @property
-    def Logger(self):
-        return self.Provider.Logger
 
     def getUser(self, name):
         print("DataSource.getUser() 1")
@@ -332,7 +331,7 @@ class DataSource(unohelper.Base,
             items.append(getKeyMapFromResult(result, user, self.Provider))
         select.close()
         msg = "Items to Sync: %s" % len(items)
-        self.Logger.logp(INFO, "DataSource", "_getItemToSync()", msg)
+        logMessage(self.ctx, INFO, msg, "DataSource", "_getItemToSync()")
         return tuple(items)
 
     def syncItem(self, request, uploader, item):
@@ -342,7 +341,7 @@ class DataSource(unohelper.Base,
             sync = item.getValue('SyncId')
             id = item.getValue('Id')
             msg = "SyncId - ItemId - Mode: %s - %s - %s" % (sync, id, mode)
-            self.Logger.logp(INFO, "DataSource", "_syncItem()", msg)
+            logMessage(self.ctx, INFO, msg, "DataSource", "_syncItem()")
             if mode == SYNC_FOLDER:
                 response = self.Provider.createFolder(request, item)
             elif mode == SYNC_FILE:
@@ -358,7 +357,7 @@ class DataSource(unohelper.Base,
             return response
         except Exception as e:
             msg = "SyncId: %s - ERROR: %s - %s" % (sync, e, traceback.print_exc())
-            self.Logger.logp(SEVERE, "DataSource", "_syncItem()", msg)
+            logMessage(self.ctx, SEVERE, msg, "DataSource", "_syncItem()")
 
     def callBack(self, item, response):
         if response.IsPresent:
@@ -373,7 +372,7 @@ class DataSource(unohelper.Base,
         delete.setLong(1, item.getValue('SyncId'))
         row = delete.executeUpdate()
         msg = "execute deleteSyncMode OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
-        self.Logger.logp(INFO, "DataSource", "updateSync", msg)
+        logMessage(self.ctx, INFO, msg, "DataSource", "updateSync")
         delete.close()
         if row and newid != oldid:
             update = self._getDataSourceCall('updateItemId')
@@ -381,7 +380,7 @@ class DataSource(unohelper.Base,
             update.setString(2, oldid)
             row = update.executeUpdate()
             msg = "execute updateItemId OldId: %s - NewId: %s - Row: %s" % (oldid, newid, row)
-            self.Logger.logp(INFO, "DataSource", "updateSync", msg)
+            logMessage(self.ctx, INFO, msg, "DataSource", "updateSync")
             update.close()
         return '' if row != 1 else newid
 
@@ -556,7 +555,7 @@ class DataSource(unohelper.Base,
                         results.append(self.updateSync(item, response.Value))
                     else:
                         msg = "ERROR: ItemId: %s" % item.getDefaultValue('Id')
-                        self.Logger.logp(SEVERE, "DataSource", "synchronize()", msg)
+                        logMessage(self.ctx, SEVERE, msg, "DataSource", "synchronize()")
                         results.append(False)
             result = all(results)
             print("DataSource.synchronize() 2 %s" % result)
