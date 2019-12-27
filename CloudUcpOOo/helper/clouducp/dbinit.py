@@ -61,6 +61,7 @@ def _createDataBase(ctx, datasource):
         logMessage(ctx, INFO, "Stage 2", 'dbinit', '_createDataBase()')
         connection = datasource.getConnection('', '')
     except Exception as e:
+        error = e
         msg = "_createDataBase: ERROR: %s - %s" % (e, traceback.print_exc())
         logMessage(ctx, SEVERE, msg, 'dbinit', '_createDataBase()')
     if error is not None:
