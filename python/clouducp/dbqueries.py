@@ -643,6 +643,6 @@ CREATE PROCEDURE "InsertItem"(IN "UserId" VARCHAR(100),
 # Queries don't exist!!!
     else:
         query = None
-        msg = getMessage(ctx, 101, name)
+        msg = getMessage(ctx, __name__, 101, name)
         logMessage(ctx, SEVERE, msg, 'dbqueries', 'getSqlQuery()')
     return query
