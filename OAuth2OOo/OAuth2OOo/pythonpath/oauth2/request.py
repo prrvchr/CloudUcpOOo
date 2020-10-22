@@ -167,11 +167,12 @@ def execute(session, parameter, timeout, parser=None):
             print ("OOps: Something Else", error)
         else:
             response.IsPresent = True
-            if parser:
-                print("OAuth2Service.execute():\n%s" % (r.json(), ))
-                response.Value = r.json(object_pairs_hook=parser.jsonParser)
+            if parser is not None:
+                if parser.DataType == 'Json':
+                    response.Value = r.json(object_pairs_hook=parser.parseResponse)
+                elif parser.DataType == 'Xml':
+                    response.Value = parser.parseResponse(r.text)
             else:
-                print("OAuth2Service.execute():\n%s" % (r, ))
                 response.Value = _parseResponse(r)
     return response, error
 
